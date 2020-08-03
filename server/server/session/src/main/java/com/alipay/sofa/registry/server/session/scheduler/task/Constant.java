@@ -32,5 +32,5 @@ public class Constant {
     /**
      * execute at 05:10, 15:10, 25:10, 35:10, 45:10, 55:10
      */
-    public final static String CACHE_PRINTER_CRON = "10 5,15,25,35,45,55 * * * ?";
+    public final static String CACHE_PRINTER_CRON      = "10 5,15,25,35,45,55 * * * ?";
 }
