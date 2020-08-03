@@ -28,4 +28,9 @@ public class Constant {
     public final static String PUSH_CLIENT_DATUM       = "PUSH_CLIENT_DATUM";
 
     public final static String PUSH_CLIENT_URL         = "PUSH_CLIENT_URL";
+
+    /**
+     * execute at 05:10, 15:10, 25:10, 35:10, 45:10, 55:10
+     */
+    public final static String CACHE_PRINTER_CRON = "10 5,15,25,35,45,55 * * * ?";
 }
