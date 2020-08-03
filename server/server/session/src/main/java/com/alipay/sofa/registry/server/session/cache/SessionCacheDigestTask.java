@@ -79,7 +79,7 @@ public class SessionCacheDigestTask {
                 LOGGER.error("[SessionCacheDigestTask] cache digest error", t);
             }
 
-        }, SchedulerCornUtil.calculateInitialDelay(Constant.CACHE_PRINTER_CRON), 600, TimeUnit.SECONDS);
+        }, SchedulerCornUtil.calculateInitialDelay(Constant.CACHE_PRINTER_CRON)/1000, 600, TimeUnit.SECONDS);
     }
 
     private String logPubOrSub(Collection<? extends BaseInfo> infos) {

@@ -84,7 +84,7 @@ public class CacheDigestTask {
             } catch (Throwable t) {
                 LOGGER.error("[CacheDigestTask] cache digest error", t);
             }
-        }, SchedulerCornUtil.calculateInitialDelay(Constant.CACHE_PRINTER_CRON), 600, TimeUnit.SECONDS);
+        }, SchedulerCornUtil.calculateInitialDelay(Constant.CACHE_PRINTER_CRON)/1000, 600, TimeUnit.SECONDS);
     }
 
     private String logPublisher(Publisher publisher) {

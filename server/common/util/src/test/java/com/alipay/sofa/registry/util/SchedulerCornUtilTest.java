@@ -42,8 +42,8 @@ public class SchedulerCornUtilTest {
 
             SchedulerCornUtil.nextTrigger(CACHE_PRINTER_CRON);
 
-            long initialDlay = SchedulerCornUtil.calculateInitialDelay(CACHE_PRINTER_CRON);
-            System.out.println(initialDlay);
+            long initialDelay = SchedulerCornUtil.calculateInitialDelay(CACHE_PRINTER_CRON);
+            System.out.println(initialDelay/1000);
         } catch (ParseException e) {
             e.printStackTrace();
         }

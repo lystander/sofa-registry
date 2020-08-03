@@ -347,6 +347,11 @@
         <appender-ref ref="COMMON-ERROR-APPENDER"/>
     </logger>
 
+    <logger name="com.alipay.sofa.registry.server.session.cache.SessionCacheDigestTask" level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="DATA-CACHE-DIGEST-APPENDER"/>
+        <appender-ref ref="COMMON-ERROR-APPENDER"/>
+    </logger>
+
     <!-- root loggers -->
 
     <root level="${LOG_LEVEL}">
