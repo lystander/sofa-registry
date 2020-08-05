@@ -79,7 +79,7 @@ public class SessionCacheDigestTask {
                     Collection<Publisher> publishers = sessionDataStore.getStoreDataByDataInfoId(dataInfoId);
                     Collection<Subscriber> subscribers = sessionInterests.getInterests(dataInfoId);
 
-                    LOGGER.info("[dataInfo] {}, {}, {}, {}, [{}];[{}]", sessionServerConfig.getSessionServerDataCenter(),
+                    LOGGER.info("[dataInfo] {}; {}; {}; {}; [{}]; [{}]", sessionServerConfig.getSessionServerDataCenter(),
                             dataInfoId, CollectionUtils.isEmpty(publishers) ? 0 : publishers.size(),
                             CollectionUtils.isEmpty(subscribers) ? 0 : subscribers.size(),
                             logPubOrSub(publishers), logPubOrSub(subscribers));
