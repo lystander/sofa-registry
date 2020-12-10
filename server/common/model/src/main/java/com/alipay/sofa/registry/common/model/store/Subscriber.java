@@ -33,11 +33,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class Subscriber extends BaseInfo {
 
     /** UID */
-    private static final long        serialVersionUID = 98433360274932292L;
+    private static final long                       serialVersionUID = 98433360274932292L;
     /** */
-    private              ScopeEnum   scope;
+    private ScopeEnum                               scope;
     /** */
-    private              ElementType elementType;
+    private ElementType                             elementType;
     /** */
     private AssembleType                            assembleType;
 
