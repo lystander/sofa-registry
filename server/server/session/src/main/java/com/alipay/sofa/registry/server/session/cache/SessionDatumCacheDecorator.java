@@ -17,6 +17,7 @@
 package com.alipay.sofa.registry.server.session.cache;
 
 import com.alipay.sofa.registry.common.model.Node;
+import com.alipay.sofa.registry.common.model.constants.ValueConstants;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.common.model.store.Subscriber;
@@ -53,8 +54,6 @@ public class SessionDatumCacheDecorator {
 
     @Autowired
     private AppRevisionCacheRegistry appRevisionCacheRegistry;
-
-    private static final String      APP_GROUP  = "SOFA_APP";
 
     public Datum getDatumCache(String dataCenter, String dataInfoId) {
         DatumKey datumKey = new DatumKey(dataInfoId, dataCenter);
@@ -116,7 +115,7 @@ public class SessionDatumCacheDecorator {
         Map<String/*datacenter*/, Map<String/*appName*/, Datum>> result = new HashMap<>();
         //get metadata from session cache
         for (String appName : appRevisionCacheRegistry.getApps(dataInfoId)) {
-            String appDataInfoId = DataInfo.toDataInfoId(appName, instanceId, APP_GROUP);
+            String appDataInfoId = DataInfo.toDataInfoId(appName, instanceId, ValueConstants.SOFA_APP);
 
             Map<String/*datacenter*/, Datum> appDatum = this.getDatumsCache(appDataInfoId);
 

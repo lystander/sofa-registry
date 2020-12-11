@@ -35,7 +35,6 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- *
  * @author xiaojian.xj
  * @version $Id: AppInterfaceAssembleService.java, v 0.1 2020年11月24日 19:34 xiaojian.xj Exp $
  */
@@ -109,7 +108,8 @@ public class AppInterfaceAssembleService implements AssembleService {
         datum.setDataInfoId(subscriber.getDataInfoId());
         datum.setDataCenter(dataCenter);
         datum.setDataId(subscriber.getDataId());
-        datum.setGroup(subscriber.getDataId());
+        datum.setInstanceId(subscriber.getInstanceId());
+        datum.setGroup(subscriber.getGroup());
 
         if (interfaceDatum != null) {
             datum.setVersion(interfaceDatum.getVersion());

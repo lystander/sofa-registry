@@ -77,13 +77,14 @@ public class DefaultSessionRegistryStrategy implements SessionRegistryStrategy {
         changeDataInfoIds.forEach(this::fireDataChangeCloudTask);
     }
 
-    private boolean checkInterestVersions(String dataCenter, String dataInfoId, Long version) {
-        boolean result = sessionInterests.checkInterestVersions(dataCenter, dataInfoId, version);
+    protected boolean checkInterestVersions(String dataCenter, String pushDataInfoId, Long version) {
+        boolean result = sessionInterests
+            .checkInterestVersions(dataCenter, pushDataInfoId, version);
         if (result) {
             LOGGER
                 .info(
                     "Request dataCenter {} dataInfo {} fetch version {} be interested,Higher than current version!Will fire data change Task",
-                    dataCenter, dataInfoId, version);
+                    dataCenter, pushDataInfoId, version);
         }
         return result;
     }

@@ -58,12 +58,10 @@ import java.util.stream.Collectors;
  */
 public class DataChangeFetchTask extends AbstractSessionTask {
 
-    private final static Logger              LOGGER    = LoggerFactory
-                                                           .getLogger(DataChangeFetchTask.class);
+    private final static Logger              LOGGER = LoggerFactory
+                                                        .getLogger(DataChangeFetchTask.class);
 
     private final SessionServerConfig        sessionServerConfig;
-
-    private static final String              APP_GROUP = "SOFA_APP";
 
     /**
      * trigger task com.alipay.sofa.registry.server.meta.listener process
@@ -159,6 +157,9 @@ public class DataChangeFetchTask extends AbstractSessionTask {
                             subscriber -> subscriber.getAssembleType() == assembleType)
                             .collect(Collectors.toList());
 
+                    if(subscribersSend.isEmpty()){
+                        continue;
+                    }
                     Subscriber defaultSubscriber = subscribersSend.stream().findFirst().get();
                     Datum datum = subscriberAssembleStrategy.assembleDatum(assembleType,
                             sessionServerConfig.getSessionServerDataCenter(),

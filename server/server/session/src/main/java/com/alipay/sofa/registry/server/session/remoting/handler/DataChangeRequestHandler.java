@@ -21,10 +21,8 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 import com.alipay.remoting.util.StringUtils;
-import com.alipay.sofa.registry.common.model.dataserver.Datum;
-import com.alipay.sofa.registry.common.model.store.AppPublisher;
+import com.alipay.sofa.registry.common.model.constants.ValueConstants;
 import com.alipay.sofa.registry.common.model.store.DataInfo;
-import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.server.session.cache.AppRevisionCacheRegistry;
 import com.alipay.sofa.registry.server.session.cache.SessionDatumCacheDecorator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +42,6 @@ import com.alipay.sofa.registry.server.session.store.Interests;
 import com.alipay.sofa.registry.server.session.strategy.DataChangeRequestHandlerStrategy;
 
 /**
- *
  * @author kezhu.wukz
  * @author shangyu.wh
  * @version $Id: DataChangeRequestHandler.java, v 0.1 2017-12-12 15:09 shangyu.wh Exp $
@@ -115,18 +112,21 @@ public class DataChangeRequestHandler extends AbstractClientHandler {
             DataInfo dataInfo = DataInfo.valueOf(dataChangeRequest.getDataInfoId());
             refreshMeta(dataChangeRequest.getRevisions());
 
-            if (StringUtils.equals("SOFA_APP", dataInfo.getDataType())) {
+            if (StringUtils.equals(ValueConstants.SOFA_APP, dataInfo.getDataType())) {
+
                 //dataInfoId is app, get relate interfaces dataInfoId from cache
-                Set<String> interfaces = appRevisionCacheRegistry.getInterfaces(dataChangeRequest
-                    .getDataInfoId());
+                Set<String> interfaces = appRevisionCacheRegistry.getInterfaces(dataInfo
+                    .getDataId());
                 for (String interfaceDataInfoId : interfaces) {
                     DataChangeRequest request = new DataChangeRequest();
                     request.setDataInfoId(interfaceDataInfoId);
+                    request.setChangedDataInfoId(dataChangeRequest.getDataInfoId());
                     request.setDataCenter(dataChangeRequest.getDataCenter());
                     request.setVersion(dataChangeRequest.getVersion());
-                    fireChangFetch(dataChangeRequest);
+                    fireChangFetch(request);
                 }
             } else {
+                dataChangeRequest.setChangedDataInfoId(dataChangeRequest.getDataInfoId());
                 fireChangFetch(dataChangeRequest);
             }
             EXCHANGE_LOGGER.info(
@@ -146,9 +146,7 @@ public class DataChangeRequestHandler extends AbstractClientHandler {
         }
     }
 
-
     /**
-     *
      * @param dataChangeRequest
      */
     private void fireChangFetch(DataChangeRequest dataChangeRequest) {

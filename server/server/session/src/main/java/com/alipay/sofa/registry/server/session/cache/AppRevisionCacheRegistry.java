@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.registry.server.session.cache;
 
+import com.alipay.sofa.registry.common.model.constants.ValueConstants;
 import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.core.model.AppRevisionRegister;
 import com.alipay.sofa.registry.core.model.AppRevisionInterface;
@@ -81,7 +82,7 @@ public class AppRevisionCacheRegistry {
         try {
             singleFlight.execute("refreshAll", () -> {
                 List<AppRevisionRegister> revisions = appRevisionNodeService
-                    .fetchMulti(appRevisionNodeService.checkRevisions(keysDigest));
+                        .fetchMulti(appRevisionNodeService.checkRevisions(keysDigest));
                 for (AppRevisionRegister rev : revisions) {
                     onNewRevision(rev);
                 }
@@ -100,13 +101,13 @@ public class AppRevisionCacheRegistry {
         for (AppRevisionInterface inf : rev.interfaces.values()) {
             String dataInfoId = DataInfo.toDataInfoId(inf.dataId, inf.instanceId, inf.group);
             Map<String, Set<String>> apps = interfaceRevisions.computeIfAbsent(dataInfoId,
-                k -> new ConcurrentHashMap<>());
+                    k -> new ConcurrentHashMap<>());
             Set<String> infRevisions = apps.computeIfAbsent(rev.appname,
-                k -> Sets.newConcurrentHashSet());
+                    k -> Sets.newConcurrentHashSet());
             infRevisions.add(rev.revision);
 
             appInterfaces.computeIfAbsent(rev.appname, k -> Sets.newConcurrentHashSet())
-                .add(dataInfoId);
+                    .add(dataInfoId);
         }
         registry.put(rev.revision, rev);
     }
@@ -118,5 +119,4 @@ public class AppRevisionCacheRegistry {
         }
         return RevisionUtils.revisionsDigest(keys);
     }
-
 }

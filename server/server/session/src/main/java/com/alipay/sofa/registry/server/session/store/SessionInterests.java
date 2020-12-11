@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import com.alipay.sofa.registry.common.model.constants.ValueConstants;
+import com.alipay.sofa.registry.common.model.sessionserver.DatumSetVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.alipay.sofa.registry.common.model.store.Subscriber;

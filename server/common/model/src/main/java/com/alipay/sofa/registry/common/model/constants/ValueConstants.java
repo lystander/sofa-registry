@@ -17,7 +17,6 @@
 package com.alipay.sofa.registry.common.model.constants;
 
 /**
- *
  * @author zhuoyu.sjw
  * @version $Id: ValueConstants.java, v 0.1 2018-03-28 23:07 zhuoyu.sjw Exp $$
  */
@@ -68,6 +67,8 @@ public class ValueConstants {
     public static final String   ENABLE_DATA_DATUM_EXPIRE              = "data.enable.datum.expire.switch#@#9600#@#CONFIG";
 
     public static final String   LOGGER_NAME_RENEW                     = "RENEW-LOGGER";
+
+    public static final String   SOFA_APP                              = "SOFA_APP";
 
     /**
      * switch key for dataId sensitive is disable or not

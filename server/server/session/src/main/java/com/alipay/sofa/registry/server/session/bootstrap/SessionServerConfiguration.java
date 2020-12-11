@@ -697,19 +697,19 @@ public class SessionServerConfiguration {
             return new SessionDatumCacheDecorator();
         }
 
-        @Bean
-        public AssembleService appAssembleService(SubscriberAssembleStrategy subscriberAssembleStrategy) {
-            AppAssembleService appAssembleService = new AppAssembleService();
-            subscriberAssembleStrategy.add(appAssembleService);
-            return appAssembleService;
-        }
-
-        @Bean
-        public AssembleService interfaceAssembleService(SubscriberAssembleStrategy subscriberAssembleStrategy) {
-            InterfaceAssembleService interfaceAssembleService = new InterfaceAssembleService();
-            subscriberAssembleStrategy.add(interfaceAssembleService);
-            return interfaceAssembleService;
-        }
+        //        @Bean
+        //        public AssembleService appAssembleService(SubscriberAssembleStrategy subscriberAssembleStrategy) {
+        //            AppAssembleService appAssembleService = new AppAssembleService();
+        //            subscriberAssembleStrategy.add(appAssembleService);
+        //            return appAssembleService;
+        //        }
+        //
+        //        @Bean
+        //        public AssembleService interfaceAssembleService(SubscriberAssembleStrategy subscriberAssembleStrategy) {
+        //            InterfaceAssembleService interfaceAssembleService = new InterfaceAssembleService();
+        //            subscriberAssembleStrategy.add(interfaceAssembleService);
+        //            return interfaceAssembleService;
+        //        }
 
         @Bean
         public AssembleService appInterfaceAssembleService(SubscriberAssembleStrategy subscriberAssembleStrategy) {

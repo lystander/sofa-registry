@@ -32,6 +32,7 @@ public class DataChangeRequest implements Serializable {
     private static final long serialVersionUID = -7674982522990222894L;
 
     private String            dataInfoId;
+    private String            changedDataInfoId;
 
     private String            dataCenter;
 
@@ -47,6 +48,7 @@ public class DataChangeRequest implements Serializable {
 
     /**
      * constructor
+     *
      * @param dataInfoId
      * @param dataCenter
      * @param version
@@ -71,7 +73,7 @@ public class DataChangeRequest implements Serializable {
     /**
      * Setter method for property <tt>dataInfoId</tt>.
      *
-     * @param dataInfoId  value to be assigned to property dataInfoId
+     * @param dataInfoId value to be assigned to property dataInfoId
      */
     public void setDataInfoId(String dataInfoId) {
         this.dataInfoId = WordCache.getInstance().getWordCache(dataInfoId);
@@ -89,7 +91,7 @@ public class DataChangeRequest implements Serializable {
     /**
      * Setter method for property <tt>dataCenter</tt>.
      *
-     * @param dataCenter  value to be assigned to property dataCenter
+     * @param dataCenter value to be assigned to property dataCenter
      */
     public void setDataCenter(String dataCenter) {
         this.dataCenter = WordCache.getInstance().getWordCache(dataCenter);
@@ -107,7 +109,7 @@ public class DataChangeRequest implements Serializable {
     /**
      * Setter method for property <tt>version</tt>.
      *
-     * @param version  value to be assigned to property version
+     * @param version value to be assigned to property version
      */
     public void setVersion(long version) {
         this.version = version;
@@ -141,4 +143,11 @@ public class DataChangeRequest implements Serializable {
         return sb.toString();
     }
 
+    public String getChangedDataInfoId() {
+        return changedDataInfoId;
+    }
+
+    public void setChangedDataInfoId(String changedDataInfoId) {
+        this.changedDataInfoId = changedDataInfoId;
+    }
 }
