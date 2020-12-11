@@ -29,7 +29,6 @@ import java.util.Map;
  */
 public class AddressUtil {
 
-
     public static String buildURL(String address, Map<String, Collection<String>> params) {
         if (CollectionUtils.isEmpty(params)) {
             return address;
