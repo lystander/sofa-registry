@@ -18,13 +18,9 @@ package com.alipay.sofa.registry.common.model.store;
 
 import java.util.List;
 
-import com.alipay.sofa.registry.common.model.AppRegisterServerDataBox;
-import com.alipay.sofa.registry.common.model.AppRegisterServerDataBox.ParamInfo;
-import com.alipay.sofa.registry.common.model.AppRegisterServerDataBox.ServiceParamInfo;
 import com.alipay.sofa.registry.common.model.PublishType;
 import com.alipay.sofa.registry.common.model.ServerDataBox;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 
 /**
  *

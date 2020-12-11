@@ -16,13 +16,13 @@
  */
 package com.alipay.sofa.registry.common.model;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.alipay.sofa.registry.common.model.store.WordCache;
+import com.google.common.collect.ArrayListMultimap;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -30,23 +30,35 @@ import java.util.List;
  * @version $Id: AppRegisterServerDataBox.java, v 0.1 2020年11月12日 11:14 xiaojian.xj Exp $
  */
 public class AppRegisterServerDataBox implements Serializable {
-    private static final long      serialVersionUID = -3615677271684611262L;
+    private static final long                                                    serialVersionUID = -3615677271684611262L;
 
     /** revision */
-    private String                 revision;
+    private String                                                               revision;
 
     /** ip:port */
-    private String                 url;
+    private String                                                               url;
 
     /** baseParams */
-    private List<ParamInfo>        baseParams;
+    private HashMap<String/*key*/, List<String>/*values*/>                     baseParams;
 
     /** */
-    private List<ServiceParamInfo> serviceParams;
+    private Map<String/*service*/, Map<String/*key*/, List<String>/*value*/>> serviceParams;
 
-    public String extract() {
-        //todo
-        return "";
+    public String extract(String serviceName) {
+        serviceParams.get(serviceName);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("?");
+        baseParams.entrySet().stream().forEach(entry -> {
+            entry.getValue().forEach(value -> builder.append(entry.getKey()).append("=").append(value).append("&"));
+        });
+
+        serviceParams.get(serviceName).entrySet().forEach(entry -> {
+            entry.getValue().forEach(value -> builder.append(entry.getKey()).append("=").append(value).append("&"));
+        });
+
+
+        return builder.deleteCharAt(builder.toString().length() - 1).toString();
     }
 
     /**
@@ -90,7 +102,7 @@ public class AppRegisterServerDataBox implements Serializable {
      *
      * @return property value of baseParams
      */
-    public List<ParamInfo> getBaseParams() {
+    public HashMap<String, List<String>> getBaseParams() {
         return baseParams;
     }
 
@@ -99,16 +111,8 @@ public class AppRegisterServerDataBox implements Serializable {
      *
      * @param baseParams value to be assigned to property baseParams
      */
-    public void setBaseParams(String baseParams) {
-        JSONObject baseParam = JSON.parseObject(baseParams);
-        List<ParamInfo> paramInfos = new ArrayList<>();
-        for (String key : baseParam.keySet()) {
-            ParamInfo param = new ParamInfo();
-            param.setKey(key);
-            param.setValue(baseParam.getString(key));
-            paramInfos.add(param);
-        }
-        this.baseParams = paramInfos;
+    public void setBaseParams(HashMap<String, List<String>> baseParams) {
+        this.baseParams = baseParams;
     }
 
     /**
@@ -116,7 +120,7 @@ public class AppRegisterServerDataBox implements Serializable {
      *
      * @return property value of serviceParams
      */
-    public List<ServiceParamInfo> getServiceParams() {
+    public Map<String, Map<String, List<String>>> getServiceParams() {
         return serviceParams;
     }
 
@@ -125,123 +129,7 @@ public class AppRegisterServerDataBox implements Serializable {
      *
      * @param serviceParams value to be assigned to property serviceParams
      */
-    public void setServiceParams(String serviceParams) {
-        JSONObject serviceParam = JSON.parseObject(serviceParams);
-        List<ServiceParamInfo> paramInfos = new ArrayList<>();
-        for (String key : serviceParam.keySet()) {
-            ServiceParamInfo param = new ServiceParamInfo();
-            param.setKey(key);
-            param.setValue(serviceParam.getString(key));
-            paramInfos.add(param);
-        }
-
-        this.serviceParams = paramInfos;
+    public void setServiceParams(Map<String, Map<String, List<String>>> serviceParams) {
+        this.serviceParams = serviceParams;
     }
-
-    public class ServiceParamInfo {
-
-        private String serviceName;
-
-        private String key;
-
-        private String value;
-
-        /**
-         * Getter method for property <tt>serviceName</tt>.
-         *
-         * @return property value of serviceName
-         */
-        public String getServiceName() {
-            return serviceName;
-        }
-
-        /**
-         * Setter method for property <tt>serviceName</tt>.
-         *
-         * @param serviceName value to be assigned to property serviceName
-         */
-        public void setServiceName(String serviceName) {
-            this.serviceName = WordCache.getInstance().getWordCache(serviceName);
-        }
-
-        /**
-         * Getter method for property <tt>key</tt>.
-         *
-         * @return property value of key
-         */
-        public String getKey() {
-            return key;
-        }
-
-        /**
-         * Setter method for property <tt>key</tt>.
-         *
-         * @param key value to be assigned to property key
-         */
-        public void setKey(String key) {
-            this.key = WordCache.getInstance().getWordCache(key);
-        }
-
-        /**
-         * Getter method for property <tt>value</tt>.
-         *
-         * @return property value of value
-         */
-        public String getValue() {
-            return value;
-        }
-
-        /**
-         * Setter method for property <tt>value</tt>.
-         *
-         * @param value value to be assigned to property value
-         */
-        public void setValue(String value) {
-            this.value = WordCache.getInstance().getWordCache(value);
-        }
-    }
-
-    public class ParamInfo {
-
-        private String key;
-
-        private String value;
-
-        /**
-         * Getter method for property <tt>key</tt>.
-         *
-         * @return property value of key
-         */
-        public String getKey() {
-            return key;
-        }
-
-        /**
-         * Setter method for property <tt>key</tt>.
-         *
-         * @param key value to be assigned to property key
-         */
-        public void setKey(String key) {
-            this.key = WordCache.getInstance().getWordCache(key);
-        }
-
-        /**
-         * Getter method for property <tt>value</tt>.
-         *
-         * @return property value of value
-         */
-        public String getValue() {
-            return value;
-        }
-
-        /**
-         * Setter method for property <tt>value</tt>.
-         *
-         * @param value value to be assigned to property value
-         */
-        public void setValue(String value) {
-            this.value = WordCache.getInstance().getWordCache(value);
-        }
-    }
-
 }

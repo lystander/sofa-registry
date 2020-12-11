@@ -27,10 +27,12 @@ import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.URL;
 import com.alipay.sofa.registry.core.model.DataBox;
 import com.alipay.sofa.registry.core.model.PublisherRegister;
+import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -41,7 +43,7 @@ import java.util.List;
 public class PublisherConverter {
 
 
-    public static final String PUB_TYPE = "PUB_TYPE";
+    public static final String PUB_TYPE = "!PublisherType";
 
     public static final String APP_PUBLISHER = "APP_PUBLISHER";
 
@@ -126,8 +128,9 @@ public class PublisherConverter {
             JSONObject jsonObject = JSON.parseObject(dataBox.getData());
             serverDataBox.setUrl(jsonObject.getString(AppRegisterConstant.URL_KEY));
             serverDataBox.setRevision(jsonObject.getString(AppRegisterConstant.REVISION_KEY));
-            serverDataBox.setBaseParams(jsonObject.getString(AppRegisterConstant.BASE_PARAMS_KEY));
-            serverDataBox.setServiceParams(jsonObject.getString(AppRegisterConstant.INTERFACE_PARAMS_KEY));
+            serverDataBox.setBaseParams(JSONObject.parseObject(jsonObject.getString(AppRegisterConstant.BASE_PARAMS_KEY), HashMap.class));
+            serverDataBox.setServiceParams(JSONObject.parseObject(jsonObject.getString(AppRegisterConstant.INTERFACE_PARAMS_KEY), HashMap.class));
+            dataBoxes.add(serverDataBox);
         }
 
         return dataBoxes;

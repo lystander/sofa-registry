@@ -16,14 +16,10 @@
  */
 package com.alipay.sofa.registry.server.session.predicate;
 
-import com.alipay.sofa.registry.core.model.AppRevisionInterface;
 import com.alipay.sofa.registry.core.model.AppRevisionRegister;
 import com.alipay.sofa.registry.server.session.cache.AppRevisionCacheRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
 
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 /**

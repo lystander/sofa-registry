@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -93,13 +94,20 @@ public class AppInterfaceAssembleService implements AssembleService {
     }
 
     private Datum doMerge(Datum interfaceDatum, Map<String, Datum> appDatum, Subscriber subscriber) {
-        if (interfaceDatum == null && CollectionUtils.isEmpty(appDatum)) {
+        if (Objects.isNull(interfaceDatum) && CollectionUtils.isEmpty(appDatum)) {
             return null;
+        }
+
+        String dataCenter;
+        if (Objects.nonNull(interfaceDatum)) {
+            dataCenter = interfaceDatum.getDataCenter();
+        } else {
+            dataCenter = appDatum.values().stream().findAny().get().getDataCenter();
         }
 
         Datum datum = new Datum();
         datum.setDataInfoId(subscriber.getDataInfoId());
-        datum.setDataCenter(subscriber.getCell());
+        datum.setDataCenter(dataCenter);
         datum.setDataId(subscriber.getDataId());
         datum.setGroup(subscriber.getDataId());
 

@@ -16,10 +16,15 @@
  */
 package com.alipay.sofa.registry.common.model;
 
-import com.alipay.sofa.registry.common.model.AppRegisterServerDataBox.ParamInfo;
-import com.alipay.sofa.registry.common.model.AppRegisterServerDataBox.ServiceParamInfo;
 import com.alipay.sofa.registry.common.model.store.AppPublisher;
 import com.alipay.sofa.registry.common.model.store.Publisher;
+import com.alipay.sofa.registry.common.model.store.WordCache;
+import com.google.common.collect.ArrayListMultimap;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  *
@@ -50,21 +55,27 @@ public class PublisherInternUtil {
             for (AppRegisterServerDataBox dataBox : appPublisher.getAppDataList()) {
                 dataBox.setUrl(dataBox.getUrl());
                 dataBox.setRevision(dataBox.getRevision());
-                for (ParamInfo param : dataBox.getBaseParams()) {
-                    param.setKey(param.getKey());
-                    param.setValue(param.getValue());
-                }
-                for (ServiceParamInfo param : dataBox.getServiceParams()) {
-                    param.setServiceName(param.getServiceName());
-                    param.setKey(param.getKey());
-                    param.setValue(param.getValue());
-                }
+
+                ArrayListMultimap<String, String> baseParams = ArrayListMultimap.create();
+                dataBox.getBaseParams().entrySet().forEach(entry -> {
+
+                    entry.getValue().stream().forEach(value -> {
+                        // cache base params key and value
+                        baseParams.put(WordCache.getInstance().getWordCache(entry.getKey()), WordCache.getInstance().getWordCache(value));
+                    });
+                });
+
+                Map<String, Map<String, List<String>>> serviceParams = new HashMap<>();
+                dataBox.getServiceParams().entrySet().forEach(entry -> {
+                    // cache serviceName
+                    serviceParams.put(WordCache.getInstance().getWordCache(entry.getKey()), entry.getValue());
+
+                });
+
             }
 
             return appPublisher;
         }
-
         return publisher;
     }
-
 }

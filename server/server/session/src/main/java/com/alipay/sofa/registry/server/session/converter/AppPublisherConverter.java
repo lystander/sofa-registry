@@ -43,7 +43,7 @@ public class AppPublisherConverter {
 
                 //todo
                 //appRevisionCacheRegistry.getParam(appPublisher.getAppName(), appRegisterServerDataBox.getRevision());
-                dataList.add(new ServerDataBox(appRegisterServerDataBox.extract()));
+                dataList.add(new ServerDataBox(appRegisterServerDataBox.extract(publisher.getDataId())));
             }
 
             publisher.setDataList(dataList);
