@@ -19,50 +19,79 @@ package com.alipay.sofa.registry.server.session.converter;
 import com.alipay.sofa.registry.common.model.AppRegisterServerDataBox;
 import com.alipay.sofa.registry.common.model.ServerDataBox;
 import com.alipay.sofa.registry.common.model.store.AppPublisher;
+import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.common.model.store.Publisher;
+import com.alipay.sofa.registry.core.model.AppRevisionRegister;
 import com.alipay.sofa.registry.server.session.cache.AppRevisionCacheRegistry;
 
+import javax.ws.rs.core.UriBuilder;
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- *
  * @author xiaojian.xj
  * @version $Id: AppPublisherConverter.java, v 0.1 2020年11月24日 20:50 xiaojian.xj Exp $
  */
 public class AppPublisherConverter {
 
     public static Publisher convert(AppPublisher appPublisher,
-                                    AppRevisionCacheRegistry appRevisionCacheRegistry) {
-        Converter<AppPublisher, Publisher> converter = source -> {
-            Publisher publisher = new Publisher();
-
-            fillCommonRegion(publisher, source);
-            List<ServerDataBox> dataList = new ArrayList<>();
-            for (AppRegisterServerDataBox appRegisterServerDataBox : source.getAppDataList()) {
-
-                //todo
-                //appRevisionCacheRegistry.getParam(appPublisher.getAppName(), appRegisterServerDataBox.getRevision());
-                dataList.add(new ServerDataBox(appRegisterServerDataBox.extract(publisher.getDataId())));
-            }
-
-            publisher.setDataList(dataList);
-            return publisher;
-        };
-
-        return converter.convert(appPublisher);
+                                    AppRevisionCacheRegistry appRevisionCacheRegistry,
+                                    DataInfo dataInfo) {
+        Publisher publisher = new Publisher();
+        String dataInfoId = dataInfo.getDataInfoId();
+        fillCommonRegion(publisher, appPublisher, dataInfo);
+        List<ServerDataBox> dataList = new ArrayList<>();
+        for (AppRegisterServerDataBox appRegisterServerDataBox : appPublisher.getAppDataList()) {
+            AppRevisionRegister revisionRegister = appRevisionCacheRegistry
+                .getRevision(appRegisterServerDataBox.getRevision());
+            Map<String, List<String>> params = extractParams(revisionRegister,
+                appRegisterServerDataBox, dataInfoId);
+            dataList.add(new ServerDataBox(buildURL(appRegisterServerDataBox.getUrl(), params)));
+        }
+        publisher.setDataList(dataList);
+        return publisher;
 
     }
 
-    private static void fillCommonRegion(Publisher publisher, AppPublisher source) {
+    private static Map<String, List<String>> extractParams(AppRevisionRegister revisionRegister,
+                                                           AppRegisterServerDataBox serverDataBox,
+                                                           String dataInfoId) {
+        Map<String, List<String>> params = new HashMap<>();
+        params.putAll(revisionRegister.baseParams);
+        if (revisionRegister.interfaces.containsKey(dataInfoId)) {
+            params.putAll(revisionRegister.interfaces.get(dataInfoId).serviceParams);
+        }
+        params.putAll(serverDataBox.getBaseParams());
+        if (serverDataBox.getServiceParams().containsKey(dataInfoId)) {
+            params.putAll(serverDataBox.getServiceParams().get(dataInfoId));
+        }
+        return params;
+    }
+
+    private static String buildURL(String address, Map<String, List<String>> params) {
+        List<String> querys = new ArrayList<>();
+        for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+            String key = entry.getKey();
+            for (String value : entry.getValue()) {
+                querys.add(key + "=" + value);
+            }
+        }
+        String queryStr = String.join("&", querys);
+        return address + "?" + queryStr;
+    }
+
+    private static void fillCommonRegion(Publisher publisher, AppPublisher source, DataInfo dataInfo) {
 
         publisher.setAppName(source.getAppName());
         //ZONE MUST BE CURRENT SESSION ZONE
         publisher.setCell(source.getCell());
         publisher.setClientId(source.getClientId());
-        publisher.setDataId(source.getDataId());
-        publisher.setGroup(source.getGroup());
-        publisher.setInstanceId(source.getInstanceId());
+        publisher.setDataId(dataInfo.getDataId());
+        publisher.setGroup(dataInfo.getDataType());
+        publisher.setInstanceId(dataInfo.getInstanceId());
         publisher.setRegisterId(source.getRegisterId());
         publisher.setProcessId(source.getProcessId());
         publisher.setVersion(source.getVersion());
@@ -72,7 +101,7 @@ public class AppPublisherConverter {
         publisher.setSourceAddress(source.getSourceAddress());
 
         publisher.setClientVersion(source.getClientVersion());
-        publisher.setDataInfoId(source.getDataInfoId());
+        publisher.setDataInfoId(dataInfo.getDataInfoId());
     }
 
 }

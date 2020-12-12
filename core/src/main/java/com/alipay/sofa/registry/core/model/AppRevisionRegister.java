@@ -23,6 +23,6 @@ import java.util.Map;
 public class AppRevisionRegister implements Serializable {
     public String                            revision;
     public String                            appname;
-    public Map<String, String>               baseParams;
+    public Map<String, List<String>>         baseParams;
     public Map<String, AppRevisionInterface> interfaces;
 }

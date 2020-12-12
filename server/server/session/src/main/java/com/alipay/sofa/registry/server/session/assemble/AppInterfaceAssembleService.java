@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.session.assemble;
 
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.store.AppPublisher;
+import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.Subscriber;
 import com.alipay.sofa.registry.core.model.AssembleType;
@@ -104,30 +105,32 @@ public class AppInterfaceAssembleService implements AssembleService {
             dataCenter = appDatum.values().stream().findAny().get().getDataCenter();
         }
 
+        DataInfo dataInfo = DataInfo.valueOf(subscriber.getDataInfoId());
         Datum datum = new Datum();
-        datum.setDataInfoId(subscriber.getDataInfoId());
+        datum.setDataInfoId(dataInfo.getDataInfoId());
         datum.setDataCenter(dataCenter);
-        datum.setDataId(subscriber.getDataId());
-        datum.setInstanceId(subscriber.getInstanceId());
-        datum.setGroup(subscriber.getGroup());
+        datum.setDataId(dataInfo.getDataId());
+        datum.setInstanceId(dataInfo.getInstanceId());
+        datum.setGroup(dataInfo.getDataType());
 
         if (interfaceDatum != null) {
             datum.setVersion(interfaceDatum.getVersion());
-            datum.setContainsUnPub(interfaceDatum.isContainsUnPub());
             datum.getPubMap().putAll(interfaceDatum.getPubMap());
         }
 
         if (!CollectionUtils.isEmpty(appDatum)) {
             for (Datum app : appDatum.values()) {
                 datum.setVersion(Math.max(app.getVersion(), datum.getVersion()));
-                for (Entry<String, Publisher> publisherEntry : app.getPubMap().entrySet()) {
-                    if (!(publisherEntry instanceof AppPublisher)) {
+                for (Publisher publisher : app.getPubMap().values()) {
+                    if (!(publisher instanceof AppPublisher)) {
                         continue;
                     }
-                    AppPublisher appPublisher = (AppPublisher) publisherEntry;
+                    AppPublisher appPublisher = (AppPublisher) publisher;
 
-                    datum.getPubMap().put(appPublisher.getRegisterId(),
-                        AppPublisherConverter.convert(appPublisher, appRevisionCacheRegistry));
+                    datum.getPubMap().put(
+                        appPublisher.getRegisterId(),
+                        AppPublisherConverter.convert(appPublisher, appRevisionCacheRegistry,
+                            dataInfo));
                 }
             }
         }
