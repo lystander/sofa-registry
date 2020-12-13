@@ -16,10 +16,11 @@
  */
 package com.alipay.sofa.registry.server.session.utils;
 
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.util.UriComponentsBuilder;
-
+import com.alipay.sofa.registry.log.Logger;
+import com.alipay.sofa.registry.log.LoggerFactory;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,19 +30,39 @@ import java.util.Map;
  */
 public class AddressUtil {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AddressUtil.class);
+
+    //public static String buildURL(String address, Map<String, Collection<String>> params) {
+    //    if (CollectionUtils.isEmpty(params)) {
+    //        return address;
+    //    }
+    //    URIBuilder builder = null;
+    //    try {
+    //        builder = new URIBuilder(address);
+    //
+    //        for (Map.Entry<String, Collection<String>> entry : params.entrySet()) {
+    //            String key = entry.getKey();
+    //            for (String value : entry.getValue()) {
+    //                builder.addParameter(key, value);
+    //
+    //            }
+    //        }
+    //        return builder.build().toString();
+    //    } catch (URISyntaxException e) {
+    //        LOGGER.error("build url error.", e);
+    //        return null;
+    //    }
+    //}
+
     public static String buildURL(String address, Map<String, Collection<String>> params) {
-        if (CollectionUtils.isEmpty(params)) {
-            return address;
-        }
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(address);
+        List<String> querys = new ArrayList<>();
         for (Map.Entry<String, Collection<String>> entry : params.entrySet()) {
             String key = entry.getKey();
             for (String value : entry.getValue()) {
-                builder.queryParam(key, value);
+                querys.add(key + "=" + value);
             }
         }
-
-        return builder.build().toString();
-
+        String queryStr = String.join("&", querys);
+        return address + "?" + queryStr;
     }
 }
