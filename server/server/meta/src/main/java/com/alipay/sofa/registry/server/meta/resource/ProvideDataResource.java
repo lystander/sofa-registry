@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: DecisionModeResource.java, v 0.1 2018-02-01 16:50 shangyu.wh Exp $
  */
 @Path("persistentData")
-@LeaderAwareRestController
 public class ProvideDataResource {
 
   private static final Logger DB_LOGGER =
@@ -53,6 +52,7 @@ public class ProvideDataResource {
   @POST
   @Path("put")
   @Produces(MediaType.APPLICATION_JSON)
+  @LeaderAwareRestController
   public Result put(PersistenceData data) {
 
     checkObj(data, "PersistenceData");
@@ -83,6 +83,7 @@ public class ProvideDataResource {
   @POST
   @Path("remove")
   @Produces(MediaType.APPLICATION_JSON)
+  @LeaderAwareRestController
   public Result remove(PersistenceData data) {
 
     checkObj(data, "PersistenceData");

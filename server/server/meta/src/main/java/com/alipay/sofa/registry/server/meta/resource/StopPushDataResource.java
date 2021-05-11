@@ -41,7 +41,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: StopPushDataResource.java, v 0.1 2018-07-25 11:40 shangyu.wh Exp $
  */
 @Path("stopPushDataSwitch")
-@LeaderAwareRestController
 public class StopPushDataResource {
 
   private static final Logger DB_LOGGER =
@@ -58,6 +57,7 @@ public class StopPushDataResource {
   @GET
   @Path("open")
   @Produces(MediaType.APPLICATION_JSON)
+  @LeaderAwareRestController
   public Result closePush() {
     PersistenceData persistenceData =
         PersistenceDataBuilder.createPersistenceData(
@@ -86,6 +86,7 @@ public class StopPushDataResource {
   @GET
   @Path("close")
   @Produces(MediaType.APPLICATION_JSON)
+  @LeaderAwareRestController
   public Result openPush() {
     PersistenceData persistenceData =
         PersistenceDataBuilder.createPersistenceData(

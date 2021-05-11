@@ -10,9 +10,9 @@ import java.util.Date;
 /**
  *
  * @author xiaojian.xj
- * @version $Id: ClientOffPodsDomain.java, v 0.1 2021年04月27日 22:37 xiaojian.xj Exp $
+ * @version $Id: ClientManagerPodsDomain.java, v 0.1 2021年04月27日 22:37 xiaojian.xj Exp $
  */
-public class ClientOffPodsDomain {
+public class ClientManagerPodsDomain {
 
     /** primary key */
     private long id;
@@ -23,13 +23,16 @@ public class ClientOffPodsDomain {
     /** local data center */
     private String address;
 
+    /** CLIENT_OFF/CLIENT_OPEN  */
+    private String operation;
+
     /** create time */
     private Date gmtCreate;
 
     /** last update time */
     private Timestamp gmtModify;
 
-    public ClientOffPodsDomain() {
+    public ClientManagerPodsDomain() {
     }
 
     /**
@@ -84,6 +87,24 @@ public class ClientOffPodsDomain {
      */
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    /**
+     * Getter method for property <tt>operation</tt>.
+     *
+     * @return property value of operation
+     */
+    public String getOperation() {
+        return operation;
+    }
+
+    /**
+     * Setter method for property <tt>operation</tt>.
+     *
+     * @param operation value to be assigned to property operation
+     */
+    public void setOperation(String operation) {
+        this.operation = operation;
     }
 
     /**

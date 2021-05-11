@@ -38,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: StopPushDataResource.java, v 0.1 2018-07-25 11:40 shangyu.wh Exp $
  */
 @Path("blacklist")
-@LeaderAwareRestController
 public class BlacklistDataResource {
 
   private static final Logger DB_LOGGER =
@@ -59,6 +58,7 @@ public class BlacklistDataResource {
   @POST
   @Path("update")
   @Produces(MediaType.APPLICATION_JSON)
+  @LeaderAwareRestController
   public Result blacklistPush(String config) {
     PersistenceData persistenceData =
         PersistenceDataBuilder.createPersistenceData(ValueConstants.BLACK_LIST_DATA_ID, config);
