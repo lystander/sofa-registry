@@ -2,7 +2,7 @@
  * Alipay.com Inc.
  * Copyright (c) 2004-2021 All Rights Reserved.
  */
-package com.alipay.sofa.registry.jdbc.domain;
+package com.alipay.sofa.registry.common.model.metaserver;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -10,9 +10,9 @@ import java.util.Date;
 /**
  *
  * @author xiaojian.xj
- * @version $Id: ClientManagerPodsDomain.java, v 0.1 2021年04月27日 22:37 xiaojian.xj Exp $
+ * @version $Id: ClientManagerPods.java, v 0.1 2021年05月12日 20:11 xiaojian.xj Exp $
  */
-public class ClientManagerPodsDomain {
+public class ClientManagerPods {
 
     /** primary key */
     private long id;
@@ -32,7 +32,7 @@ public class ClientManagerPodsDomain {
     /** last update time */
     private Timestamp gmtModify;
 
-    public ClientManagerPodsDomain() {
+    public ClientManagerPods() {
     }
 
     /**

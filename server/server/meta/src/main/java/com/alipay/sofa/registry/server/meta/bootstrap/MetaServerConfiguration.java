@@ -27,6 +27,8 @@ import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfigBean;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfigBeanProperty;
+import com.alipay.sofa.registry.server.meta.provide.data.ClientManagerService;
+import com.alipay.sofa.registry.server.meta.provide.data.DefaultClientManagerService;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultProvideDataService;
 import com.alipay.sofa.registry.server.meta.provide.data.ProvideDataService;
 import com.alipay.sofa.registry.server.meta.remoting.DataNodeExchanger;
@@ -241,12 +243,18 @@ public class MetaServerConfiguration {
 
     @Bean(name = "metaLeaderListeners")
     public Collection<MetaLeaderElectorListener> metaLeaderListeners() {
-      return Lists.newArrayList(provideDataService());
+      return Lists.newArrayList(provideDataService(),
+              clientManagerService());
     }
 
     @Bean
     public ProvideDataService provideDataService() {
       return new DefaultProvideDataService();
+    }
+
+    @Bean
+    public ClientManagerService clientManagerService() {
+      return new DefaultClientManagerService();
     }
 
     @Bean

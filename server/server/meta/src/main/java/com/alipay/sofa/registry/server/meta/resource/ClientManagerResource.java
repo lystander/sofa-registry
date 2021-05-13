@@ -17,17 +17,24 @@
 package com.alipay.sofa.registry.server.meta.resource;
 
 import com.alipay.sofa.registry.common.model.CommonResponse;
+import com.alipay.sofa.registry.common.model.metaserver.ProvideData;
+import com.alipay.sofa.registry.common.model.metaserver.ProvideDataChangeEvent;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
+import com.alipay.sofa.registry.server.meta.provide.data.ClientManagerService;
+import com.alipay.sofa.registry.server.meta.provide.data.DefaultProvideDataNotifier;
+import com.alipay.sofa.registry.store.api.DBResponse;
+import com.alipay.sofa.registry.store.api.OperationStatus;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 
 /**
  * The type Clients open resource.
@@ -39,7 +46,17 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class ClientManagerResource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientManagerResource.class);
+    private static final Logger DB_LOGGER =
+            LoggerFactory.getLogger(ClientManagerResource.class, "[DBService]");
+
+    private static final Logger taskLogger =
+            LoggerFactory.getLogger(ClientManagerResource.class, "[Task]");
+
+    @Autowired
+    private ClientManagerService clientManagerService;
+
+    @Autowired
+    private DefaultProvideDataNotifier provideDataNotifier;
 
     /** Client off */
     @POST
@@ -49,22 +66,53 @@ public class ClientManagerResource {
             return CommonResponse.buildFailedResponse("ips is empty");
         }
         String[] ipArray = StringUtils.split(ips.trim(), ';');
-        List<String> ipList = Arrays.asList(ipArray);
+        HashSet<String> ipSet = Sets.newHashSet(ipArray);
 
-        return CommonResponse.buildSuccessResponse();
+        DBResponse<ProvideData> ret = clientManagerService.clientOff(ipSet);
+
+        DB_LOGGER.info("client off result:{}, ips:{}", ret.getOperationStatus(), ips);
+
+        if (ret.getOperationStatus() == OperationStatus.SUCCESS) {
+            fireClientManagerChangeNotify(ret.getEntity().getVersion(), ret.getEntity().getDataInfoId());
+            return CommonResponse.buildSuccessResponse();
+        }
+
+        return CommonResponse.buildFailedResponse("client of fail");
+
     }
 
     /** Client Open */
     @POST
     @Path("/clientOpen")
-    public CommonResponse clientOn(@FormParam("ips") String ips) {
+    public CommonResponse clientOpen(@FormParam("ips") String ips) {
         if (StringUtils.isEmpty(ips)) {
             return CommonResponse.buildFailedResponse("ips is empty");
         }
         String[] ipArray = StringUtils.split(ips.trim(), ';');
-        List<String> ipList = Arrays.asList(ipArray);
+        HashSet<String> ipSet = Sets.newHashSet(ipArray);
 
-        return CommonResponse.buildSuccessResponse();
+        DBResponse<ProvideData> ret = clientManagerService.clientOpen(ipSet);
+
+        DB_LOGGER.info("client open result:{}, ips:{}", ret.getOperationStatus(), ips);
+
+        if (ret.getOperationStatus() == OperationStatus.SUCCESS) {
+            fireClientManagerChangeNotify(ret.getEntity().getVersion(), ret.getEntity().getDataInfoId());
+            return CommonResponse.buildSuccessResponse();
+        }
+
+        return CommonResponse.buildFailedResponse("client open fail");
+    }
+
+    private void fireClientManagerChangeNotify(Long version, String dataInfoId) {
+
+        ProvideDataChangeEvent provideDataChangeEvent = new ProvideDataChangeEvent(dataInfoId, version);
+
+        if (taskLogger.isInfoEnabled()) {
+            taskLogger.info(
+                    "send CLIENT_MANAGER_CHANGE_NOTIFY_TASK notifyClientManagerChange: {}",
+                    provideDataChangeEvent);
+        }
+        provideDataNotifier.notifyProvideDataChange(provideDataChangeEvent);
     }
 
 }

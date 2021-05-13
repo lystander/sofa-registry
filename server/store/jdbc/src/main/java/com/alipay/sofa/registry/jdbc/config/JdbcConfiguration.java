@@ -37,8 +37,10 @@ import com.alipay.sofa.registry.jdbc.repository.batch.AppRevisionHeartbeatBatchC
 import com.alipay.sofa.registry.jdbc.repository.batch.InterfaceAppBatchQueryCallable;
 import com.alipay.sofa.registry.jdbc.repository.impl.AppRevisionHeartbeatJdbcRepository;
 import com.alipay.sofa.registry.jdbc.repository.impl.AppRevisionJdbcRepository;
+import com.alipay.sofa.registry.jdbc.repository.impl.ClientManagerPodsJdbcRepository;
 import com.alipay.sofa.registry.jdbc.repository.impl.InterfaceAppsJdbcRepository;
 import com.alipay.sofa.registry.jdbc.repository.impl.ProvideDataJdbcRepository;
+import com.alipay.sofa.registry.store.api.meta.ClientManagerPodsRepository;
 import com.alipay.sofa.registry.store.api.meta.ProvideDataRepository;
 import com.alipay.sofa.registry.store.api.repository.AppRevisionHeartbeatRepository;
 import com.alipay.sofa.registry.store.api.repository.AppRevisionRepository;
@@ -235,6 +237,11 @@ public class JdbcConfiguration {
     @Bean
     public ProvideDataRepository provideDataJdbcRepository() {
       return new ProvideDataJdbcRepository();
+    }
+
+    @Bean
+    public ClientManagerPodsRepository clientManagerPodsJdbcRepository() {
+      return new ClientManagerPodsJdbcRepository();
     }
 
     /** batch callable */
