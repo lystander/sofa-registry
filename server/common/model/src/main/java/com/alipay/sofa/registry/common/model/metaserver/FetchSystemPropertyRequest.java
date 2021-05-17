@@ -40,6 +40,11 @@ public class FetchSystemPropertyRequest implements Serializable {
         return version;
     }
 
-
-
+    @Override
+    public String toString() {
+        return "FetchSystemPropertyRequest{" +
+                "dataInfoId='" + dataInfoId + '\'' +
+                ", version=" + version +
+                '}';
+    }
 }

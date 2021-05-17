@@ -13,9 +13,16 @@ import java.io.Serializable;
  */
 public class FetchSystemPropertyResult implements Serializable {
 
+    private static final ProvideData INIT = null;
+
     private final boolean versionUpgrade;
 
     private final ProvideData provideData;
+
+    public FetchSystemPropertyResult(boolean versionUpgrade) {
+        this.versionUpgrade = versionUpgrade;
+        this.provideData = INIT;
+    }
 
     public FetchSystemPropertyResult(boolean versionUpgrade, ProvideData provideData) {
         this.versionUpgrade = versionUpgrade;
