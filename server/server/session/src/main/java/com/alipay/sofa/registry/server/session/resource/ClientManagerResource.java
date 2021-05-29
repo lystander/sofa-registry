@@ -29,6 +29,7 @@ import com.alipay.sofa.registry.server.session.mapper.ConnectionMapper;
 import com.alipay.sofa.registry.server.session.registry.SessionRegistry;
 import com.alipay.sofa.registry.server.shared.meta.MetaServerService;
 import com.alipay.sofa.registry.task.MetricsableThreadPoolExecutor;
+import com.google.common.collect.Sets;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -75,9 +76,9 @@ public class ClientManagerResource {
       return CommonResponse.buildFailedResponse("ips is empty");
     }
     String[] ipArray = StringUtils.split(ips.trim(), ';');
-    List<String> ipList = Arrays.asList(ipArray);
 
-    List<ConnectId> conIds = connectionsService.getIpConnects(ipList);
+    Set<String> ipSet = Sets.newHashSet(ipArray);
+    List<ConnectId> conIds = connectionsService.getIpConnects(ipSet);
 
     if (!CollectionUtils.isEmpty(conIds)) {
       sessionRegistry.remove(conIds);

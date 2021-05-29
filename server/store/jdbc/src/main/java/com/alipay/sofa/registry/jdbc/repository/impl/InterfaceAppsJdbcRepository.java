@@ -198,7 +198,7 @@ public class InterfaceAppsJdbcRepository implements InterfaceAppsRepository {
             mapping);
       }
       interfaceApps.put(domain.getInterfaceName(), newMapping);
-    } else {
+    } else if (nanosLong < mapping.getNanosVersion()) {
       LOG.error(
           "[IgnoreUpdateCache]ignored refresh index, interfac={}, newVersion={} , current mapping={}",
           domain.getInterfaceName(),

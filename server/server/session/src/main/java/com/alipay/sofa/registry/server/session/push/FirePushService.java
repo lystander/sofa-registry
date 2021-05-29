@@ -31,6 +31,7 @@ import com.alipay.sofa.registry.server.session.cache.CacheService;
 import com.alipay.sofa.registry.server.session.cache.DatumKey;
 import com.alipay.sofa.registry.server.session.cache.Key;
 import com.alipay.sofa.registry.server.session.cache.Value;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.store.Interests;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.alipay.sofa.registry.task.FastRejectedExecutionException;
@@ -43,6 +44,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
@@ -50,6 +53,8 @@ public class FirePushService {
   private static final Logger LOGGER = LoggerFactory.getLogger(FirePushService.class);
 
   @Autowired SessionServerConfig sessionServerConfig;
+
+  @Resource FetchStopPushService fetchStopPushService;
 
   @Autowired CacheService sessionCacheService;
 
@@ -171,7 +176,7 @@ public class FirePushService {
 
   private boolean processPush(
       PushCause pushCause, SubDatum datum, Collection<Subscriber> subscriberList) {
-    if (sessionServerConfig.isStopPushSwitch()) {
+    if (fetchStopPushService.isStopPushSwitch()) {
       return false;
     }
     if (subscriberList.isEmpty()) {

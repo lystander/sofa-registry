@@ -17,7 +17,6 @@
 package com.alipay.sofa.registry.server.shared.meta;
 
 import com.alipay.sofa.registry.common.model.ProcessId;
-import com.alipay.sofa.registry.common.model.metaserver.FetchSystemPropertyRequest;
 import com.alipay.sofa.registry.common.model.metaserver.FetchSystemPropertyResult;
 import com.alipay.sofa.registry.common.model.metaserver.ProvideData;
 import com.alipay.sofa.registry.common.model.metaserver.SlotTableChangeEvent;

@@ -65,10 +65,9 @@ public class ValueConstants {
       DataInfo.toDataInfoId(
           "session.blacklist.data", SESSION_PROVIDE_DATA_INSTANCE_ID, SESSION_PROVIDE_DATA_GROUP);
 
-
   public static final String CLIENT_OFF_PODS_DATA_ID =
-          DataInfo.toDataInfoId(
-                  "session.blacklist.data", SESSION_PROVIDE_DATA_INSTANCE_ID, SESSION_PROVIDE_DATA_GROUP);
+      DataInfo.toDataInfoId(
+          "registry.client.off.list", SESSION_PROVIDE_DATA_INSTANCE_ID, SESSION_PROVIDE_DATA_GROUP);
 
   public static final String DATA_DATUM_SYNC_SESSION_INTERVAL_SEC =
       DataInfo.toDataInfoId(
@@ -102,4 +101,8 @@ public class ValueConstants {
   public static final int METADATA_STATUS_PROCESS_ERROR = 500;
 
   public static final String ATTR_RPC_CHANNEL_PROCESS_ID = "attr.registry.rpc.channel.processId";
+
+  public static final String CLIENT_OFF = "clientOff";
+
+  public static final String CLIENT_OPEN = "clientOpen";
 }

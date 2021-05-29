@@ -24,6 +24,7 @@ import com.alipay.sofa.registry.remoting.CallbackHandler;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.node.service.ClientNodeService;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.strategy.ReceivedConfigDataPushTaskStrategy;
 import com.alipay.sofa.registry.task.listener.TaskEvent;
 import java.util.Map;
@@ -40,6 +41,7 @@ public class ReceivedConfigDataPushTask extends AbstractSessionTask {
       LoggerFactory.getLogger(ReceivedConfigDataPushTask.class, "[Task]");
 
   private final SessionServerConfig sessionServerConfig;
+  private final FetchStopPushService fetchStopPushService;
   private final ClientNodeService clientNodeService;
   private ReceivedConfigData receivedConfigData;
   private URL url;
@@ -47,9 +49,11 @@ public class ReceivedConfigDataPushTask extends AbstractSessionTask {
 
   public ReceivedConfigDataPushTask(
       SessionServerConfig sessionServerConfig,
+      FetchStopPushService fetchStopPushService,
       ClientNodeService clientNodeService,
       ReceivedConfigDataPushTaskStrategy receivedConfigDataPushTaskStrategy) {
     this.sessionServerConfig = sessionServerConfig;
+    this.fetchStopPushService = fetchStopPushService;
     this.clientNodeService = clientNodeService;
     this.receivedConfigDataPushTaskStrategy = receivedConfigDataPushTaskStrategy;
   }
@@ -57,7 +61,7 @@ public class ReceivedConfigDataPushTask extends AbstractSessionTask {
   @Override
   public void execute() {
 
-    if (sessionServerConfig.isStopPushSwitch()) {
+    if (fetchStopPushService.isStopPushSwitch()) {
       LOGGER.info(
           "Stop Push receivedConfigData with switch on! dataId: {},group: {},Instance: {}, url: {}",
           receivedConfigData.getDataId(),

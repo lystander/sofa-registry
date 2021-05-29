@@ -22,12 +22,15 @@ import com.alipay.sofa.registry.common.model.store.Watcher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import com.alipay.sofa.registry.server.session.strategy.SessionRegistryStrategy;
 import com.alipay.sofa.registry.task.listener.TaskEvent;
 import com.alipay.sofa.registry.task.listener.TaskListenerManager;
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
 
 /**
  * @author kezhu.wukz
@@ -45,12 +48,14 @@ public class DefaultSessionRegistryStrategy implements SessionRegistryStrategy {
 
   @Autowired private SessionServerConfig sessionServerConfig;
 
+  @Resource private FetchStopPushService fetchStopPushService;
+
   @Override
   public void afterPublisherRegister(Publisher publisher) {}
 
   @Override
   public void afterSubscriberRegister(Subscriber subscriber) {
-    if (!sessionServerConfig.isStopPushSwitch()) {
+    if (!fetchStopPushService.isStopPushSwitch()) {
       firePushService.fireOnRegister(subscriber);
     }
   }

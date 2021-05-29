@@ -16,6 +16,8 @@
  */
 package com.alipay.sofa.registry.server.session.push;
 
+import static com.alipay.sofa.registry.server.session.push.PushMetrics.Push.*;
+
 import com.alipay.remoting.rpc.exception.InvokeTimeoutException;
 import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.Tuple;
@@ -30,6 +32,7 @@ import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.remoting.exchange.RequestChannelClosedException;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.node.service.ClientNodeService;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
 import com.alipay.sofa.registry.task.MetricsableThreadPoolExecutor;
 import com.alipay.sofa.registry.trace.TraceID;
@@ -39,9 +42,6 @@ import com.alipay.sofa.registry.util.OsUtils;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.Executor;
@@ -51,8 +51,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 
-import static com.alipay.sofa.registry.server.session.push.PushMetrics.Push.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class PushProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(PushProcessor.class);
@@ -68,6 +70,8 @@ public class PushProcessor {
   @Autowired PushDataGenerator pushDataGenerator;
 
   @Autowired ClientNodeService clientNodeService;
+
+  @Resource FetchStopPushService fetchStopPushService;
 
   final WatchDog watchDog = new WatchDog();
   final Cleaner cleaner = new Cleaner();
@@ -205,7 +209,7 @@ public class PushProcessor {
   }
 
   List<PushTask> watchCommit() {
-    if (sessionServerConfig.isStopPushSwitch()) {
+    if (fetchStopPushService.isStopPushSwitch()) {
       // stop push, clean the task
       pendingLock.lock();
       try {
@@ -329,7 +333,7 @@ public class PushProcessor {
   }
 
   boolean doPush(PushTask task) {
-    if (sessionServerConfig.isStopPushSwitch()) {
+    if (fetchStopPushService.isStopPushSwitch()) {
       return false;
     }
 

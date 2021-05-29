@@ -240,17 +240,27 @@ public abstract class AbstractMetaServerService<T extends BaseHeartBeatResponse>
     final String leaderIp = metaServerManager.getMetaServerLeader();
 
     try {
-      Response response = metaServerManager.sendRequest(new FetchSystemPropertyRequest(dataInfoId, version));
+      Response response =
+          metaServerManager.sendRequest(new FetchSystemPropertyRequest(dataInfoId, version));
 
       Object result = response.getResult();
       if (result instanceof FetchSystemPropertyResult) {
         return (FetchSystemPropertyResult) result;
       } else {
-        LOGGER.error("fetch system property data:{}, version:{}, from {} is null", dataInfoId, version, leaderIp);
+        LOGGER.error(
+            "fetch system property data:{}, version:{}, from {} is null",
+            dataInfoId,
+            version,
+            leaderIp);
         throw new RuntimeException("metaServerService fetch null system property data!");
       }
     } catch (Throwable e) {
-      LOGGER.error("fetch system property data:{}, version:{}, from {} is null", dataInfoId, version, leaderIp, e);
+      LOGGER.error(
+          "fetch system property data:{}, version:{}, from {} is null",
+          dataInfoId,
+          version,
+          leaderIp,
+          e);
       throw new RuntimeException("fetch system property data error! " + e.getMessage(), e);
     }
   }

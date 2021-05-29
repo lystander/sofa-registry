@@ -116,10 +116,6 @@ public interface SessionServerConfig {
 
   String getBlacklistSubDataIdRegex();
 
-  boolean isStopPushSwitch();
-
-  void setStopPushSwitch(boolean stopPushSwitch);
-
   boolean isInvalidForeverZone(String zoneId);
 
   boolean isInvalidIgnored(String dataId);
@@ -175,4 +171,6 @@ public interface SessionServerConfig {
   int getRevisionHeartbeatInitialDelayMinutes();
 
   int getRevisionHeartbeatMinutes();
+
+  int getClientManagerIntervalMillis();
 }

@@ -32,11 +32,10 @@ import com.alipay.sofa.registry.server.session.connections.ConnectionsService;
 import com.alipay.sofa.registry.server.session.filter.DataIdMatchStrategy;
 import com.alipay.sofa.registry.server.session.filter.IPMatchStrategy;
 import com.alipay.sofa.registry.server.session.filter.ProcessFilter;
-import com.alipay.sofa.registry.server.session.filter.blacklist.BlacklistManager;
-import com.alipay.sofa.registry.server.session.filter.blacklist.BlacklistManagerImpl;
 import com.alipay.sofa.registry.server.session.filter.blacklist.BlacklistMatchProcessFilter;
 import com.alipay.sofa.registry.server.session.filter.blacklist.DefaultDataIdMatchStrategy;
 import com.alipay.sofa.registry.server.session.filter.blacklist.DefaultIPMatchStrategy;
+import com.alipay.sofa.registry.server.session.filter.clientoff.ClientOffMatchProcessFilter;
 import com.alipay.sofa.registry.server.session.limit.AccessLimitService;
 import com.alipay.sofa.registry.server.session.limit.AccessLimitServiceImpl;
 import com.alipay.sofa.registry.server.session.listener.ProvideDataChangeFetchTaskListener;
@@ -53,10 +52,10 @@ import com.alipay.sofa.registry.server.session.node.service.DataNodeService;
 import com.alipay.sofa.registry.server.session.node.service.DataNodeServiceImpl;
 import com.alipay.sofa.registry.server.session.node.service.MetaServerServiceImpl;
 import com.alipay.sofa.registry.server.session.node.service.SessionMetaServerManager;
-import com.alipay.sofa.registry.server.session.provideData.ProvideDataProcessor;
+import com.alipay.sofa.registry.server.session.provideData.FetchBlackListService;
+import com.alipay.sofa.registry.server.session.provideData.FetchClientOffPodsService;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.provideData.ProvideDataProcessorManager;
-import com.alipay.sofa.registry.server.session.provideData.processor.BlackListProvideDataProcessor;
-import com.alipay.sofa.registry.server.session.provideData.processor.StopPushProvideDataProcessor;
 import com.alipay.sofa.registry.server.session.push.ChangeProcessor;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import com.alipay.sofa.registry.server.session.push.PushDataGenerator;
@@ -118,10 +117,12 @@ import com.alipay.sofa.registry.server.session.strategy.impl.DefaultWatcherHandl
 import com.alipay.sofa.registry.server.session.wrapper.AccessLimitWrapperInterceptor;
 import com.alipay.sofa.registry.server.session.wrapper.BlacklistWrapperInterceptor;
 import com.alipay.sofa.registry.server.session.wrapper.ClientCheckWrapperInterceptor;
+import com.alipay.sofa.registry.server.session.wrapper.ClientOffWrapperInterceptor;
 import com.alipay.sofa.registry.server.session.wrapper.WrapperInterceptor;
 import com.alipay.sofa.registry.server.session.wrapper.WrapperInterceptorManager;
 import com.alipay.sofa.registry.server.shared.meta.MetaServerManager;
 import com.alipay.sofa.registry.server.shared.meta.MetaServerService;
+import com.alipay.sofa.registry.server.shared.providedata.ProvideDataProcessor;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractClientHandler;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.server.shared.remoting.SlotTableChangeEventHandler;
@@ -674,13 +675,14 @@ public class SessionServerConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ProcessFilter processFilter() {
+    public ProcessFilter blacklistMatchProcessFilter() {
       return new BlacklistMatchProcessFilter();
     }
 
     @Bean
-    public BlacklistManager blacklistManager() {
-      return new BlacklistManagerImpl();
+    @ConditionalOnMissingBean
+    public ProcessFilter clientOffMatchProcessFilter() {
+      return new ClientOffMatchProcessFilter();
     }
 
     @Bean
@@ -699,11 +701,20 @@ public class SessionServerConfiguration {
 
     @Bean
     public WrapperInterceptor blacklistWrapperInterceptor(
-        WrapperInterceptorManager wrapperInterceptorManager) {
+            WrapperInterceptorManager wrapperInterceptorManager) {
       BlacklistWrapperInterceptor blacklistWrapperInterceptor = new BlacklistWrapperInterceptor();
       wrapperInterceptorManager.addInterceptor(blacklistWrapperInterceptor);
       return blacklistWrapperInterceptor;
     }
+
+    @Bean
+    public WrapperInterceptor clientOffWrapperInterceptor(
+            WrapperInterceptorManager wrapperInterceptorManager) {
+      ClientOffWrapperInterceptor clientOffWrapperInterceptor = new ClientOffWrapperInterceptor();
+      wrapperInterceptorManager.addInterceptor(clientOffWrapperInterceptor);
+      return clientOffWrapperInterceptor;
+    }
+
 
     @Bean
     public WrapperInterceptor accessLimitWrapperInterceptor(
@@ -746,21 +757,30 @@ public class SessionServerConfiguration {
     }
 
     @Bean
-    public ProvideDataProcessor blackListProvideDataProcessor(
+    public ProvideDataProcessor fetchBlackListService(
         ProvideDataProcessor provideDataProcessorManager) {
-      ProvideDataProcessor blackListProvideDataProcessor = new BlackListProvideDataProcessor();
+      ProvideDataProcessor fetchBlackListService = new FetchBlackListService();
       ((ProvideDataProcessorManager) provideDataProcessorManager)
-          .addProvideDataProcessor(blackListProvideDataProcessor);
-      return blackListProvideDataProcessor;
+          .addProvideDataProcessor(fetchBlackListService);
+      return fetchBlackListService;
     }
 
     @Bean
-    public ProvideDataProcessor stopPushProvideDataProcessor(
+    public ProvideDataProcessor fetchStopPushService(
         ProvideDataProcessor provideDataProcessorManager) {
-      ProvideDataProcessor stopPushProvideDataProcessor = new StopPushProvideDataProcessor();
+      ProvideDataProcessor fetchStopPushService = new FetchStopPushService();
       ((ProvideDataProcessorManager) provideDataProcessorManager)
-          .addProvideDataProcessor(stopPushProvideDataProcessor);
-      return stopPushProvideDataProcessor;
+          .addProvideDataProcessor(fetchStopPushService);
+      return fetchStopPushService;
+    }
+
+    @Bean
+    public ProvideDataProcessor fetchClientOffPodsService(
+        ProvideDataProcessor provideDataProcessorManager) {
+      ProvideDataProcessor fetchClientOffPodsService = new FetchClientOffPodsService();
+      ((ProvideDataProcessorManager) provideDataProcessorManager)
+          .addProvideDataProcessor(fetchClientOffPodsService);
+      return fetchClientOffPodsService;
     }
   }
 }

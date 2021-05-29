@@ -23,12 +23,15 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.server.session.bootstrap.ExecutorManager;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractClientHandler;
 import com.alipay.sofa.registry.server.shared.remoting.RemotingHelper;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
 
 /**
  * current for standard env temp publisher push
@@ -45,6 +48,8 @@ public class DataPushRequestHandler extends AbstractClientHandler<DataPushReques
   @Autowired ExecutorManager executorManager;
 
   @Autowired SessionServerConfig sessionServerConfig;
+
+  @Resource FetchStopPushService fetchStopPushService;
 
   @Override
   public Executor getExecutor() {
@@ -63,7 +68,7 @@ public class DataPushRequestHandler extends AbstractClientHandler<DataPushReques
 
   @Override
   public Object doHandle(Channel channel, DataPushRequest request) {
-    if (sessionServerConfig.isStopPushSwitch()) {
+    if (fetchStopPushService.isStopPushSwitch()) {
       return null;
     }
     try {

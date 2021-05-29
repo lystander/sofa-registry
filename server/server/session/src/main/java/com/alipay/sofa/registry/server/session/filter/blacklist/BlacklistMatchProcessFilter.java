@@ -22,8 +22,11 @@ import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.filter.DataIdMatchStrategy;
 import com.alipay.sofa.registry.server.session.filter.IPMatchStrategy;
 import com.alipay.sofa.registry.server.session.filter.ProcessFilter;
+import com.alipay.sofa.registry.server.session.provideData.FetchBlackListService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
 
 /**
  * @author shangyu.wh
@@ -35,14 +38,14 @@ public class BlacklistMatchProcessFilter implements ProcessFilter<BaseInfo> {
 
   @Autowired private IPMatchStrategy ipMatchStrategy;
 
-  @Autowired private BlacklistManager blacklistManager;
+  @Resource private FetchBlackListService fetchBlackListService;
 
   @Autowired private SessionServerConfig sessionServerConfig;
 
   @Override
   public boolean match(BaseInfo storeData) {
 
-    final List<BlacklistConfig> configList = blacklistManager.getBlacklistConfigList();
+    final List<BlacklistConfig> configList = fetchBlackListService.getBlacklistConfigList();
 
     // empty list proceed
     if (null == configList || configList.size() == 0) {
@@ -107,23 +110,5 @@ public class BlacklistMatchProcessFilter implements ProcessFilter<BaseInfo> {
    */
   public void setIpMatchStrategy(IPMatchStrategy ipMatchStrategy) {
     this.ipMatchStrategy = ipMatchStrategy;
-  }
-
-  /**
-   * Getter method for property <tt>blacklistManager</tt>.
-   *
-   * @return property value of blacklistManager
-   */
-  public BlacklistManager getBlacklistManager() {
-    return blacklistManager;
-  }
-
-  /**
-   * Setter method for property <tt>blacklistManager</tt>.
-   *
-   * @param blacklistManager value to be assigned to property blacklistManager
-   */
-  public void setBlacklistManager(BlacklistManager blacklistManager) {
-    this.blacklistManager = blacklistManager;
   }
 }

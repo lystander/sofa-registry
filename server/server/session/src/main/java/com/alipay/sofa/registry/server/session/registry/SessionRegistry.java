@@ -32,6 +32,7 @@ import com.alipay.sofa.registry.server.session.acceptor.WriteDataRequest;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.filter.DataIdMatchStrategy;
 import com.alipay.sofa.registry.server.session.node.service.DataNodeService;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import com.alipay.sofa.registry.server.session.push.TriggerPushContext;
 import com.alipay.sofa.registry.server.session.slot.SlotTableCache;
@@ -50,6 +51,7 @@ import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
@@ -83,6 +85,8 @@ public class SessionRegistry implements Registry {
   @Autowired private TaskListenerManager taskListenerManager;
 
   @Autowired private SessionServerConfig sessionServerConfig;
+
+  @Autowired private FetchStopPushService fetchStopPushService;
 
   @Autowired private Exchange boltExchange;
 
@@ -207,20 +211,27 @@ public class SessionRegistry implements Registry {
   @Override
   public void cancel(List<ConnectId> connectIds) {
     // update local firstly, data node send error depend on renew check
-    for (ConnectId connectId : connectIds) {
-      List<Publisher> removes = removeFromSession(connectId);
-      if (!removes.isEmpty()) {
-        // clientOff to dataNode async
-        clientOffToDataNode(connectId, removes);
-      }
-    }
+    Map<ConnectId, List<Publisher>> removes = removeFromSession(connectIds);
+    removes
+        .entrySet()
+        .forEach(
+            entry -> {
+              // clientOff to dataNode async
+              clientOffToDataNode(entry.getKey(), entry.getValue());
+            });
   }
 
-  private List<Publisher> removeFromSession(ConnectId connectId) {
-    Map<String, Publisher> publisherMap = sessionDataStore.deleteByConnectId(connectId);
-    sessionInterests.deleteByConnectId(connectId);
-    sessionWatchers.deleteByConnectId(connectId);
-    return Lists.newArrayList(publisherMap.values());
+  private Map<ConnectId, List<Publisher>> removeFromSession(List<ConnectId> connectIds) {
+    Map<ConnectId, Map<String, Publisher>> publisherMap =
+        sessionDataStore.deleteByConnectIds(connectIds);
+    sessionInterests.deleteByConnectIds(connectIds);
+    sessionWatchers.deleteByConnectIds(connectIds);
+
+    Map<ConnectId, List<Publisher>> ret = Maps.newHashMap();
+    for (Entry<ConnectId, Map<String, Publisher>> entry : publisherMap.entrySet()) {
+      ret.put(entry.getKey(), Lists.newArrayList(entry.getValue().values()));
+    }
+    return ret;
   }
 
   private void clientOffToDataNode(ConnectId connectId, List<Publisher> clientOffPublishers) {
@@ -250,7 +261,7 @@ public class SessionRegistry implements Registry {
     @Override
     public void runUnthrowable() {
       try {
-        final boolean stop = sessionServerConfig.isStopPushSwitch();
+        final boolean stop = fetchStopPushService.isStopPushSwitch();
         // could not start scan ver at begin
         // 1. stopPush.val = false in session.default
         // 2. stopPush.val = true in meta
@@ -362,28 +373,24 @@ public class SessionRegistry implements Registry {
 
   public void remove(List<ConnectId> connectIds) {
     List<ConnectId> connectIdsAll = new ArrayList<>();
-    connectIds.forEach(
-        connectId -> {
-          Map pubMap = getSessionDataStore().queryByConnectId(connectId);
-          boolean pubExisted = pubMap != null && !pubMap.isEmpty();
+    Map<ConnectId, Map<String, Publisher>> pubMap =
+        getSessionDataStore().queryByConnectIds(connectIds);
+    Map<ConnectId, Map<String, Subscriber>> subMap =
+        getSessionInterests().queryByConnectIds(connectIds);
 
-          Map<String, Subscriber> subMap = getSessionInterests().queryByConnectId(connectId);
-          boolean subExisted = false;
-          if (subMap != null && !subMap.isEmpty()) {
-            subExisted = true;
+    for (Map<String, Subscriber> value : subMap.values()) {
+      value
+          .values()
+          .forEach(
+              subscriber -> {
+                if (isFireSubscriberPushEmptyTask(subscriber.getDataId())) {
+                  fireSubscriberPushEmptyTask(subscriber);
+                }
+              });
+    }
 
-            subMap.forEach(
-                (registerId, sub) -> {
-                  if (isFireSubscriberPushEmptyTask(sub.getDataId())) {
-                    fireSubscriberPushEmptyTask(sub);
-                  }
-                });
-          }
-
-          if (pubExisted || subExisted) {
-            connectIdsAll.add(connectId);
-          }
-        });
+    connectIdsAll.addAll(pubMap.keySet());
+    connectIdsAll.addAll(subMap.keySet());
     cancel(connectIdsAll);
   }
 

@@ -243,8 +243,7 @@ public class MetaServerConfiguration {
 
     @Bean(name = "metaLeaderListeners")
     public Collection<MetaLeaderElectorListener> metaLeaderListeners() {
-      return Lists.newArrayList(provideDataService(),
-              clientManagerService());
+      return Lists.newArrayList(provideDataService(), clientManagerService());
     }
 
     @Bean

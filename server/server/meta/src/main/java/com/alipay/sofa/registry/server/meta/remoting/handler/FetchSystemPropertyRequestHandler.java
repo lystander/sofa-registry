@@ -16,9 +16,10 @@
  */
 package com.alipay.sofa.registry.server.meta.remoting.handler;
 
+import static com.alipay.sofa.registry.common.model.constants.ValueConstants.CLIENT_OFF_PODS_DATA_ID;
+
 import com.alipay.sofa.registry.common.model.ServerDataBox;
 import com.alipay.sofa.registry.common.model.console.PersistenceData;
-import com.alipay.sofa.registry.common.model.constants.ValueConstants;
 import com.alipay.sofa.registry.common.model.metaserver.FetchProvideDataRequest;
 import com.alipay.sofa.registry.common.model.metaserver.FetchSystemPropertyRequest;
 import com.alipay.sofa.registry.common.model.metaserver.FetchSystemPropertyResult;
@@ -34,15 +35,14 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
-import static com.alipay.sofa.registry.common.model.constants.ValueConstants.CLIENT_OFF_PODS_DATA_ID;
-
 /**
  * Handle session node's query request
  *
  * @author xiaojian.xj
  * @version $Id: FetchSystemPropertyRequestHandler.java, v 0.1 2021-05-06 15:12 xiaojian.xj Exp $
  */
-public class FetchSystemPropertyRequestHandler extends BaseMetaServerHandler<FetchSystemPropertyRequest> {
+public class FetchSystemPropertyRequestHandler
+    extends BaseMetaServerHandler<FetchSystemPropertyRequest> {
 
   private static final Logger DB_LOGGER =
       LoggerFactory.getLogger(FetchSystemPropertyRequestHandler.class, "[DBService]");
@@ -53,12 +53,13 @@ public class FetchSystemPropertyRequestHandler extends BaseMetaServerHandler<Fet
 
   @Override
   public void checkParam(FetchSystemPropertyRequest request) {
-      Assert.isTrue(request != null, "get system data request is null.");
-      Assert.isTrue(StringUtils.isNotEmpty(request.getDataInfoId()), "get system data request dataInfoId is empty.");
+    Assert.isTrue(request != null, "get system data request is null.");
+    Assert.isTrue(
+        StringUtils.isNotEmpty(request.getDataInfoId()),
+        "get system data request dataInfoId is empty.");
   }
 
-
-    @Override
+  @Override
   public Object doHandle(Channel channel, FetchSystemPropertyRequest request) {
     try {
       DB_LOGGER.info("get system data {}", request);
@@ -71,10 +72,11 @@ public class FetchSystemPropertyRequestHandler extends BaseMetaServerHandler<Fet
         data = ret.getEntity();
       } else {
         DBResponse<PersistenceData> ret =
-                provideDataService.queryProvideData(request.getDataInfoId());
+            provideDataService.queryProvideData(request.getDataInfoId());
         status = ret.getOperationStatus();
         PersistenceData persistenceData = ret.getEntity();
-        data = new ProvideData(
+        data =
+            new ProvideData(
                 new ServerDataBox(persistenceData.getData()),
                 request.getDataInfoId(),
                 persistenceData.getVersion());
@@ -88,25 +90,21 @@ public class FetchSystemPropertyRequestHandler extends BaseMetaServerHandler<Fet
           result = new FetchSystemPropertyResult(false);
         }
         if (DB_LOGGER.isInfoEnabled()) {
-            DB_LOGGER.info("get SystemProperty {} from DB success!", result);
+          DB_LOGGER.info("get SystemProperty {} from DB success!", result);
         }
         return result;
       } else if (status == OperationStatus.NOTFOUND) {
-        ProvideData provideData =
-            new ProvideData(null, request.getDataInfoId(), null);
-        DB_LOGGER.warn(
-            "has not found system data from DB dataInfoId:{}", request.getDataInfoId());
-        return provideData;
+        FetchSystemPropertyResult result = new FetchSystemPropertyResult(false);
+        DB_LOGGER.warn("has not found system data from DB dataInfoId:{}", request.getDataInfoId());
+        return result;
       } else {
         DB_LOGGER.error("get Data DB status error!");
         throw new RuntimeException("Get Data DB status error!");
       }
 
     } catch (Exception e) {
-      DB_LOGGER.error(
-          "get persistence Data dataInfoId {} from db error!",
-          request.getDataInfoId());
-      throw new RuntimeException("Get persistence Data from db error!", e);
+      DB_LOGGER.error("get system data {} from db error!", request.getDataInfoId());
+      throw new RuntimeException("Get system data from db error!", e);
     }
   }
 

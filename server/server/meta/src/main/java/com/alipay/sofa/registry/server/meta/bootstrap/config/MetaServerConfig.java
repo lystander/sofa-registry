@@ -58,4 +58,10 @@ public interface MetaServerConfig {
   int getRevisionGcSecs();
 
   int getMetaSchedulerPoolSize();
+
+  int getClientManagerRefreshSecs();
+
+  int getClientManagerWatchMillis();
+
+  int getClientManagerRefreshLimit();
 }

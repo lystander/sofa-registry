@@ -24,6 +24,8 @@ import com.alipay.sofa.registry.server.session.filter.ProcessFilter;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Resource;
+
 /**
  * blacklist filter
  *
@@ -32,9 +34,10 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class BlacklistWrapperInterceptor implements WrapperInterceptor<StoreData, Boolean> {
 
-  @Autowired private FirePushService firePushService;
+  @Autowired private FirePushService         firePushService;
   /** blacklist filter */
-  @Autowired private ProcessFilter<BaseInfo> processFilter;
+  @Resource
+  private ProcessFilter<BaseInfo> blacklistMatchProcessFilter;
 
   @Override
   public Boolean invokeCodeWrapper(WrapperInvocation<StoreData, Boolean> invocation)
@@ -42,7 +45,7 @@ public class BlacklistWrapperInterceptor implements WrapperInterceptor<StoreData
 
     BaseInfo storeData = (BaseInfo) invocation.getParameterSupplier().get();
 
-    if (processFilter.match(storeData)) {
+    if (blacklistMatchProcessFilter.match(storeData)) {
       if (DataType.PUBLISHER == storeData.getDataType()) {
         // match blacklist stop pub.
         return true;

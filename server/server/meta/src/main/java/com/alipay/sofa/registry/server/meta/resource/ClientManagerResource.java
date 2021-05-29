@@ -18,23 +18,25 @@ package com.alipay.sofa.registry.server.meta.resource;
 
 import com.alipay.sofa.registry.common.model.CommonResponse;
 import com.alipay.sofa.registry.common.model.metaserver.ProvideData;
-import com.alipay.sofa.registry.common.model.metaserver.ProvideDataChangeEvent;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.meta.provide.data.ClientManagerService;
-import com.alipay.sofa.registry.server.meta.provide.data.DefaultProvideDataNotifier;
 import com.alipay.sofa.registry.store.api.DBResponse;
 import com.alipay.sofa.registry.store.api.OperationStatus;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.HashSet;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * The type Clients open resource.
@@ -46,73 +48,76 @@ import java.util.HashSet;
 @Produces(MediaType.APPLICATION_JSON)
 public class ClientManagerResource {
 
-    private static final Logger DB_LOGGER =
-            LoggerFactory.getLogger(ClientManagerResource.class, "[DBService]");
+  private static final Logger DB_LOGGER =
+      LoggerFactory.getLogger(ClientManagerResource.class, "[DBService]");
 
-    private static final Logger taskLogger =
-            LoggerFactory.getLogger(ClientManagerResource.class, "[Task]");
+  @Autowired private ClientManagerService clientManagerService;
 
-    @Autowired
-    private ClientManagerService clientManagerService;
-
-    @Autowired
-    private DefaultProvideDataNotifier provideDataNotifier;
-
-    /** Client off */
-    @POST
-    @Path("/clientOff")
-    public CommonResponse clientOff(@FormParam("ips") String ips) {
-        if (StringUtils.isEmpty(ips)) {
-            return CommonResponse.buildFailedResponse("ips is empty");
-        }
-        String[] ipArray = StringUtils.split(ips.trim(), ';');
-        HashSet<String> ipSet = Sets.newHashSet(ipArray);
-
-        DBResponse<ProvideData> ret = clientManagerService.clientOff(ipSet);
-
-        DB_LOGGER.info("client off result:{}, ips:{}", ret.getOperationStatus(), ips);
-
-        if (ret.getOperationStatus() == OperationStatus.SUCCESS) {
-            fireClientManagerChangeNotify(ret.getEntity().getVersion(), ret.getEntity().getDataInfoId());
-            return CommonResponse.buildSuccessResponse();
-        }
-
-        return CommonResponse.buildFailedResponse("client of fail");
-
+  /** Client off */
+  @POST
+  @Path("/clientOff")
+  public CommonResponse clientOff(@FormParam("ips") String ips) {
+    if (StringUtils.isEmpty(ips)) {
+      return CommonResponse.buildFailedResponse("ips is empty");
     }
+    String[] ipArray = StringUtils.split(ips.trim(), ';');
+    HashSet<String> ipSet = Sets.newHashSet(ipArray);
 
-    /** Client Open */
-    @POST
-    @Path("/clientOpen")
-    public CommonResponse clientOpen(@FormParam("ips") String ips) {
-        if (StringUtils.isEmpty(ips)) {
-            return CommonResponse.buildFailedResponse("ips is empty");
-        }
-        String[] ipArray = StringUtils.split(ips.trim(), ';');
-        HashSet<String> ipSet = Sets.newHashSet(ipArray);
+    boolean ret = clientManagerService.clientOff(ipSet);
 
-        DBResponse<ProvideData> ret = clientManagerService.clientOpen(ipSet);
+    DB_LOGGER.info("client off result:{}, ips:{}", ret, ips);
 
-        DB_LOGGER.info("client open result:{}, ips:{}", ret.getOperationStatus(), ips);
+    CommonResponse response = CommonResponse.buildSuccessResponse();
+    response.setSuccess(ret);
+    return response;
+  }
 
-        if (ret.getOperationStatus() == OperationStatus.SUCCESS) {
-            fireClientManagerChangeNotify(ret.getEntity().getVersion(), ret.getEntity().getDataInfoId());
-            return CommonResponse.buildSuccessResponse();
-        }
-
-        return CommonResponse.buildFailedResponse("client open fail");
+  /** Client Open */
+  @POST
+  @Path("/clientOpen")
+  public CommonResponse clientOpen(@FormParam("ips") String ips) {
+    if (StringUtils.isEmpty(ips)) {
+      return CommonResponse.buildFailedResponse("ips is empty");
     }
+    String[] ipArray = StringUtils.split(ips.trim(), ';');
+    HashSet<String> ipSet = Sets.newHashSet(ipArray);
 
-    private void fireClientManagerChangeNotify(Long version, String dataInfoId) {
+    boolean ret = clientManagerService.clientOpen(ipSet);
 
-        ProvideDataChangeEvent provideDataChangeEvent = new ProvideDataChangeEvent(dataInfoId, version);
+    DB_LOGGER.info("client open result:{}, ips:{}", ret, ips);
 
-        if (taskLogger.isInfoEnabled()) {
-            taskLogger.info(
-                    "send CLIENT_MANAGER_CHANGE_NOTIFY_TASK notifyClientManagerChange: {}",
-                    provideDataChangeEvent);
-        }
-        provideDataNotifier.notifyProvideDataChange(provideDataChangeEvent);
+    CommonResponse response = CommonResponse.buildSuccessResponse();
+    response.setSuccess(ret);
+    return response;
+  }
+
+  /** Client Open */
+  @GET
+  @Path("/query")
+  public Map<String, Object> query() {
+    DBResponse<ProvideData> ret = clientManagerService.queryClientOffSet();
+    DB_LOGGER.info("client open result:{}", ret);
+
+    Map<String, Object> response = Maps.newHashMap();
+    response.put("status", ret.getOperationStatus());
+    if (ret.getOperationStatus() != OperationStatus.SUCCESS) {
+      return response;
     }
+    ProvideData entity = ret.getEntity();
+    response.put("version", entity.getVersion());
+    response.put("ips", entity.getProvideData().getObject());
 
+    return response;
+  }
+
+  /**
+   * Setter method for property <tt>clientManagerService</tt>.
+   *
+   * @param clientManagerService value to be assigned to property clientManagerService
+   */
+  @VisibleForTesting
+  protected ClientManagerResource setClientManagerService(ClientManagerService clientManagerService) {
+    this.clientManagerService = clientManagerService;
+    return this;
+  }
 }

@@ -17,11 +17,12 @@
 package com.alipay.sofa.registry.server.session.filter.blacklist;
 
 import com.alipay.sofa.registry.server.session.filter.IPMatchStrategy;
+import com.alipay.sofa.registry.server.session.provideData.FetchBlackListService;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 
 /**
  * @author shangyu.wh
@@ -29,7 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class DefaultIPMatchStrategy implements IPMatchStrategy<String> {
 
-  @Autowired BlacklistManager blacklistManager;
+  @Resource
+  private FetchBlackListService fetchBlackListService;
 
   @Override
   public boolean match(String IP, Supplier<String> getOperatorType) {
@@ -38,7 +40,7 @@ public class DefaultIPMatchStrategy implements IPMatchStrategy<String> {
 
   private boolean match(String type, String matchPattern) {
 
-    List<BlacklistConfig> configList = blacklistManager.getBlacklistConfigList();
+    List<BlacklistConfig> configList = fetchBlackListService.getBlacklistConfigList();
     for (BlacklistConfig blacklistConfig : configList) {
 
       // 如黑名单类型不匹配则跳过

@@ -24,6 +24,7 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.server.session.bootstrap.ExecutorManager;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import com.alipay.sofa.registry.server.session.push.TriggerPushContext;
 import com.alipay.sofa.registry.server.session.store.Interests;
@@ -33,6 +34,8 @@ import com.alipay.sofa.registry.util.ParaCheckUtil;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
 
 /**
  * @author kezhu.wukz
@@ -46,6 +49,8 @@ public class DataChangeRequestHandler extends AbstractClientHandler<DataChangeRe
   @Autowired Interests sessionInterests;
 
   @Autowired SessionServerConfig sessionServerConfig;
+
+  @Resource FetchStopPushService fetchStopPushService;
 
   @Autowired ExecutorManager executorManager;
 
@@ -69,7 +74,7 @@ public class DataChangeRequestHandler extends AbstractClientHandler<DataChangeRe
 
   @Override
   public Object doHandle(Channel channel, DataChangeRequest dataChangeRequest) {
-    if (sessionServerConfig.isStopPushSwitch()) {
+    if (fetchStopPushService.isStopPushSwitch()) {
       return null;
     }
     final String dataNode = RemotingHelper.getRemoteHostAddress(channel);

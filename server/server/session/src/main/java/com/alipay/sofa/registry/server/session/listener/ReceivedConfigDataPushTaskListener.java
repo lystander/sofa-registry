@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.session.listener;
 
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.node.service.ClientNodeService;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.scheduler.task.ReceivedConfigDataPushTask;
 import com.alipay.sofa.registry.server.session.scheduler.task.SessionTask;
 import com.alipay.sofa.registry.server.session.strategy.ReceivedConfigDataPushTaskStrategy;
@@ -29,6 +30,8 @@ import com.alipay.sofa.registry.task.listener.TaskEvent.TaskType;
 import com.alipay.sofa.registry.task.listener.TaskListener;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Resource;
+
 /**
  * @author shangyu.wh
  * @version $Id: SubscriberRegisterPushTaskListener.java, v 0.1 2017-12-11 20:44 shangyu.wh Exp $
@@ -36,6 +39,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ReceivedConfigDataPushTaskListener implements TaskListener {
 
   @Autowired private SessionServerConfig sessionServerConfig;
+
+  @Resource private FetchStopPushService fetchStopPushService;
 
   @Autowired private ClientNodeService clientNodeService;
 
@@ -73,7 +78,7 @@ public class ReceivedConfigDataPushTaskListener implements TaskListener {
 
     SessionTask receivedConfigDataPushTask =
         new ReceivedConfigDataPushTask(
-            sessionServerConfig, clientNodeService, receivedConfigDataPushTaskStrategy);
+            sessionServerConfig, fetchStopPushService, clientNodeService, receivedConfigDataPushTaskStrategy);
     receivedConfigDataPushTask.setTaskEvent(event);
     getSingleTaskDispatcher()
         .dispatch(
