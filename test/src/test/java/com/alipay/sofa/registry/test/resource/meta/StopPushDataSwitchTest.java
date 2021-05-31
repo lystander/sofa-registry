@@ -26,7 +26,6 @@ import com.alipay.sofa.registry.client.api.registration.PublisherRegistration;
 import com.alipay.sofa.registry.client.api.registration.SubscriberRegistration;
 import com.alipay.sofa.registry.core.model.Result;
 import com.alipay.sofa.registry.core.model.ScopeEnum;
-import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.test.BaseIntegrationTest;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
@@ -68,7 +67,8 @@ public class StopPushDataSwitchTest extends BaseIntegrationTest {
 
     LOGGER.info("dataidIn:" + dataId);
 
-    FetchStopPushService fetchStopPushService = sessionApplicationContext.getBean("fetchStopPushService", FetchStopPushService.class);
+    FetchStopPushService fetchStopPushService =
+        sessionApplicationContext.getBean("fetchStopPushService", FetchStopPushService.class);
 
     LOGGER.info("fetchStopPushService.isStopPushSwitch:" + fetchStopPushService.isStopPushSwitch());
     waitConditionUntilTimeOut(fetchStopPushService::isStopPushSwitch, 6000);

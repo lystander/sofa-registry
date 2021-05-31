@@ -27,13 +27,12 @@ import com.alipay.sofa.registry.remoting.exchange.RequestChannelClosedException;
 import com.alipay.sofa.registry.server.session.TestUtils;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfigBean;
 import com.alipay.sofa.registry.server.session.node.service.ClientNodeService;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;

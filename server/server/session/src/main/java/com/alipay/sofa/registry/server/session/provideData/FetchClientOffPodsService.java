@@ -90,7 +90,12 @@ public class FetchClientOffPodsService extends AbstractFetchSystemPropertyServic
       writeLock.unlock();
     }
 
-    LOGGER.info("olds clientOffPods:{}, toBeAdd:{}, toBeRemove:{}, current clientOffPods:{}", olds, toBeAdd, toBeRemove, clientOffPods);
+    LOGGER.info(
+        "olds clientOffPods:{}, toBeAdd:{}, toBeRemove:{}, current clientOffPods:{}",
+        olds,
+        toBeAdd,
+        toBeRemove,
+        clientOffPods);
     return true;
   }
 

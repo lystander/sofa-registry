@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: RenewSwitchResource.java, v 0.1 2018-07-25 11:40 shangyu.wh Exp $
  */
 @Path("slotSync")
+@LeaderAwareRestController
 public class SlotSyncResource {
 
   @Autowired private ProvideDataService provideDataService;
@@ -43,7 +44,6 @@ public class SlotSyncResource {
   @GET
   @Path("get")
   @Produces(MediaType.APPLICATION_JSON)
-  @LeaderAwareRestController
   public Map<String, Object> getSlotSync() throws Exception {
     Map<String, Object> resultMap = new HashMap<>(2);
     DBResponse<PersistenceData> syncSessionIntervalSec =

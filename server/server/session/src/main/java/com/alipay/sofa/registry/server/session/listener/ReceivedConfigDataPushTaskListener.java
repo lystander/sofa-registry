@@ -28,9 +28,8 @@ import com.alipay.sofa.registry.task.batcher.TaskProcessor;
 import com.alipay.sofa.registry.task.listener.TaskEvent;
 import com.alipay.sofa.registry.task.listener.TaskEvent.TaskType;
 import com.alipay.sofa.registry.task.listener.TaskListener;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author shangyu.wh
@@ -78,7 +77,10 @@ public class ReceivedConfigDataPushTaskListener implements TaskListener {
 
     SessionTask receivedConfigDataPushTask =
         new ReceivedConfigDataPushTask(
-            sessionServerConfig, fetchStopPushService, clientNodeService, receivedConfigDataPushTaskStrategy);
+            sessionServerConfig,
+            fetchStopPushService,
+            clientNodeService,
+            receivedConfigDataPushTaskStrategy);
     receivedConfigDataPushTask.setTaskEvent(event);
     getSingleTaskDispatcher()
         .dispatch(

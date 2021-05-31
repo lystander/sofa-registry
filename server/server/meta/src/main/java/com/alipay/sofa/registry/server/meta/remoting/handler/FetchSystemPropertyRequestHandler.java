@@ -20,7 +20,6 @@ import static com.alipay.sofa.registry.common.model.constants.ValueConstants.CLI
 
 import com.alipay.sofa.registry.common.model.ServerDataBox;
 import com.alipay.sofa.registry.common.model.console.PersistenceData;
-import com.alipay.sofa.registry.common.model.metaserver.FetchProvideDataRequest;
 import com.alipay.sofa.registry.common.model.metaserver.FetchSystemPropertyRequest;
 import com.alipay.sofa.registry.common.model.metaserver.FetchSystemPropertyResult;
 import com.alipay.sofa.registry.common.model.metaserver.ProvideData;
@@ -65,10 +64,9 @@ public class FetchSystemPropertyRequestHandler
       DB_LOGGER.info("get system data {}", request);
 
       if (CLIENT_OFF_PODS_DATA_ID.equals(request.getDataInfoId())) {
-         return fetchClientOffSet(request);
+        return fetchClientOffSet(request);
       } else {
         return fetchSystemData(request);
-
       }
     } catch (Exception e) {
       DB_LOGGER.error("get system data {} from db error!", request.getDataInfoId(), e);
@@ -77,17 +75,16 @@ public class FetchSystemPropertyRequestHandler
   }
 
   private Object fetchSystemData(FetchSystemPropertyRequest request) {
-    DBResponse<PersistenceData> ret =
-            provideDataService.queryProvideData(request.getDataInfoId());
+    DBResponse<PersistenceData> ret = provideDataService.queryProvideData(request.getDataInfoId());
     OperationStatus status = ret.getOperationStatus();
     PersistenceData persistenceData = ret.getEntity();
 
     if (status == OperationStatus.SUCCESS) {
       ProvideData data =
-              new ProvideData(
-                      new ServerDataBox(persistenceData.getData()),
-                      request.getDataInfoId(),
-                      persistenceData.getVersion());
+          new ProvideData(
+              new ServerDataBox(persistenceData.getData()),
+              request.getDataInfoId(),
+              persistenceData.getVersion());
 
       FetchSystemPropertyResult result;
       if (data.getVersion() > request.getVersion()) {
@@ -107,7 +104,6 @@ public class FetchSystemPropertyRequestHandler
       DB_LOGGER.error("get Data DB status error!");
       throw new RuntimeException("Get Data DB status error!");
     }
-
   }
 
   private Object fetchClientOffSet(FetchSystemPropertyRequest request) {

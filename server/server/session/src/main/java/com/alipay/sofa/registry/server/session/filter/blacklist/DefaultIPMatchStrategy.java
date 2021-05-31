@@ -18,13 +18,12 @@ package com.alipay.sofa.registry.server.session.filter.blacklist;
 
 import com.alipay.sofa.registry.server.session.filter.IPMatchStrategy;
 import com.alipay.sofa.registry.server.session.provideData.FetchBlackListService;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.lang.StringUtils;
 import javax.annotation.Resource;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author shangyu.wh
@@ -32,8 +31,7 @@ import javax.annotation.Resource;
  */
 public class DefaultIPMatchStrategy implements IPMatchStrategy<String> {
 
-  @Resource
-  private FetchBlackListService fetchBlackListService;
+  @Resource private FetchBlackListService fetchBlackListService;
 
   @Override
   public boolean match(String IP, Supplier<String> getOperatorType) {

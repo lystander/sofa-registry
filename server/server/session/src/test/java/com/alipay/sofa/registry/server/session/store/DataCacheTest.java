@@ -16,6 +16,8 @@
  */
 package com.alipay.sofa.registry.server.session.store;
 
+import static org.mockito.Mockito.when;
+
 import com.alipay.sofa.registry.common.model.ConnectId;
 import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.constants.ValueConstants;
@@ -37,8 +39,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static org.mockito.Mockito.when;
 
 /**
  * @author shangyu.wh

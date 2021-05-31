@@ -23,6 +23,7 @@ import com.alipay.sofa.registry.common.model.metaserver.ProvideData;
 import com.alipay.sofa.registry.common.model.metaserver.ProvideDataChangeEvent;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
+import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.resource.ClientManagerResource;
 import com.alipay.sofa.registry.store.api.DBResponse;
@@ -30,6 +31,8 @@ import com.alipay.sofa.registry.store.api.meta.ClientManagerPodsRepository;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.LoopRunnable;
 import com.alipay.sofa.registry.util.MathUtils;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -43,8 +46,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.PostConstruct;
-
-import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
@@ -83,19 +84,22 @@ public class DefaultClientManagerService implements ClientManagerService {
 
   @Autowired private MetaServerConfig metaServerConfig;
 
+  @Autowired private MetaLeaderService metaLeaderService;
+
   private int refreshLimit;
 
-  @PostConstruct
   public void init() {
     version.set(-1L);
     cache.set(new ConcurrentHashMap<>().newKeySet());
+    refreshFinish.set(false);
+  }
+
+  @PostConstruct
+  public void postConstruct() {
+    init();
 
     ConcurrentUtils.createDaemonThread("clientManager_watcher", watcher).start();
     ConcurrentUtils.createDaemonThread("clientManager_refresher", refresher).start();
-
-    refresher.suspend();
-    // resume when become leader
-    watcher.suspend();
 
     refreshLimit = metaServerConfig.getClientManagerRefreshLimit();
   }
@@ -129,6 +133,11 @@ public class DefaultClientManagerService implements ClientManagerService {
    */
   @Override
   public DBResponse<ProvideData> queryClientOffSet() {
+    if (!refreshFinish.get()) {
+      LOGGER.warn("query client manager cache before refreshFinish");
+      return DBResponse.notfound().build();
+    }
+
     readLock.lock();
     try {
       ProvideData provideData =
@@ -147,24 +156,22 @@ public class DefaultClientManagerService implements ClientManagerService {
 
   @Override
   public void becomeLeader() {
-    refresher.resume();
-    watcher.resume();
+    refresher.runUnthrowable();
   }
 
   @Override
-  public void loseLeader() {
-    refresher.suspend();
-    watcher.suspend();
-
-    version.set(-1L);
-    cache.set(new ConcurrentHashMap<>().newKeySet());
-    refreshFinish.set(false);
-  }
+  public void loseLeader() {}
 
   private final class ClientManagerRefresher extends LoopRunnable {
 
     @Override
     public void runUnthrowable() {
+      if (!metaLeaderService.amILeader()) {
+        return;
+      }
+
+      init();
+
       final int total = clientManagerPodsRepository.queryTotalCount();
 
       // add 10, query the new records which inserted when scanning
@@ -191,8 +198,9 @@ public class DefaultClientManagerService implements ClientManagerService {
 
       ClientManagerAggregation aggregation = aggregate(totalRet);
 
-      if (doRefresh(aggregation)) {
+      if (aggregation == EMPTY_AGGREGATION || doRefresh(aggregation)) {
         refreshFinish.set(true);
+        LOGGER.info("finish load clientManager, refreshFinish:{}", refreshFinish.get());
         fireClientManagerChangeNotify(version.get(), ValueConstants.CLIENT_OFF_PODS_DATA_ID);
       }
     }
@@ -208,6 +216,10 @@ public class DefaultClientManagerService implements ClientManagerService {
 
     @Override
     public void runUnthrowable() {
+      if (!metaLeaderService.amILeader()) {
+        return;
+      }
+
       List<ClientManagerPods> clientManagerPods =
           clientManagerPodsRepository.queryAfterThan(version.get());
 
@@ -231,6 +243,10 @@ public class DefaultClientManagerService implements ClientManagerService {
   }
 
   private ClientManagerAggregation aggregate(List<ClientManagerPods> clientManagerPods) {
+    if (CollectionUtils.isEmpty(clientManagerPods)) {
+      return EMPTY_AGGREGATION;
+    }
+
     long max = clientManagerPods.get(clientManagerPods.size() - 1).getId();
     Set<String> clientOffPods = new HashSet<>();
     Set<String> clientOpenPods = new HashSet<>();
@@ -253,10 +269,11 @@ public class DefaultClientManagerService implements ClientManagerService {
   }
 
   private boolean doRefresh(ClientManagerAggregation aggregation) {
-
+    long before;
     writeLock.lock();
     try {
-      if (version.get() >= aggregation.max) {
+      before = version.get();
+      if (before >= aggregation.max) {
         return false;
       }
       version.set(aggregation.max);
@@ -268,6 +285,12 @@ public class DefaultClientManagerService implements ClientManagerService {
     } finally {
       writeLock.unlock();
     }
+    LOGGER.info(
+        "doRefresh success, before:{}, after:{}, clientOff:{}, clientOpen:{}",
+        before,
+        aggregation.max,
+        aggregation.clientOffPods,
+        aggregation.clientOpenPods);
     return true;
   }
 
@@ -282,6 +305,9 @@ public class DefaultClientManagerService implements ClientManagerService {
     }
     provideDataNotifier.notifyProvideDataChange(provideDataChangeEvent);
   }
+
+  private final ClientManagerAggregation EMPTY_AGGREGATION =
+      new ClientManagerAggregation(-1L, Sets.newHashSet(), Sets.newHashSet());
 
   final class ClientManagerAggregation {
     final long max;
@@ -299,11 +325,14 @@ public class DefaultClientManagerService implements ClientManagerService {
 
     @Override
     public String toString() {
-      return "ClientManagerAggregation{" +
-              "max=" + max +
-              ", clientOffPods=" + clientOffPods +
-              ", clientOpenPods=" + clientOpenPods +
-              '}';
+      return "ClientManagerAggregation{"
+          + "max="
+          + max
+          + ", clientOffPods="
+          + clientOffPods
+          + ", clientOpenPods="
+          + clientOpenPods
+          + '}';
     }
   }
 
@@ -314,7 +343,7 @@ public class DefaultClientManagerService implements ClientManagerService {
    */
   @VisibleForTesting
   public void setClientManagerPodsRepository(
-          ClientManagerPodsRepository clientManagerPodsRepository) {
+      ClientManagerPodsRepository clientManagerPodsRepository) {
     this.clientManagerPodsRepository = clientManagerPodsRepository;
   }
 }

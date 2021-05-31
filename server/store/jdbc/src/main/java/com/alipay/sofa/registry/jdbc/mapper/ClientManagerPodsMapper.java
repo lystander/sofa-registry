@@ -35,10 +35,13 @@ public interface ClientManagerPodsMapper {
    * @param limit
    * @return
    */
-  List<ClientManagerPods> queryAfterThanByLimit(@Param("dataCenter") String dataCenter,
-      @Param("maxId") long maxId, @Param("limit") long limit);
+  List<ClientManagerPods> queryAfterThanByLimit(
+      @Param("dataCenter") String dataCenter,
+      @Param("maxId") long maxId,
+      @Param("limit") long limit);
 
-  List<ClientManagerPods> queryAfterThan(@Param("dataCenter") String dataCenter, @Param("maxId") long maxId);
+  List<ClientManagerPods> queryAfterThan(
+      @Param("dataCenter") String dataCenter, @Param("maxId") long maxId);
 
   /**
    * @param clientManagerPods

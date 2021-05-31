@@ -28,7 +28,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -116,7 +115,8 @@ public class ClientManagerResource {
    * @param clientManagerService value to be assigned to property clientManagerService
    */
   @VisibleForTesting
-  protected ClientManagerResource setClientManagerService(ClientManagerService clientManagerService) {
+  protected ClientManagerResource setClientManagerService(
+      ClientManagerService clientManagerService) {
     this.clientManagerService = clientManagerService;
     return this;
   }

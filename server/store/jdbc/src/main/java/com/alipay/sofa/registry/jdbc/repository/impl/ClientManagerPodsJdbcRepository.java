@@ -94,7 +94,8 @@ public class ClientManagerPodsJdbcRepository implements ClientManagerPodsReposit
   @Override
   public List<ClientManagerPods> queryAfterThan(long maxId, long limit) {
     CLIENT_MANAGER_QUERY_COUNTER.inc();
-    return clientManagerPodsMapper.queryAfterThanByLimit(defaultCommonConfig.getClusterId(), maxId, limit);
+    return clientManagerPodsMapper.queryAfterThanByLimit(
+        defaultCommonConfig.getClusterId(), maxId, limit);
   }
 
   @Override

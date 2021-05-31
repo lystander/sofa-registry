@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: MetaDigestResource.java, v 0.1 2018-06-25 21:13 shangyu.wh Exp $
  */
 @Path("digest")
+@LeaderAwareRestController
 public class MetaDigestResource {
 
   private static final Logger TASK_LOGGER =
@@ -72,7 +73,6 @@ public class MetaDigestResource {
 
   @GET
   @Path("{type}/node/query")
-  @LeaderAwareRestController
   @Produces(MediaType.APPLICATION_JSON)
   public Map getRegisterNodeByType(@PathParam("type") String type) {
     try {
@@ -87,7 +87,6 @@ public class MetaDigestResource {
   @GET
   @Path("pushSwitch")
   @Produces(MediaType.APPLICATION_JSON)
-  @LeaderAwareRestController
   public Map<String, String> getPushSwitch() {
     Map<String, String> resultMap = new HashMap<>(1);
     try {

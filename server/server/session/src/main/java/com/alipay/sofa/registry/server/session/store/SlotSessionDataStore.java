@@ -164,7 +164,6 @@ public class SlotSessionDataStore implements DataStore {
         Map<String, Publisher> remove = ret.computeIfAbsent(entry.getKey(), k -> Maps.newHashMap());
         remove.putAll(entry.getValue());
       }
-
     }
     return ret;
   }

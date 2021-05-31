@@ -53,7 +53,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class PushProcessor {

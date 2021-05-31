@@ -694,7 +694,7 @@ public class SessionServerConfiguration {
 
     @Bean
     public WrapperInterceptor blacklistWrapperInterceptor(
-            WrapperInterceptorManager wrapperInterceptorManager) {
+        WrapperInterceptorManager wrapperInterceptorManager) {
       BlacklistWrapperInterceptor blacklistWrapperInterceptor = new BlacklistWrapperInterceptor();
       wrapperInterceptorManager.addInterceptor(blacklistWrapperInterceptor);
       return blacklistWrapperInterceptor;
@@ -702,12 +702,11 @@ public class SessionServerConfiguration {
 
     @Bean
     public WrapperInterceptor clientOffWrapperInterceptor(
-            WrapperInterceptorManager wrapperInterceptorManager) {
+        WrapperInterceptorManager wrapperInterceptorManager) {
       ClientOffWrapperInterceptor clientOffWrapperInterceptor = new ClientOffWrapperInterceptor();
       wrapperInterceptorManager.addInterceptor(clientOffWrapperInterceptor);
       return clientOffWrapperInterceptor;
     }
-
 
     @Bean
     public WrapperInterceptor accessLimitWrapperInterceptor(

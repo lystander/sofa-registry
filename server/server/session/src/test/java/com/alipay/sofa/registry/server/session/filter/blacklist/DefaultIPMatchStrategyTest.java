@@ -16,10 +16,9 @@
  */
 package com.alipay.sofa.registry.server.session.filter.blacklist;
 
+import com.alipay.sofa.registry.server.session.provideData.FetchBlackListService;
 import java.util.Collections;
 import java.util.List;
-
-import com.alipay.sofa.registry.server.session.provideData.FetchBlackListService;
 import org.assertj.core.util.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,13 +30,13 @@ public class DefaultIPMatchStrategyTest {
     DefaultIPMatchStrategy strategy = new DefaultIPMatchStrategy();
     FetchBlackListService mgr = new FetchBlackListService();
     strategy.setFetchBlackListService(mgr);
-    mgr.getBlacklistConfigList().add(
-        getIpConfig(BlacklistConstants.FORBIDDEN_PUB + "1", Collections.emptyList()));
+    mgr.getBlacklistConfigList()
+        .add(getIpConfig(BlacklistConstants.FORBIDDEN_PUB + "1", Collections.emptyList()));
 
     Assert.assertFalse(strategy.match("192.168.1.1", () -> BlacklistConstants.FORBIDDEN_PUB));
 
-    mgr.getBlacklistConfigList().add(
-        getIpConfig(BlacklistConstants.FORBIDDEN_PUB, Collections.emptyList()));
+    mgr.getBlacklistConfigList()
+        .add(getIpConfig(BlacklistConstants.FORBIDDEN_PUB, Collections.emptyList()));
     Assert.assertFalse(strategy.match("192.168.1.1", () -> BlacklistConstants.FORBIDDEN_PUB));
 
     List<MatchType> types = Lists.newArrayList();
