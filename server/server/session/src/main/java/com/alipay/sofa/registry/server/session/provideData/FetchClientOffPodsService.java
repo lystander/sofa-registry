@@ -89,6 +89,8 @@ public class FetchClientOffPodsService extends AbstractFetchSystemPropertyServic
     } finally {
       writeLock.unlock();
     }
+
+    LOGGER.info("olds clientOffPods:{}, toBeAdd:{}, toBeRemove:{}, current clientOffPods:{}", olds, toBeAdd, toBeRemove, clientOffPods);
     return true;
   }
 
@@ -168,7 +170,10 @@ public class FetchClientOffPodsService extends AbstractFetchSystemPropertyServic
   }
 
   private void doTrafficOn(Set<String> _ipList) {
-    connectionsService.closeIpConnects(Lists.newArrayList(_ipList));
+    List<String> connections = connectionsService.closeIpConnects(Lists.newArrayList(_ipList));
+    if (CollectionUtils.isNotEmpty(connections)) {
+      LOGGER.info("clientOpen conIds: {}", connections);
+    }
   }
 
   /**

@@ -43,6 +43,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.PostConstruct;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
@@ -215,6 +217,7 @@ public class DefaultClientManagerService implements ClientManagerService {
 
       ClientManagerAggregation aggregation = aggregate(clientManagerPods);
 
+      LOGGER.info("client manager watcher aggregation:{}", aggregation);
       if (doRefresh(aggregation)) {
         fireClientManagerChangeNotify(version.get(), ValueConstants.CLIENT_OFF_PODS_DATA_ID);
       }
@@ -246,7 +249,7 @@ public class DefaultClientManagerService implements ClientManagerService {
           break;
       }
     }
-    return new ClientManagerAggregation(max, clientOffPods, clientOffPods);
+    return new ClientManagerAggregation(max, clientOffPods, clientOpenPods);
   }
 
   private boolean doRefresh(ClientManagerAggregation aggregation) {
@@ -256,8 +259,9 @@ public class DefaultClientManagerService implements ClientManagerService {
       if (version.get() >= aggregation.max) {
         return false;
       }
+      version.set(aggregation.max);
       cache.get().addAll(aggregation.clientOffPods);
-      cache.get().addAll(aggregation.clientOpenPods);
+      cache.get().removeAll(aggregation.clientOpenPods);
     } catch (Throwable t) {
       LOGGER.error("refresh client manager cache error.", t);
       return false;
@@ -292,5 +296,25 @@ public class DefaultClientManagerService implements ClientManagerService {
       this.clientOffPods = clientOffPods;
       this.clientOpenPods = clientOpenPods;
     }
+
+    @Override
+    public String toString() {
+      return "ClientManagerAggregation{" +
+              "max=" + max +
+              ", clientOffPods=" + clientOffPods +
+              ", clientOpenPods=" + clientOpenPods +
+              '}';
+    }
+  }
+
+  /**
+   * Setter method for property <tt>clientManagerPodsRepository</tt>.
+   *
+   * @param clientManagerPodsRepository value to be assigned to property clientManagerPodsRepository
+   */
+  @VisibleForTesting
+  public void setClientManagerPodsRepository(
+          ClientManagerPodsRepository clientManagerPodsRepository) {
+    this.clientManagerPodsRepository = clientManagerPodsRepository;
   }
 }

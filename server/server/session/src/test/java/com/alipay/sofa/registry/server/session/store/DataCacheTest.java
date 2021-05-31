@@ -26,6 +26,7 @@ import com.alipay.sofa.registry.net.NetUtil;
 import com.alipay.sofa.registry.server.session.bootstrap.CommonConfig;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfigBean;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.net.InetSocketAddress;
@@ -35,6 +36,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import static org.mockito.Mockito.when;
 
 /**
  * @author shangyu.wh
@@ -333,9 +337,11 @@ public class DataCacheTest extends BaseTest {
   @Test
   public void testOverwriteSameConnectIdSubscriber() {
 
+    FetchStopPushService fetchStopPushService = Mockito.mock(FetchStopPushService.class);
+    when(fetchStopPushService.isStopPushSwitch()).thenReturn(false);
+
     SessionInterests sessionInterests = new SessionInterests();
     SessionServerConfig config = new SessionServerConfigBean(new CommonConfig());
-    config.setStopPushSwitch(false);
     sessionInterests.setSessionServerConfig(config);
 
     Subscriber subscriber1 = new Subscriber();

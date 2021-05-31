@@ -8,8 +8,13 @@ import com.alipay.sofa.registry.common.model.store.BaseInfo;
 import com.alipay.sofa.registry.common.model.store.StoreData;
 import com.alipay.sofa.registry.common.model.store.StoreData.DataType;
 import com.alipay.sofa.registry.common.model.store.Subscriber;
+import com.alipay.sofa.registry.common.model.store.URL;
+import com.alipay.sofa.registry.log.Logger;
+import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.filter.ProcessFilter;
+import com.alipay.sofa.registry.server.session.provideData.FetchClientOffPodsService;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
+import com.alipay.sofa.registry.server.session.registry.SessionRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
@@ -21,20 +26,24 @@ import javax.annotation.Resource;
  */
 public class ClientOffWrapperInterceptor implements WrapperInterceptor<StoreData, Boolean> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientOffWrapperInterceptor.class);
+
     @Autowired
     private FirePushService firePushService;
 
     @Resource
-    private ProcessFilter<BaseInfo> clientOffMatchProcessFilter;
+    private FetchClientOffPodsService fetchClientOffPodsService;
 
     @Override
     public Boolean invokeCodeWrapper(WrapperInvocation<StoreData, Boolean> invocation) throws Exception {
         BaseInfo storeData = (BaseInfo) invocation.getParameterSupplier().get();
 
+        URL url = storeData.getSourceAddress();
 
-        if (clientOffMatchProcessFilter.match(storeData)) {
+        if (fetchClientOffPodsService.getClientOffPods().contains(url.getIpAddress())) {
+            LOGGER.info("dataInfoId:{} ,url:{} match clientOff ips.", storeData.getDataInfoId(), url.getIpAddress());
             if (DataType.PUBLISHER == storeData.getDataType()) {
-                // match blacklist stop pub.
+                // match client off pub.
                 return true;
             }
 

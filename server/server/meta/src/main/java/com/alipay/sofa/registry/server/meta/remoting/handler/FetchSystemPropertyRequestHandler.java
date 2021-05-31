@@ -64,52 +64,80 @@ public class FetchSystemPropertyRequestHandler
     try {
       DB_LOGGER.info("get system data {}", request);
 
-      OperationStatus status;
-      ProvideData data;
       if (CLIENT_OFF_PODS_DATA_ID.equals(request.getDataInfoId())) {
-        DBResponse<ProvideData> ret = clientManagerService.queryClientOffSet();
-        status = ret.getOperationStatus();
-        data = ret.getEntity();
+         return fetchClientOffSet(request);
       } else {
-        DBResponse<PersistenceData> ret =
-            provideDataService.queryProvideData(request.getDataInfoId());
-        status = ret.getOperationStatus();
-        PersistenceData persistenceData = ret.getEntity();
-        data =
-            new ProvideData(
-                new ServerDataBox(persistenceData.getData()),
-                request.getDataInfoId(),
-                persistenceData.getVersion());
-      }
+        return fetchSystemData(request);
 
-      if (status == OperationStatus.SUCCESS) {
-        FetchSystemPropertyResult result;
-        if (data.getVersion() > request.getVersion()) {
-          result = new FetchSystemPropertyResult(true, data);
-        } else {
-          result = new FetchSystemPropertyResult(false);
-        }
-        if (DB_LOGGER.isInfoEnabled()) {
-          DB_LOGGER.info("get SystemProperty {} from DB success!", result);
-        }
-        return result;
-      } else if (status == OperationStatus.NOTFOUND) {
-        FetchSystemPropertyResult result = new FetchSystemPropertyResult(false);
-        DB_LOGGER.warn("has not found system data from DB dataInfoId:{}", request.getDataInfoId());
-        return result;
-      } else {
-        DB_LOGGER.error("get Data DB status error!");
-        throw new RuntimeException("Get Data DB status error!");
       }
-
     } catch (Exception e) {
-      DB_LOGGER.error("get system data {} from db error!", request.getDataInfoId());
+      DB_LOGGER.error("get system data {} from db error!", request.getDataInfoId(), e);
       throw new RuntimeException("Get system data from db error!", e);
+    }
+  }
+
+  private Object fetchSystemData(FetchSystemPropertyRequest request) {
+    DBResponse<PersistenceData> ret =
+            provideDataService.queryProvideData(request.getDataInfoId());
+    OperationStatus status = ret.getOperationStatus();
+    PersistenceData persistenceData = ret.getEntity();
+
+    if (status == OperationStatus.SUCCESS) {
+      ProvideData data =
+              new ProvideData(
+                      new ServerDataBox(persistenceData.getData()),
+                      request.getDataInfoId(),
+                      persistenceData.getVersion());
+
+      FetchSystemPropertyResult result;
+      if (data.getVersion() > request.getVersion()) {
+        result = new FetchSystemPropertyResult(true, data);
+      } else {
+        result = new FetchSystemPropertyResult(false);
+      }
+      if (DB_LOGGER.isInfoEnabled()) {
+        DB_LOGGER.info("get SystemProperty {} from DB success!", result);
+      }
+      return result;
+    } else if (status == OperationStatus.NOTFOUND) {
+      FetchSystemPropertyResult result = new FetchSystemPropertyResult(false);
+      DB_LOGGER.warn("has not found system data from DB dataInfoId:{}", request.getDataInfoId());
+      return result;
+    } else {
+      DB_LOGGER.error("get Data DB status error!");
+      throw new RuntimeException("Get Data DB status error!");
+    }
+
+  }
+
+  private Object fetchClientOffSet(FetchSystemPropertyRequest request) {
+    DBResponse<ProvideData> ret = clientManagerService.queryClientOffSet();
+    OperationStatus status = ret.getOperationStatus();
+    ProvideData data = ret.getEntity();
+
+    if (status == OperationStatus.SUCCESS) {
+      FetchSystemPropertyResult result;
+      if (data.getVersion() > request.getVersion()) {
+        result = new FetchSystemPropertyResult(true, data);
+      } else {
+        result = new FetchSystemPropertyResult(false);
+      }
+      if (DB_LOGGER.isInfoEnabled()) {
+        DB_LOGGER.info("get SystemProperty {} from DB success!", result);
+      }
+      return result;
+    } else if (status == OperationStatus.NOTFOUND) {
+      FetchSystemPropertyResult result = new FetchSystemPropertyResult(false);
+      DB_LOGGER.warn("has not found system data from DB dataInfoId:{}", request.getDataInfoId());
+      return result;
+    } else {
+      DB_LOGGER.error("get Data DB status error!");
+      throw new RuntimeException("Get Data DB status error!");
     }
   }
 
   @Override
   public Class interest() {
-    return FetchProvideDataRequest.class;
+    return FetchSystemPropertyRequest.class;
   }
 }

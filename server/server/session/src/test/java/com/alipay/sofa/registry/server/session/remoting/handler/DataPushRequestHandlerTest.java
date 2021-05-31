@@ -26,10 +26,12 @@ import com.alipay.sofa.registry.remoting.ChannelHandler;
 import com.alipay.sofa.registry.server.session.TestUtils;
 import com.alipay.sofa.registry.server.session.bootstrap.ExecutorManager;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfigBean;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class DataPushRequestHandlerTest {
   @Test
@@ -53,14 +55,15 @@ public class DataPushRequestHandlerTest {
     SessionServerConfigBean serverConfigBean = TestUtils.newSessionConfig("testDc");
     handler.sessionServerConfig = serverConfigBean;
     handler.executorManager = new ExecutorManager(serverConfigBean);
+    handler.fetchStopPushService = Mockito.mock(FetchStopPushService.class);
     Assert.assertNotNull(handler.getExecutor());
 
-    handler.sessionServerConfig.setStopPushSwitch(true);
+    handler.fetchStopPushService.setStopPushSwitch(true);
     // no npe, stopPush skip the handle
     Object obj = handler.doHandle(null, null);
     Assert.assertNull(obj);
 
-    handler.sessionServerConfig.setStopPushSwitch(false);
+    handler.fetchStopPushService.setStopPushSwitch(false);
     // npe
     TestUtils.assertRunException(RuntimeException.class, () -> handler.doHandle(null, request()));
     handler.firePushService = mock(FirePushService.class);

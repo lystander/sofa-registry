@@ -21,6 +21,8 @@ import com.alipay.sofa.registry.server.session.provideData.FetchBlackListService
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import javax.annotation.Resource;
 
@@ -76,5 +78,15 @@ public class DefaultIPMatchStrategy implements IPMatchStrategy<String> {
       }
     }
     return false;
+  }
+
+  /**
+   * Setter method for property <tt>fetchBlackListService</tt>.
+   *
+   * @param fetchBlackListService value to be assigned to property fetchBlackListService
+   */
+  @VisibleForTesting
+  public void setFetchBlackListService(FetchBlackListService fetchBlackListService) {
+    this.fetchBlackListService = fetchBlackListService;
   }
 }

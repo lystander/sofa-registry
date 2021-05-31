@@ -159,7 +159,12 @@ public class SlotSessionDataStore implements DataStore {
   public Map<ConnectId, Map<String, Publisher>> deleteByConnectIds(List<ConnectId> connectIds) {
     Map<ConnectId, Map<String, Publisher>> ret = Maps.newHashMap();
     for (DataStore ds : slot2DataStores.values()) {
-      ds.deleteByConnectIds(connectIds);
+      Map<ConnectId, Map<String, Publisher>> publisherMap = ds.deleteByConnectIds(connectIds);
+      for (Entry<ConnectId, Map<String, Publisher>> entry : publisherMap.entrySet()) {
+        Map<String, Publisher> remove = ret.computeIfAbsent(entry.getKey(), k -> Maps.newHashMap());
+        remove.putAll(entry.getValue());
+      }
+
     }
     return ret;
   }

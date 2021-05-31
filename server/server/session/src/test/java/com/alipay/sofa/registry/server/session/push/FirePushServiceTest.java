@@ -23,6 +23,8 @@ import com.alipay.sofa.registry.server.session.TestUtils;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfigBean;
 import com.alipay.sofa.registry.server.session.cache.CacheService;
 import com.alipay.sofa.registry.server.session.cache.Value;
+import com.alipay.sofa.registry.server.session.provideData.FetchClientOffPodsService;
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import com.alipay.sofa.registry.server.session.store.Interests;
 import com.alipay.sofa.registry.task.FastRejectedExecutionException;
 import java.util.Collections;
@@ -39,8 +41,10 @@ public class FirePushServiceTest {
     FirePushService svc = new FirePushService();
     SessionServerConfigBean config = TestUtils.newSessionConfig("testDc");
     svc.sessionServerConfig = config;
+    FetchStopPushService fetchStopPushService = Mockito.mock(FetchStopPushService.class);
     svc.sessionInterests = Mockito.mock(Interests.class);
     svc.pushProcessor = Mockito.mock(PushProcessor.class);
+    svc.fetchStopPushService = fetchStopPushService;
     TriggerPushContext ctx =
         new TriggerPushContext("testDc", 100, "testDataNode", System.currentTimeMillis());
     Assert.assertFalse(svc.fireOnChange("testDataId", ctx));
@@ -51,13 +55,13 @@ public class FirePushServiceTest {
         .fireChange(Mockito.anyString(), Mockito.anyObject(), Mockito.anyObject());
 
     Subscriber subscriber = TestUtils.newZoneSubscriber(dataId, zone);
-    config.setStopPushSwitch(true);
+    fetchStopPushService.setStopPushSwitch(true);
     svc.fireOnPushEmpty(subscriber);
     Mockito.verify(svc.pushProcessor, Mockito.times(0))
         .firePush(
             Mockito.anyObject(), Mockito.anyObject(), Mockito.anyObject(), Mockito.anyObject());
 
-    config.setStopPushSwitch(false);
+    fetchStopPushService.setStopPushSwitch(false);
 
     svc.fireOnPushEmpty(subscriber);
     Mockito.verify(svc.pushProcessor, Mockito.times(1))

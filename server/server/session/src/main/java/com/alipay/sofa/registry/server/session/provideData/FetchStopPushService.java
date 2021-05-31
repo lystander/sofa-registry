@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.registry.Registry;
 import com.alipay.sofa.registry.server.shared.providedata.AbstractFetchSystemPropertyService;
+import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -84,5 +85,15 @@ public class FetchStopPushService extends AbstractFetchSystemPropertyService {
     } finally {
       readLock.unlock();
     }
+  }
+
+  /**
+   * Setter method for property <tt>stopPushSwitch</tt>.
+   *
+   * @param stopPushSwitch value to be assigned to property stopPushSwitch
+   */
+  @VisibleForTesting
+  public void setStopPushSwitch(boolean stopPushSwitch) {
+    this.stopPushSwitch = stopPushSwitch;
   }
 }

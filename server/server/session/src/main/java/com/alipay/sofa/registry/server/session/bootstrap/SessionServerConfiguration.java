@@ -35,7 +35,6 @@ import com.alipay.sofa.registry.server.session.filter.ProcessFilter;
 import com.alipay.sofa.registry.server.session.filter.blacklist.BlacklistMatchProcessFilter;
 import com.alipay.sofa.registry.server.session.filter.blacklist.DefaultDataIdMatchStrategy;
 import com.alipay.sofa.registry.server.session.filter.blacklist.DefaultIPMatchStrategy;
-import com.alipay.sofa.registry.server.session.filter.clientoff.ClientOffMatchProcessFilter;
 import com.alipay.sofa.registry.server.session.limit.AccessLimitService;
 import com.alipay.sofa.registry.server.session.limit.AccessLimitServiceImpl;
 import com.alipay.sofa.registry.server.session.listener.ProvideDataChangeFetchTaskListener;
@@ -677,12 +676,6 @@ public class SessionServerConfiguration {
     @ConditionalOnMissingBean
     public ProcessFilter blacklistMatchProcessFilter() {
       return new BlacklistMatchProcessFilter();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public ProcessFilter clientOffMatchProcessFilter() {
-      return new ClientOffMatchProcessFilter();
     }
 
     @Bean

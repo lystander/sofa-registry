@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
+
+import com.alipay.sofa.registry.server.session.provideData.FetchStopPushService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -44,6 +46,7 @@ public class PushProcessorTest {
   public void testFire() throws Exception {
     PushProcessor processor = new PushProcessor();
     processor.sessionServerConfig = TestUtils.newSessionConfig("testDc");
+    processor.fetchStopPushService = Mockito.mock(FetchStopPushService.class);
     Assert.assertTrue(processor.watchDog.getWaitingMillis() < 200);
 
     Assert.assertEquals(processor.watchCommit().size(), 0);
@@ -101,10 +104,10 @@ public class PushProcessorTest {
     Assert.assertTrue(replaceTask.toString(), replaceTask.toString().contains(dataId));
 
     // now there is one pending task with delay
-    processor.sessionServerConfig.setStopPushSwitch(true);
+    processor.fetchStopPushService.setStopPushSwitch(true);
     Assert.assertEquals(processor.watchCommit().size(), 0);
 
-    processor.sessionServerConfig.setStopPushSwitch(false);
+    processor.fetchStopPushService.setStopPushSwitch(false);
     // task has clean
     Assert.assertEquals(processor.watchCommit().size(), 0);
     // first suspend, avoid run watchdog
@@ -167,10 +170,10 @@ public class PushProcessorTest {
     PushProcessor.PushTask task = processor.pendingTasks.values().iterator().next();
     processor.pendingTasks.clear();
 
-    processor.sessionServerConfig.setStopPushSwitch(true);
+    processor.fetchStopPushService.setStopPushSwitch(true);
     Assert.assertFalse(processor.doPush(task));
 
-    processor.sessionServerConfig.setStopPushSwitch(false);
+    processor.fetchStopPushService.setStopPushSwitch(false);
     // clientNodeService is null
     Assert.assertFalse(processor.doPush(task));
     Assert.assertEquals(processor.pushingTasks.size(), 0);

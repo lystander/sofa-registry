@@ -38,11 +38,13 @@ import com.alipay.sofa.registry.server.meta.remoting.connection.DataConnectionMa
 import com.alipay.sofa.registry.server.meta.remoting.connection.MetaConnectionManager;
 import com.alipay.sofa.registry.server.meta.remoting.connection.SessionConnectionManager;
 import com.alipay.sofa.registry.server.meta.remoting.handler.FetchProvideDataRequestHandler;
+import com.alipay.sofa.registry.server.meta.remoting.handler.FetchSystemPropertyRequestHandler;
 import com.alipay.sofa.registry.server.meta.remoting.handler.HeartbeatRequestHandler;
 import com.alipay.sofa.registry.server.meta.remoting.handler.RegistryForbiddenServerHandler;
 import com.alipay.sofa.registry.server.meta.remoting.meta.MetaNodeExchange;
 import com.alipay.sofa.registry.server.meta.remoting.meta.MetaServerRenewService;
 import com.alipay.sofa.registry.server.meta.resource.BlacklistDataResource;
+import com.alipay.sofa.registry.server.meta.resource.ClientManagerResource;
 import com.alipay.sofa.registry.server.meta.resource.HealthResource;
 import com.alipay.sofa.registry.server.meta.resource.MetaDigestResource;
 import com.alipay.sofa.registry.server.meta.resource.MetaLeaderResource;
@@ -162,6 +164,7 @@ public class MetaServerConfiguration {
       Collection<AbstractServerHandler> list = new ArrayList<>();
       list.add(heartbeatRequestHandler());
       list.add(fetchProvideDataRequestHandler());
+      list.add(fetchSystemPropertyRequestHandler());
       list.add(registryForbiddenServerHandler());
       return list;
     }
@@ -205,6 +208,11 @@ public class MetaServerConfiguration {
     @Bean
     public FetchProvideDataRequestHandler fetchProvideDataRequestHandler() {
       return new FetchProvideDataRequestHandler();
+    }
+
+    @Bean
+    public FetchSystemPropertyRequestHandler fetchSystemPropertyRequestHandler() {
+      return new FetchSystemPropertyRequestHandler();
     }
 
     @Bean
@@ -306,6 +314,11 @@ public class MetaServerConfiguration {
     @Bean
     public BlacklistDataResource blacklistDataResource() {
       return new BlacklistDataResource();
+    }
+
+    @Bean
+    public ClientManagerResource clientManagerResource() {
+      return new ClientManagerResource();
     }
 
     @Bean
