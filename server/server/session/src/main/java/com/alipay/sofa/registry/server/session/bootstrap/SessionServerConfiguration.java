@@ -65,6 +65,7 @@ import com.alipay.sofa.registry.server.session.strategy.impl.*;
 import com.alipay.sofa.registry.server.session.wrapper.*;
 import com.alipay.sofa.registry.server.shared.client.manager.BaseClientManagerService;
 import com.alipay.sofa.registry.server.shared.client.manager.ClientManagerService;
+import com.alipay.sofa.registry.server.shared.meta.MetaLeaderExchanger;
 import com.alipay.sofa.registry.server.shared.meta.MetaServerManager;
 import com.alipay.sofa.registry.server.shared.meta.MetaServerService;
 import com.alipay.sofa.registry.server.shared.providedata.FetchSystemPropertyService;
@@ -174,7 +175,7 @@ public class SessionServerConfiguration {
     }
 
     @Bean
-    public MetaServerManager metaServerManager() {
+    public MetaLeaderExchanger metaLeaderExchanger() {
       return new SessionMetaServerManager();
     }
 

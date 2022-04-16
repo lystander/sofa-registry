@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.registry.server.data.bootstrap;
 
+import com.alipay.sofa.registry.server.shared.config.CommonConfig;
 import com.alipay.sofa.registry.server.shared.config.ServerShareConfig;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
 import com.alipay.sofa.registry.util.OsUtils;

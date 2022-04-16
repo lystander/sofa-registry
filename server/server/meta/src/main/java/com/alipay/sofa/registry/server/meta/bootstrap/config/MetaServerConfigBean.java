@@ -42,6 +42,9 @@ public class MetaServerConfigBean implements MetaServerConfig {
 
   private int httpServerPort = 9615;
 
+  private int remoteMetaServerPort = 9617;
+
+
   private int schedulerHeartbeatIntervalSecs = 1;
 
   private int dataNodeExchangeTimeoutMillis = 3000;
@@ -74,6 +77,10 @@ public class MetaServerConfigBean implements MetaServerConfig {
 
   private int appRevisionMaxRemove = 2000;
   private int appRevisionCountAlarmThreshold = 20;
+
+  private int multiClusterWatcherMillis = 1000;
+
+  private int remoteClusterRpcTimeoutMillis = 3000;
 
   private long metaLeaderWarmupMillis =
       SystemUtils.getSystemLong(
@@ -541,7 +548,61 @@ public class MetaServerConfigBean implements MetaServerConfig {
     return appRevisionCountAlarmThreshold;
   }
 
+  /**
+   * Setter method for property <tt>multiClusterWatcherMillis</tt>.
+   *
+   * @param multiClusterWatcherMillis value to be assigned to property multiClusterWatcherMillis
+   */
+  public void setMultiClusterWatcherMillis(int multiClusterWatcherMillis) {
+    this.multiClusterWatcherMillis = multiClusterWatcherMillis;
+  }
+
+  @Override
+  public int getMultiClusterWatcherMillis() {
+    return multiClusterWatcherMillis;
+  }
+
   public void setAppRevisionCountAlarmThreshold(int appRevisionCountAlarmThreshold) {
     this.appRevisionCountAlarmThreshold = appRevisionCountAlarmThreshold;
   }
+
+  /**
+   * Getter method for property <tt>remoteClusterRpcTimeoutMillis</tt>.
+   *
+   * @return property value of remoteClusterRpcTimeoutMillis
+   */
+  @Override
+  public int getRemoteClusterRpcTimeoutMillis() {
+    return remoteClusterRpcTimeoutMillis;
+  }
+
+  /**
+   * Setter method for property <tt>remoteClusterRpcTimeoutMillis</tt>.
+   *
+   * @param remoteClusterRpcTimeoutMillis value to be assigned to property remoteClusterRpcTimeoutMillis
+   */
+  public void setRemoteClusterRpcTimeoutMillis(int remoteClusterRpcTimeoutMillis) {
+    this.remoteClusterRpcTimeoutMillis = remoteClusterRpcTimeoutMillis;
+  }
+
+  /**
+   * Getter method for property <tt>RemoteMetaServerPort</tt>.
+   *
+   * @return property value of RemoteMetaServerPort
+   */
+  @Override
+  public int getRemoteMetaServerPort() {
+    return remoteMetaServerPort;
+  }
+
+
+  /**
+   * Setter method for property <tt>remoteMetaServerPort</tt>.
+   *
+   * @param remoteMetaServerPort value to be assigned to property RemoteMetaServerPort
+   */
+  public void setRemoteMetaServerPort(int remoteMetaServerPort) {
+    this.remoteMetaServerPort = remoteMetaServerPort;
+  }
+
 }

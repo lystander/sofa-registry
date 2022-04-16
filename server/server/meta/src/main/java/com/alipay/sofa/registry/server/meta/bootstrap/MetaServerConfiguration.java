@@ -30,6 +30,7 @@ import com.alipay.sofa.registry.server.meta.cleaner.AppRevisionCleaner;
 import com.alipay.sofa.registry.server.meta.cleaner.InterfaceAppsIndexCleaner;
 import com.alipay.sofa.registry.server.meta.lease.filter.DefaultForbiddenServerManager;
 import com.alipay.sofa.registry.server.meta.lease.filter.RegistryForbiddenServerManager;
+import com.alipay.sofa.registry.server.meta.multi.cluster.DefaultMultiClusterSlotTableSyncer;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultClientManagerService;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultProvideDataService;
 import com.alipay.sofa.registry.server.meta.provide.data.NodeOperatingService;
@@ -45,7 +46,7 @@ import com.alipay.sofa.registry.server.meta.remoting.handler.FetchSystemProperty
 import com.alipay.sofa.registry.server.meta.remoting.handler.GetSlotTableStatusRequestHandler;
 import com.alipay.sofa.registry.server.meta.remoting.handler.HeartbeatRequestHandler;
 import com.alipay.sofa.registry.server.meta.remoting.handler.RegistryForbiddenServerHandler;
-import com.alipay.sofa.registry.server.meta.remoting.meta.MetaNodeExchange;
+import com.alipay.sofa.registry.server.meta.remoting.meta.LocalMetaExchanger;
 import com.alipay.sofa.registry.server.meta.remoting.meta.MetaServerRenewService;
 import com.alipay.sofa.registry.server.meta.resource.*;
 import com.alipay.sofa.registry.server.meta.resource.filter.LeaderAwareFilter;
@@ -241,8 +242,8 @@ public class MetaServerConfiguration {
     }
 
     @Bean
-    public MetaNodeExchange metaNodeExchange() {
-      return new MetaNodeExchange();
+    public LocalMetaExchanger localMetaExchanger() {
+      return new LocalMetaExchanger();
     }
 
     @Bean
@@ -398,6 +399,14 @@ public class MetaServerConfiguration {
     @Bean
     public RegistryCoreOpsResource registryCoreOpsResource() {
       return new RegistryCoreOpsResource();
+    }
+  }
+
+  @Configuration
+  public static class MultiClusterConfiguration {
+    @Bean
+    public DefaultMultiClusterSlotTableSyncer multiClusterSlotTableSyncer() {
+      return new DefaultMultiClusterSlotTableSyncer();
     }
   }
 

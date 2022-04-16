@@ -26,6 +26,7 @@ import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfig;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
+import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +43,12 @@ public class MetaServerRenewService {
 
   @Autowired private NodeConfig nodeConfig;
 
-  @Autowired protected MetaNodeExchange metaNodeExchange;
+  @Autowired protected LocalMetaExchanger localMetaExchanger;
 
   @Autowired protected MetaServerConfig metaServerConfig;
+
+  @Autowired private DefaultCommonConfig defaultCommonConfig;
+
 
   private Renewer renewer;
 
@@ -91,7 +95,7 @@ public class MetaServerRenewService {
     final long startTimestamp = System.currentTimeMillis();
     try {
       GenericResponse resp =
-          (GenericResponse) metaNodeExchange.sendRequest(heartbeatRequest).getResult();
+          (GenericResponse) localMetaExchanger.sendRequest(defaultCommonConfig.getDefaultClusterId(), heartbeatRequest).getResult();
 
       if (resp == null || !resp.isSuccess()) {
         success = false;

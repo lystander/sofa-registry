@@ -1,0 +1,295 @@
+/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+package com.alipay.sofa.registry.server.shared.meta;
+
+import com.alipay.sofa.registry.common.model.GenericResponse;
+import com.alipay.sofa.registry.common.model.Tuple;
+import com.alipay.sofa.registry.common.model.constants.ValueConstants;
+import com.alipay.sofa.registry.common.model.elector.LeaderInfo;
+import com.alipay.sofa.registry.common.model.store.URL;
+import com.alipay.sofa.registry.exception.MetaLeaderQueryException;
+import com.alipay.sofa.registry.jdbc.constant.TableEnum;
+import com.alipay.sofa.registry.jdbc.domain.DistributeLockDomain;
+import com.alipay.sofa.registry.jdbc.elector.MetaJdbcLeaderElector;
+import com.alipay.sofa.registry.jdbc.mapper.DistributeLockMapper;
+import com.alipay.sofa.registry.log.Logger;
+import com.alipay.sofa.registry.log.LoggerFactory;
+import com.alipay.sofa.registry.remoting.ChannelHandler;
+import com.alipay.sofa.registry.remoting.exchange.RequestException;
+import com.alipay.sofa.registry.remoting.exchange.message.Request;
+import com.alipay.sofa.registry.remoting.exchange.message.Response;
+import com.alipay.sofa.registry.remoting.jersey.JerseyClient;
+import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
+import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;
+import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
+import com.alipay.sofa.registry.util.JsonUtils;
+import com.alipay.sofa.registry.util.StringFormatter;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.WaitStrategies;
+import com.google.common.collect.Maps;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.PostConstruct;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * @author xiaojian.xj
+ * @version : AbstractMetaLeaderExchanger.java, v 0.1 2022年04月16日 16:34 xiaojian.xj Exp $
+ */
+public abstract class AbstractMetaLeaderExchanger extends ClientSideExchanger
+    implements MetaLeaderExchanger {
+
+  private final Logger LOGGER;
+
+  private final Map<String, LeaderInfo> leaderInfo = Maps.newConcurrentMap();
+
+  private final ExchangerModeEnum mode;
+
+  protected final Retryer<LeaderInfo> retryer =
+      RetryerBuilder.<LeaderInfo>newBuilder()
+          .retryIfException()
+          .retryIfResult(Objects::isNull)
+          .withWaitStrategy(WaitStrategies.exponentialWait(1000, 3000, TimeUnit.MILLISECONDS))
+          .withStopStrategy(StopStrategies.stopAfterAttempt(5))
+          .build();
+
+  @Autowired private DefaultCommonConfig defaultCommonConfig;
+
+  // todo xiaojian.xj
+  @Autowired private DistributeLockMapper distributeLockMapper;
+
+  private javax.ws.rs.client.Client rsClient;
+
+
+  private static final String LEADER_KEY = "leader";
+  private static final String EPOCH_KEY = "epoch";
+
+  protected AbstractMetaLeaderExchanger(String serverType, ExchangerModeEnum mode, Logger logger) {
+    super(serverType);
+    this.LOGGER = logger;
+    this.mode = mode;
+  }
+
+  @PostConstruct
+  public void init() {
+    super.init();
+    rsClient = JerseyClient.getInstance().getClient();
+  }
+
+  /**
+   * send request to remote cluster meta leader
+   *
+   * @param dataCenter
+   * @param requestBody
+   * @return
+   * @throws RequestException
+   */
+  @Override
+  public Response sendRequest(String dataCenter, Object requestBody)
+      throws RequestException {
+    Request request =
+            new Request() {
+              @Override
+              public Object getRequestBody() {
+                return requestBody;
+              }
+
+              @Override
+              public URL getRequestUrl() {
+                return new URL(getLeader(dataCenter).getLeader(), getServerPort());
+              }
+            };
+    LOGGER.info(
+            "[request] MetaNode Exchanger dataCenter={},request={},url={},callbackHandler={}",
+            dataCenter,
+            request.getRequestBody(),
+            request.getRequestUrl(),
+            request.getCallBackHandler());
+
+    try {
+      return super.request(request);
+    } catch (Throwable e) {
+      // retry
+      resetLeader(dataCenter);
+      URL url = new URL(getLeader(dataCenter).getLeader(), getServerPort());
+      LOGGER.warn(
+              "[request] MetaNode Exchanger request send error!It will be retry once!Request url:{}",
+              url);
+      return super.request(request);
+    }
+  }
+
+  /**
+   * learn leader from remote resp
+   *
+   * @param dataCenter
+   * @param update
+   */
+  @Override
+  public boolean learn(String dataCenter, LeaderInfo update) {
+    LeaderInfo data = new LeaderInfo(update.getEpoch(), update.getLeader());
+
+    // use cas instead of synchronized to avoid multi cluster compete lock
+    for (; ; ) {
+      final LeaderInfo exist = this.leaderInfo.get(dataCenter);
+      if (exist == null) {
+        if (leaderInfo.putIfAbsent(dataCenter, data) == null) {
+          setServerIps(Collections.singleton(update.getLeader()));
+          return true;
+        }
+        continue;
+      }
+      if (update.getEpoch() <= exist.getEpoch()) {
+        LOGGER.warn("[setLeaderConflict]dataCenter={},exist={}/{},input={}/{}",
+                data, exist.getEpoch(), exist.getLeader(), data.getEpoch(), data.getLeader());
+        return false;
+      }
+      if (leaderInfo.replace(dataCenter, exist, data)) {
+        setServerIps(Collections.singleton(update.getLeader()));
+        return true;
+      }
+    }
+  }
+
+  /**
+   * reset leader from remoteMetaDomain
+   *
+   * @param dataCenter
+   */
+  @Override
+  public LeaderInfo resetLeader(String dataCenter) {
+    LeaderInfo leader = null;
+    if (mode == ExchangerModeEnum.LOCAL_DATA_CENTER && defaultCommonConfig.isJdbc()) {
+      leader = queryLeaderFromDb();
+    } else {
+      leader = queryLeaderFromRest(dataCenter);
+    }
+
+    // connect to meta leader
+    connect(new URL(leader.getLeader(), getServerPort()));
+    // learn leader from resp
+    learn(dataCenter, leader);
+    return leaderInfo.get(dataCenter);
+  }
+
+  /**
+   * get leader info
+   *
+   * @param dataCenter
+   * @return
+   */
+  @Override
+  public LeaderInfo getLeader(String dataCenter) {
+    LeaderInfo leader = leaderInfo.get(dataCenter);
+    if (leader != null) {
+      return new LeaderInfo(leader.getEpoch(), leader.getLeader());
+    }
+    return resetLeader(dataCenter);
+  }
+
+  /**
+   * remove leader
+   *
+   * @param dataCenter
+   */
+  @Override
+  public void removeLeader(String dataCenter) {
+    leaderInfo.remove(dataCenter);
+  }
+
+  protected LeaderInfo queryLeaderFromDb() {
+    try {
+      return retryer.call(
+          () -> {
+            DistributeLockDomain lock =
+                distributeLockMapper.queryDistLock(
+                    defaultCommonConfig.getClusterId(TableEnum.DISTRIBUTE_LOCK.getTableName()),
+                    MetaJdbcLeaderElector.lockName);
+            if (!validateLockLeader(lock)) {
+              return null;
+            }
+            String leader = lock.getOwner();
+            long epoch = lock.getGmtModifiedUnixMillis();
+            return new LeaderInfo(epoch, leader);
+          });
+    } catch (Throwable e) {
+      throw new MetaLeaderQueryException(
+          StringFormatter.format("query meta leader error from db failed"), e);
+    }
+  }
+
+  private boolean validateLockLeader(DistributeLockDomain lock) {
+    if (lock == null) {
+      LOGGER.error("[resetLeaderFromDb] failed to query leader from db: lock null");
+      return false;
+    }
+    long expireTimestamp = lock.getGmtModifiedUnixMillis() + lock.getDuration() / 2;
+    long now = System.currentTimeMillis();
+    if (expireTimestamp < now) {
+      LOGGER.error("[resetLeaderFromDb] failed to query leader from db: lock expired {}", lock);
+      return false;
+    }
+    return true;
+  }
+
+  private LeaderInfo queryLeaderFromRest(String dataCenter) {
+    Collection<String> metaDomains = getMetaServerDomains(dataCenter);
+
+    try {
+      return retryer.call(() -> queryLeaderInfo(dataCenter, metaDomains, rsClient));
+    } catch (Throwable e) {
+      throw new MetaLeaderQueryException(
+              StringFormatter.format("query meta leader from {} failed", metaDomains), e);
+    }
+  }
+
+  private LeaderInfo queryLeaderInfo(String dataCenter,
+          Collection<String> metaDomains, javax.ws.rs.client.Client client) {
+    for (String metaDomain : metaDomains) {
+      String url = String.format(ValueConstants.META_LEADER_QUERY_URL, metaDomain);
+      try {
+        javax.ws.rs.core.Response resp = client.target(url).request().buildGet().invoke();
+        if (resp.getStatus() != javax.ws.rs.core.Response.Status.OK.getStatusCode()) {
+          LOGGER.error(
+                  "[resetLeaderFromRestServer] dataCenter:{} failed to query from url: {}, resp status: {}",
+                  dataCenter,
+                  url,
+                  resp.getStatus());
+          continue;
+        }
+        GenericResponse genericResponse = new GenericResponse<>();
+        genericResponse = resp.readEntity(genericResponse.getClass());
+
+        if (!genericResponse.isSuccess() || genericResponse.getData() == null) {
+          LOGGER.error(
+                  "[resetLeaderFromRestServer] dataCenter:{} failed to query from url: {}, resp: {}",
+                  dataCenter,
+                  url,
+                  JsonUtils.writeValueAsString(genericResponse));
+          continue;
+        }
+        Map data = (Map) genericResponse.getData();
+        Long epoch = (Long) data.get(EPOCH_KEY);
+        String leader = (String) data.get(LEADER_KEY);
+        if (StringUtils.isBlank(leader)) {
+          continue;
+        }
+        LeaderInfo query = new LeaderInfo(epoch, leader);
+        LOGGER.info("[resetLeaderFromRestServer] dataCenter:{} query from url: {}, meta leader:{}", dataCenter, url, query);
+        return query;
+      } catch (Throwable e) {
+        LOGGER.error("[resetLeaderFromRestServer] dataCenter:{} failed to query from url: {}", dataCenter, url, e);
+      }
+    }
+    return null;
+  }
+
+  protected abstract Collection<String> getMetaServerDomains(String dataCenter);
+
+}

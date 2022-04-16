@@ -22,6 +22,8 @@ package com.alipay.sofa.registry.store.api.config;
  */
 public interface DefaultCommonConfig {
 
+  String getDefaultClusterId();
+
   String getClusterId(String table);
 
   String getClusterId(String table, String key);

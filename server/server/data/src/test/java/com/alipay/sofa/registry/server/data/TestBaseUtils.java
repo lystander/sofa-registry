@@ -32,7 +32,6 @@ import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.URL;
 import com.alipay.sofa.registry.remoting.bolt.BoltChannel;
-import com.alipay.sofa.registry.server.data.bootstrap.CommonConfig;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumCache;
 import com.alipay.sofa.registry.server.data.cache.LocalDatumStorage;

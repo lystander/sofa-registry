@@ -45,6 +45,8 @@ import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.data.slot.SlotManagerImpl;
 import com.alipay.sofa.registry.server.data.timer.CacheCountTask;
 import com.alipay.sofa.registry.server.data.timer.CacheDigestTask;
+import com.alipay.sofa.registry.server.shared.config.CommonConfig;
+import com.alipay.sofa.registry.server.shared.meta.MetaLeaderExchanger;
 import com.alipay.sofa.registry.server.shared.meta.MetaServerManager;
 import com.alipay.sofa.registry.server.shared.providedata.FetchSystemPropertyService;
 import com.alipay.sofa.registry.server.shared.providedata.ProvideDataProcessor;
@@ -257,7 +259,7 @@ public class DataServerBeanConfiguration {
   public static class DataServerRemotingBeanConfiguration {
 
     @Bean
-    public MetaServerManager metaServerManager() {
+    public MetaLeaderExchanger metaLeaderExchanger() {
       return new DataMetaServerManager();
     }
 

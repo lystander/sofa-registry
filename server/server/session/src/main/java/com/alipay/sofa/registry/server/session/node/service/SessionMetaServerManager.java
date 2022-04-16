@@ -16,22 +16,38 @@
  */
 package com.alipay.sofa.registry.server.session.node.service;
 
+import com.alipay.sofa.registry.log.Logger;
+import com.alipay.sofa.registry.log.LoggerFactory;
+import com.alipay.sofa.registry.remoting.ChannelHandler;
+import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
-import com.alipay.sofa.registry.server.shared.meta.AbstractMetaServerManager;
+import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
+import com.alipay.sofa.registry.server.shared.meta.AbstractMetaLeaderExchanger;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
 
 /**
  * @author chen.zhu
  *     <p>Mar 15, 2021
  */
-public class SessionMetaServerManager extends AbstractMetaServerManager {
+public class SessionMetaServerManager extends AbstractMetaLeaderExchanger {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMetaLeaderExchanger.class);
 
   @Autowired private SessionServerConfig sessionServerConfig;
 
+  @Resource(name = "metaClientHandlers")
+  private Collection<ChannelHandler> metaClientHandlers;
+
+  public SessionMetaServerManager() {
+    super(Exchange.META_SERVER_TYPE, ExchangerModeEnum.LOCAL_DATA_CENTER, LOGGER);
+  }
+
   @Override
-  protected Collection<String> getConfiguredMetaServerDomains() {
+  protected Collection<String> getMetaServerDomains(String dataCenter) {
     return sessionServerConfig.getMetaServerAddresses();
   }
 
@@ -43,6 +59,11 @@ public class SessionMetaServerManager extends AbstractMetaServerManager {
   @Override
   public int getServerPort() {
     return sessionServerConfig.getMetaServerPort();
+  }
+
+  @Override
+  protected Collection<ChannelHandler> getClientHandlers() {
+    return metaClientHandlers;
   }
 
   @VisibleForTesting

@@ -14,13 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alipay.sofa.registry.server.data.bootstrap;
+package com.alipay.sofa.registry.server.shared.config;
 
-import java.util.Collection;
-import java.util.Map;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author shangyu.wh
