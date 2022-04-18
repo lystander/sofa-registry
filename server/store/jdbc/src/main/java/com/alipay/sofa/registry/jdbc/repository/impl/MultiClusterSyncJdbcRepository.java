@@ -1,4 +1,19 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.jdbc.repository.impl;
 
 import com.alipay.sofa.registry.common.model.metaserver.MultiClusterSyncInfo;
@@ -12,9 +27,8 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.store.api.meta.MultiClusterSyncRepository;
 import com.alipay.sofa.registry.store.api.meta.RecoverConfig;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author xiaojian.xj
@@ -22,8 +36,7 @@ import java.util.List;
  */
 public class MultiClusterSyncJdbcRepository implements MultiClusterSyncRepository, RecoverConfig {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger("MULTI-CLUSTER", "[UpdateSyncInfo]");
+  private static final Logger LOG = LoggerFactory.getLogger("MULTI-CLUSTER", "[UpdateSyncInfo]");
 
   @Autowired private MultiClusterSyncMapper multiClusterSyncMapper;
 
@@ -65,15 +78,15 @@ public class MultiClusterSyncJdbcRepository implements MultiClusterSyncRepositor
 
   @Override
   public List<MultiClusterSyncInfo> queryAll() {
-    List<MultiClusterSyncDomain> domains = multiClusterSyncMapper.queryByCluster(
-            defaultCommonConfig.getClusterId(tableName()));
+    List<MultiClusterSyncDomain> domains =
+        multiClusterSyncMapper.queryByCluster(defaultCommonConfig.getClusterId(tableName()));
     return MultiClusterSyncConvertor.convert2Infos(domains);
   }
 
   @Override
   public int remove(String remoteDataCenter, long dataVersion) {
-    return multiClusterSyncMapper.remove(defaultCommonConfig.getClusterId(tableName()),
-            remoteDataCenter, dataVersion);
+    return multiClusterSyncMapper.remove(
+        defaultCommonConfig.getClusterId(tableName()), remoteDataCenter, dataVersion);
   }
 
   @Override

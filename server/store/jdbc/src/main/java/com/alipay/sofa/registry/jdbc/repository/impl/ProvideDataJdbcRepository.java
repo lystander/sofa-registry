@@ -23,7 +23,6 @@ import com.alipay.sofa.registry.common.model.console.PersistenceData;
 import com.alipay.sofa.registry.common.model.console.PersistenceDataBuilder;
 import com.alipay.sofa.registry.jdbc.constant.TableEnum;
 import com.alipay.sofa.registry.jdbc.convertor.ProvideDataDomainConvertor;
-import com.alipay.sofa.registry.jdbc.domain.MultiClusterSyncDomain;
 import com.alipay.sofa.registry.jdbc.domain.ProvideDataDomain;
 import com.alipay.sofa.registry.jdbc.mapper.ProvideDataMapper;
 import com.alipay.sofa.registry.jdbc.repository.impl.MultiClusterSyncJdbcRepository.Configer;
@@ -69,7 +68,6 @@ public class ProvideDataJdbcRepository implements ProvideDataRepository, Recover
   public void init() {
     recoverConfigRepository.registerCallback(this);
   }
-
 
   class Configer extends BaseConfigRepository<ProvideDataDomain> {
     public Configer() {

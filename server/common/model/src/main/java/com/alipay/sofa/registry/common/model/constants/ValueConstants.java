@@ -172,5 +172,4 @@ public class ValueConstants {
   public static final String BLOCKED_REQUEST_KEY = "!Blocked";
 
   public static final String META_LEADER_QUERY_URL = "http://%s:9615/meta/leader/query";
-
 }
