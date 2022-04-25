@@ -16,6 +16,8 @@
  */
 package com.alipay.sofa.registry.common.model.metaserver;
 
+import com.google.common.base.Objects;
+
 /**
  * @author xiaojian.xj
  * @version : MultiClusterSyncInfo.java, v 0.1 2022年04月13日 17:09 xiaojian.xj Exp $
@@ -120,6 +122,20 @@ public class MultiClusterSyncInfo {
    */
   public void setDataVersion(long dataVersion) {
     this.dataVersion = dataVersion;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) { return true; }
+    if (o == null || getClass() != o.getClass()) { return false; }
+    MultiClusterSyncInfo that = (MultiClusterSyncInfo) o;
+    return Objects.equal(dataCenter, that.dataCenter) && Objects.equal(remoteDataCenter,
+            that.remoteDataCenter);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(dataCenter, remoteDataCenter);
   }
 
   @Override

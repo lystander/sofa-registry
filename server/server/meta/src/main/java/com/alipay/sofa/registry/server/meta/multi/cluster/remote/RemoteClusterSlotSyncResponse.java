@@ -55,6 +55,41 @@ public class RemoteClusterSlotSyncResponse implements Serializable {
     return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, true, true, slotTable);
   }
 
+  public boolean isSyncOnLeader() {
+    return syncOnLeader;
+  }
+
+  public boolean isSlotTableUpgrade() {
+    return slotTableUpgrade;
+  }
+
+  /**
+   * Getter method for property <tt>metaLeader</tt>.
+   *
+   * @return property value of metaLeader
+   */
+  public String getMetaLeader() {
+    return metaLeader;
+  }
+
+  /**
+   * Getter method for property <tt>metaLeaderEpoch</tt>.
+   *
+   * @return property value of metaLeaderEpoch
+   */
+  public long getMetaLeaderEpoch() {
+    return metaLeaderEpoch;
+  }
+
+  /**
+   * Getter method for property <tt>slotTable</tt>.
+   *
+   * @return property value of slotTable
+   */
+  public SlotTable getSlotTable() {
+    return slotTable;
+  }
+
   @Override
   public String toString() {
     return "RemoteClusterSlotSyncResponse{" +

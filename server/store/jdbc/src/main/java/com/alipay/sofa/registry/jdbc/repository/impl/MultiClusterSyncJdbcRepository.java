@@ -28,6 +28,8 @@ import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.store.api.meta.MultiClusterSyncRepository;
 import com.alipay.sofa.registry.store.api.meta.RecoverConfig;
 import java.util.List;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -77,7 +79,7 @@ public class MultiClusterSyncJdbcRepository implements MultiClusterSyncRepositor
   }
 
   @Override
-  public List<MultiClusterSyncInfo> queryAll() {
+  public Set<MultiClusterSyncInfo> queryAll() {
     List<MultiClusterSyncDomain> domains =
         multiClusterSyncMapper.queryByCluster(defaultCommonConfig.getClusterId(tableName()));
     return MultiClusterSyncConvertor.convert2Infos(domains);

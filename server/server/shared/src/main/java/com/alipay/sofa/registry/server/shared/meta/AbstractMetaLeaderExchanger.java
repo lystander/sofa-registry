@@ -72,7 +72,7 @@ public abstract class AbstractMetaLeaderExchanger extends ClientSideExchanger
 
   @Autowired private DefaultCommonConfig defaultCommonConfig;
 
-  // todo xiaojian.xj
+  // todo xiaojian.xj change to repository
   @Autowired private DistributeLockMapper distributeLockMapper;
 
   private javax.ws.rs.client.Client rsClient;

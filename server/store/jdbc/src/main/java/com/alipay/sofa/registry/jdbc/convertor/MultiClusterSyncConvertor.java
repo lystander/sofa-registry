@@ -20,6 +20,7 @@ import com.alipay.sofa.registry.common.model.metaserver.MultiClusterSyncInfo;
 import com.alipay.sofa.registry.jdbc.domain.MultiClusterSyncDomain;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
 
@@ -48,12 +49,12 @@ public class MultiClusterSyncConvertor {
         domain.getDataVersion());
   }
 
-  public static List<MultiClusterSyncInfo> convert2Infos(List<MultiClusterSyncDomain> domains) {
+  public static Set<MultiClusterSyncInfo> convert2Infos(List<MultiClusterSyncDomain> domains) {
     if (CollectionUtils.isEmpty(domains)) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptySet();
     }
     return domains.stream()
         .map(MultiClusterSyncConvertor::convert2Info)
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
   }
 }

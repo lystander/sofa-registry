@@ -24,6 +24,8 @@ import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.remoting.jersey.exchange.JerseyExchange;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfigBean;
+import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfig;
+import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfigBean;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfigBeanProperty;
 import com.alipay.sofa.registry.server.meta.cleaner.AppRevisionCleaner;
@@ -31,6 +33,7 @@ import com.alipay.sofa.registry.server.meta.cleaner.InterfaceAppsIndexCleaner;
 import com.alipay.sofa.registry.server.meta.lease.filter.DefaultForbiddenServerManager;
 import com.alipay.sofa.registry.server.meta.lease.filter.RegistryForbiddenServerManager;
 import com.alipay.sofa.registry.server.meta.multi.cluster.DefaultMultiClusterSlotTableSyncer;
+import com.alipay.sofa.registry.server.meta.multi.cluster.remote.RemoteClusterMetaExchanger;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultClientManagerService;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultProvideDataService;
 import com.alipay.sofa.registry.server.meta.provide.data.NodeOperatingService;
@@ -404,9 +407,21 @@ public class MetaServerConfiguration {
 
   @Configuration
   public static class MultiClusterConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    public MultiClusterMetaServerConfig multiClusterMetaServerConfig() {
+      return new MultiClusterMetaServerConfigBean();
+    }
+
     @Bean
     public DefaultMultiClusterSlotTableSyncer multiClusterSlotTableSyncer() {
       return new DefaultMultiClusterSlotTableSyncer();
+    }
+
+    @Bean
+    public RemoteClusterMetaExchanger remoteClusterMetaExchanger() {
+      return new RemoteClusterMetaExchanger();
     }
   }
 
@@ -429,8 +444,8 @@ public class MetaServerConfiguration {
     }
 
     @Bean
-    public ExecutorManager executorManager(MetaServerConfig metaServerConfig) {
-      return new ExecutorManager(metaServerConfig);
+    public ExecutorManager executorManager(MetaServerConfig metaServerConfig, MultiClusterMetaServerConfig multiClusterMetaServerConfig) {
+      return new ExecutorManager(metaServerConfig, multiClusterMetaServerConfig);
     }
   }
 }

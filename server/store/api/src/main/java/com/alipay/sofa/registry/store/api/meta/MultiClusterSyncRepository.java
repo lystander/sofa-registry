@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.store.api.meta;
 
 import com.alipay.sofa.registry.common.model.metaserver.MultiClusterSyncInfo;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author xiaojian.xj
@@ -34,7 +35,7 @@ public interface MultiClusterSyncRepository {
   boolean put(MultiClusterSyncInfo syncInfo);
 
   /** query MultiClusterSyncInfo */
-  public List<MultiClusterSyncInfo> queryAll();
+  public Set<MultiClusterSyncInfo> queryAll();
 
   /**
    * remove provideData

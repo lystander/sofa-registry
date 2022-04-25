@@ -74,10 +74,4 @@ public interface MetaServerConfig {
   int getAppRevisionMaxRemove();
 
   int getAppRevisionCountAlarmThreshold();
-
-  int getMultiClusterWatcherMillis();
-
-  int getRemoteClusterRpcTimeoutMillis();
-
-  int getRemoteMetaServerPort();
 }

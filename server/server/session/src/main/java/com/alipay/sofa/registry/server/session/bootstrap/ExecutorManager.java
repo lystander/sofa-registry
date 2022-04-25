@@ -18,8 +18,6 @@ package com.alipay.sofa.registry.server.session.bootstrap;
 
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
-import com.alipay.sofa.registry.server.session.metadata.AppRevisionHeartbeatRegistry;
-import com.alipay.sofa.registry.server.shared.meta.MetaServerService;
 import com.alipay.sofa.registry.task.MetricsableThreadPoolExecutor;
 import com.alipay.sofa.registry.util.NamedThreadFactory;
 import com.alipay.sofa.registry.util.OsUtils;
@@ -30,7 +28,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author shangyu.wh
@@ -50,12 +47,6 @@ public class ExecutorManager {
   private final ThreadPoolExecutor consoleExecutor;
   private final ThreadPoolExecutor zoneSdkExecutor;
   private final ThreadPoolExecutor clientManagerCheckExecutor;
-
-  @Autowired protected SessionServerConfig sessionServerConfig;
-
-  @Autowired protected MetaServerService metaServerService;
-
-  @Autowired protected AppRevisionHeartbeatRegistry appRevisionHeartbeatRegistry;
 
   private Map<String, ThreadPoolExecutor> reportExecutors = new HashMap<>();
 
