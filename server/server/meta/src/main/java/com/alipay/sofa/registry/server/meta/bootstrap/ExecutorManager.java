@@ -22,8 +22,6 @@ import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfig;
 import com.alipay.sofa.registry.task.MetricsableThreadPoolExecutor;
 import com.alipay.sofa.registry.util.NamedThreadFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -46,28 +44,29 @@ public class ExecutorManager {
 
   private static final String MULTI_CLUSTER_CONFIG_RELOAD_EXECUTOR =
       "MULTI_CLUSTER_CONFIG_RELOAD_EXECUTOR";
-  private static final String REMOTE_CLUSTER_HANDLER_EXECUTOR =
-          "REMOTE_CLUSTER_HANDLER_EXECUTOR";
+  private static final String REMOTE_CLUSTER_HANDLER_EXECUTOR = "REMOTE_CLUSTER_HANDLER_EXECUTOR";
 
   private Map<String, ThreadPoolExecutor> reportExecutors = new HashMap<>();
 
-  public ExecutorManager(MetaServerConfig metaServerConfig, MultiClusterMetaServerConfig multiClusterMetaServerConfig) {
+  public ExecutorManager(
+      MetaServerConfig metaServerConfig,
+      MultiClusterMetaServerConfig multiClusterMetaServerConfig) {
     scheduler =
         new ScheduledThreadPoolExecutor(
             metaServerConfig.getMetaSchedulerPoolSize(), new NamedThreadFactory("MetaScheduler"));
 
     multiClusterConfigReloadExecutor =
         reportExecutors.computeIfAbsent(
-                MULTI_CLUSTER_CONFIG_RELOAD_EXECUTOR,
+            MULTI_CLUSTER_CONFIG_RELOAD_EXECUTOR,
             k ->
                 new MetricsableThreadPoolExecutor(
-                        MULTI_CLUSTER_CONFIG_RELOAD_EXECUTOR,
-                        multiClusterMetaServerConfig.getMultiClusterConfigReloadWorkerSize(),
-                        multiClusterMetaServerConfig.getMultiClusterConfigReloadWorkerSize(),
+                    MULTI_CLUSTER_CONFIG_RELOAD_EXECUTOR,
+                    multiClusterMetaServerConfig.getMultiClusterConfigReloadWorkerSize(),
+                    multiClusterMetaServerConfig.getMultiClusterConfigReloadWorkerSize(),
                     60,
                     TimeUnit.SECONDS,
                     new ArrayBlockingQueue<>(
-                            multiClusterMetaServerConfig.getMultiClusterConfigReloadMaxBufferSize()),
+                        multiClusterMetaServerConfig.getMultiClusterConfigReloadMaxBufferSize()),
                     new NamedThreadFactory(MULTI_CLUSTER_CONFIG_RELOAD_EXECUTOR, true),
                     (r, executor) -> {
                       String msg =
@@ -77,19 +76,19 @@ public class ExecutorManager {
                       LOGGER.error(msg);
                     }));
 
-      remoteClusterHandlerExecutor =
-            reportExecutors.computeIfAbsent(
+    remoteClusterHandlerExecutor =
+        reportExecutors.computeIfAbsent(
+            REMOTE_CLUSTER_HANDLER_EXECUTOR,
+            k ->
+                new MetricsableThreadPoolExecutor(
                     REMOTE_CLUSTER_HANDLER_EXECUTOR,
-                    k ->
-                            new MetricsableThreadPoolExecutor(
-                                    REMOTE_CLUSTER_HANDLER_EXECUTOR,
-                                    multiClusterMetaServerConfig.getRemoteClusterHandlerCoreSize(),
-                                    multiClusterMetaServerConfig.getRemoteClusterHandlerMaxSize(),
-                                    60,
-                                    TimeUnit.SECONDS,
-                                    new ArrayBlockingQueue<>(
-                                            multiClusterMetaServerConfig.getRemoteClusterHandlerMaxBufferSize()),
-                                    new NamedThreadFactory(REMOTE_CLUSTER_HANDLER_EXECUTOR, true)));
+                    multiClusterMetaServerConfig.getRemoteClusterHandlerCoreSize(),
+                    multiClusterMetaServerConfig.getRemoteClusterHandlerMaxSize(),
+                    60,
+                    TimeUnit.SECONDS,
+                    new ArrayBlockingQueue<>(
+                        multiClusterMetaServerConfig.getRemoteClusterHandlerMaxBufferSize()),
+                    new NamedThreadFactory(REMOTE_CLUSTER_HANDLER_EXECUTOR, true)));
   }
 
   public void startScheduler() {}

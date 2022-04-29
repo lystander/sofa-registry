@@ -67,7 +67,6 @@ import com.alipay.sofa.registry.server.shared.client.manager.BaseClientManagerSe
 import com.alipay.sofa.registry.server.shared.client.manager.ClientManagerService;
 import com.alipay.sofa.registry.server.shared.config.CommonConfig;
 import com.alipay.sofa.registry.server.shared.meta.MetaLeaderExchanger;
-import com.alipay.sofa.registry.server.shared.meta.MetaServerManager;
 import com.alipay.sofa.registry.server.shared.meta.MetaServerService;
 import com.alipay.sofa.registry.server.shared.providedata.FetchSystemPropertyService;
 import com.alipay.sofa.registry.server.shared.providedata.ProvideDataProcessor;

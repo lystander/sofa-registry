@@ -1,4 +1,19 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.meta.multi.cluster;
 
 import com.alipay.sofa.registry.common.model.GenericResponse;
@@ -9,7 +24,6 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.exchange.message.Response;
 import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.ExecutorManager;
-import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfig;
 import com.alipay.sofa.registry.server.meta.multi.cluster.remote.RemoteClusterMetaExchanger;
 import com.alipay.sofa.registry.server.meta.multi.cluster.remote.RemoteClusterSlotSyncRequest;
@@ -22,12 +36,11 @@ import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author xiaojian.xj
@@ -36,7 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTableSyncer {
 
   private static final Logger LOGGER =
-      LoggerFactory.getLogger("MULTI-CLUSTER", "[SlotTableSyncer]");
+      LoggerFactory.getLogger("MULTI-CLUSTER-CLIENT", "[SlotTableSyncer]");
 
   private Map<String, RemoteClusterSlotState> slotStateMap = Maps.newConcurrentMap();
 
@@ -67,12 +80,14 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
     remoteSlotSyncerExecutor =
         new KeyedThreadPoolExecutor(
             "REMOTE_SLOT_SYNCER_EXECUTOR",
-                multiClusterMetaServerConfig.getRemoteSlotSyncerExecutorPoolSize(),
-                multiClusterMetaServerConfig.getRemoteSlotSyncerExecutorQueueSize());
+            multiClusterMetaServerConfig.getRemoteSlotSyncerExecutorPoolSize(),
+            multiClusterMetaServerConfig.getRemoteSlotSyncerExecutorQueueSize());
   }
 
   @Override
-  public void becomeLeader() {}
+  public void becomeLeader() {
+    watcher.wakeup();
+  }
 
   @Override
   public void loseLeader() {}
@@ -82,7 +97,7 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
     @Override
     public void runUnthrowable() {
       try {
-        //if need reload sync info from db
+        // if need reload sync info from db
         if (needReloadConfig()) {
           executorManager
               .getMultiClusterConfigReloadExecutor()
@@ -91,6 +106,10 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
         }
       } catch (Throwable t) {
         LOGGER.error("refresh multi cluster config error.", t);
+      }
+
+      if (!metaLeaderService.amILeader()) {
+        return;
       }
 
       Set<String> remoteClusters = remoteClusterMetaExchanger.getAllRemoteClusters();
@@ -106,10 +125,12 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
 
         // check if exceed max fail count
         if (checkSyncFailCount(slotState.getFailCount())) {
-          remoteSlotSyncerExecutor.execute(dataCenter, () -> {
-            slotState.initFailCount();
-            remoteClusterMetaExchanger.resetLeader(dataCenter);
-          });
+          remoteSlotSyncerExecutor.execute(
+              dataCenter,
+              () -> {
+                slotState.initFailCount();
+                remoteClusterMetaExchanger.resetLeader(dataCenter);
+              });
           continue;
         }
 
@@ -128,9 +149,7 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
 
     private boolean checkSyncFailCount(long failCount) {
       if (failCount >= MAX_SYNC_FAIL_COUNT) {
-        LOGGER.error(
-                "sync failed [{}] times, prepare to reset leader from rest api.",
-                failCount);
+        LOGGER.error("sync failed [{}] times, prepare to reset leader from rest api.", failCount);
         return true;
       }
       return false;
@@ -155,7 +174,8 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
    * @return
    */
   private boolean needSync(KeyedTask<SlotSyncTask> task) {
-    return task == null || task.isOverAfter(multiClusterMetaServerConfig.getRemoteSlotSyncerMillis());
+    return task == null
+        || task.isOverAfter(multiClusterMetaServerConfig.getRemoteSlotSyncerMillis());
   }
 
   private static final class RemoteClusterSlotState {
@@ -244,7 +264,7 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
     if (!(response instanceof GenericResponse)) {
       state.incrementAndGetFailCount();
       throw new RuntimeException(
-          String.format("sync request: %s fail, resp: %s", request, response));
+          StringFormatter.format("sync request: {} fail, resp: {}", request, response));
     }
     GenericResponse<RemoteClusterSlotSyncResponse> syncRest =
         (GenericResponse<RemoteClusterSlotSyncResponse>) response.getResult();
@@ -255,33 +275,45 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
           request.getDataCenter(), new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader()));
       handleSyncResult(state, data);
       state.initFailCount();
-    } else {
-      if (data == null) {
-        // could no get data, trigger the counter inc
-        state.incrementAndGetFailCount();
+      return;
+    }
+    handleFailResponse(request, state, syncRest);
+  }
 
-        throw new RuntimeException(
-            String.format("sync request: %s fail, resp.data is null, msg: %s", request, response));
-      }
-      // heartbeat on follow, refresh leader;
-      // it will sync on leader next time;
-      if (!data.isSyncOnLeader()) {
-        remoteClusterMetaExchanger.learn(
-            request.getDataCenter(),
-            new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader()));
-        // refresh the leader from follower, but the info maybe is incorrect
-        // throw the exception to trigger the counter inc
-        // if the info is correct, the counter would be reset
-        throw new RuntimeException(
-            String.format(
-                "sync dataCenter: %s on metaServer.follower, leader is: %s ",
-                request.getDataCenter(),
-                new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader())));
-      } else {
-        throw new RuntimeException(
-            StringFormatter.format(
-                "sync dataCenter: %s on metaServer.leader error, msg={}, data={}", syncRest.getMessage(), data));
-      }
+  private void handleFailResponse(
+      RemoteClusterSlotSyncRequest request,
+      RemoteClusterSlotState state,
+      GenericResponse<RemoteClusterSlotSyncResponse> syncRest) {
+
+    RemoteClusterSlotSyncResponse data = syncRest.getData();
+
+    if (data == null) {
+      throw new RuntimeException(
+          StringFormatter.format(
+              "sync request: {} fail, resp.data is null, msg: {}", request, syncRest.getMessage()));
+    }
+    // heartbeat on follow, refresh leader;
+    // it will sync on leader next time;
+    if (!data.isSyncOnLeader()) {
+      remoteClusterMetaExchanger.learn(
+          request.getDataCenter(), new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader()));
+      // refresh the leader from follower, but the info maybe is incorrect
+      // throw the exception to trigger the counter inc
+      // if the info is correct, the counter would be reset
+      throw new RuntimeException(
+          StringFormatter.format(
+              "sync dataCenter: {} on metaServer.follower, leader is: {} ",
+              request.getDataCenter(),
+              new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader())));
+    } else if (!data.isLeaderWarmuped()) {
+      // remote leader not warmuped, just print log, not throw exception.
+      LOGGER.info("sync dataCenter: {}, remote leader:{} not warmuped.", request.getDataCenter());
+    } else {
+      throw new RuntimeException(
+          StringFormatter.format(
+              "sync dataCenter: {} on metaServer.leader error, msg={}, data={}",
+              syncRest.getMessage(),
+              data));
     }
   }
 

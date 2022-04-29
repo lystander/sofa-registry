@@ -1,45 +1,100 @@
-/**
- * Alipay.com Inc.
- * Copyright (c) 2004-2022 All Rights Reserved.
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.alipay.sofa.registry.server.meta.multi.cluster.remote;
 
+import com.alipay.sofa.registry.common.model.GenericResponse;
 import com.alipay.sofa.registry.common.model.Node.NodeType;
+import com.alipay.sofa.registry.common.model.slot.SlotTable;
+import com.alipay.sofa.registry.log.Logger;
+import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.Channel;
+import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.ExecutorManager;
-import com.alipay.sofa.registry.server.meta.remoting.handler.BaseMetaServerHandler;
+import com.alipay.sofa.registry.server.meta.metaserver.CurrentDcMetaServer;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
+import com.alipay.sofa.registry.server.shared.slot.SlotTableUtils;
+import com.alipay.sofa.registry.store.api.elector.AbstractLeaderElector.LeaderInfo;
+import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.concurrent.Executor;
-
 /**
- *
  * @author xiaojian.xj
  * @version : RemoteClusterSlotSyncHandler.java, v 0.1 2022年04月21日 21:54 xiaojian.xj Exp $
  */
-public class RemoteClusterSlotSyncHandler extends AbstractServerHandler<RemoteClusterSlotSyncRequest> {
+public class RemoteClusterSlotSyncHandler
+    extends AbstractServerHandler<RemoteClusterSlotSyncRequest> {
 
-    @Autowired
-    private ExecutorManager executorManager;
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger("MULTI-CLUSTER-SRV", "[SlotTableHandler]");
+  @Autowired private ExecutorManager executorManager;
 
-    @Override
-    public Class interest() {
-        return RemoteClusterSlotSyncRequest.class;
+  @Autowired private CurrentDcMetaServer currentDcMetaServer;
+
+  @Autowired private MetaLeaderService metaLeaderService;
+
+  @Override
+  public Class interest() {
+    return RemoteClusterSlotSyncRequest.class;
+  }
+
+  @Override
+  protected NodeType getConnectNodeType() {
+    return NodeType.META;
+  }
+
+  @Override
+  public GenericResponse<RemoteClusterSlotSyncResponse> doHandle(
+      Channel channel, RemoteClusterSlotSyncRequest request) {
+
+    LeaderInfo leaderInfo = metaLeaderService.getLeaderInfo();
+    // wrong leader
+    if (!metaLeaderService.amILeader()) {
+      LOGGER.error("request: {} sync on follower, leader is:{}", request, leaderInfo.getLeader());
+      return new GenericResponse<RemoteClusterSlotSyncResponse>()
+          .fillFailData(
+              RemoteClusterSlotSyncResponse.wrongLeader(
+                  leaderInfo.getLeader(), leaderInfo.getEpoch()));
     }
 
-    @Override
-    protected NodeType getConnectNodeType() {
-        return NodeType.META;
+    // leader not warmuped
+    if (!metaLeaderService.amIStableAsLeader()) {
+      LOGGER.error("request: {} sync on leader not warmuped.}", request);
+      return new GenericResponse<RemoteClusterSlotSyncResponse>()
+          .fillFailData(
+              RemoteClusterSlotSyncResponse.leaderNotWarmuped(
+                  leaderInfo.getLeader(), leaderInfo.getEpoch()));
     }
 
-    @Override
-    public Object doHandle(Channel channel, RemoteClusterSlotSyncRequest request) {
-        return null;
+    SlotTable slotTable = currentDcMetaServer.getSlotTable();
+
+    if (request.getSlotTableEpoch() > slotTable.getEpoch()) {
+      // it should not happen
+      LOGGER.error("request: {} slotEpoch > local.slotEpoch.", request, slotTable.getEpoch());
+    }
+    if (!SlotTableUtils.isValidSlotTable(slotTable)) {
+      return new GenericResponse<RemoteClusterSlotSyncResponse>()
+          .fillFailed("slot-table not valid, check meta-server log for detail");
     }
 
-    @Override
-    public Executor getExecutor() {
-        return executorManager.getRemoteClusterHandlerExecutor();
-    }
+    return null;
+  }
+
+  @Override
+  public Executor getExecutor() {
+    return executorManager.getRemoteClusterHandlerExecutor();
+  }
 }

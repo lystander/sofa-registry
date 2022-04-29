@@ -444,7 +444,9 @@ public class MetaServerConfiguration {
     }
 
     @Bean
-    public ExecutorManager executorManager(MetaServerConfig metaServerConfig, MultiClusterMetaServerConfig multiClusterMetaServerConfig) {
+    public ExecutorManager executorManager(
+        MetaServerConfig metaServerConfig,
+        MultiClusterMetaServerConfig multiClusterMetaServerConfig) {
       return new ExecutorManager(metaServerConfig, multiClusterMetaServerConfig);
     }
   }

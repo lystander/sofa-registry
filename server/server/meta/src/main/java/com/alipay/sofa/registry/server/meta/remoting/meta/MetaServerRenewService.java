@@ -49,7 +49,6 @@ public class MetaServerRenewService {
 
   @Autowired private DefaultCommonConfig defaultCommonConfig;
 
-
   private Renewer renewer;
 
   public synchronized void startRenewer(int intervalMs) {
@@ -95,7 +94,10 @@ public class MetaServerRenewService {
     final long startTimestamp = System.currentTimeMillis();
     try {
       GenericResponse resp =
-          (GenericResponse) localMetaExchanger.sendRequest(defaultCommonConfig.getDefaultClusterId(), heartbeatRequest).getResult();
+          (GenericResponse)
+              localMetaExchanger
+                  .sendRequest(defaultCommonConfig.getDefaultClusterId(), heartbeatRequest)
+                  .getResult();
 
       if (resp == null || !resp.isSuccess()) {
         success = false;

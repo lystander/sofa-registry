@@ -1,8 +1,22 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.meta.multi.cluster.remote;
 
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
-
 import java.io.Serializable;
 
 /**
@@ -21,6 +35,9 @@ public class RemoteClusterSlotSyncResponse implements Serializable {
   /** sync on meta leader */
   private final boolean syncOnLeader;
 
+  /** leader warmuped */
+  private final boolean leaderWarmuped;
+
   /** if slot table upgrade */
   private final boolean slotTableUpgrade;
 
@@ -31,28 +48,35 @@ public class RemoteClusterSlotSyncResponse implements Serializable {
       String metaLeader,
       long metaLeaderEpoch,
       boolean syncOnLeader,
+      boolean leaderWarmuped,
       boolean slotTableUpgrade,
       SlotTable slotTable) {
     this.metaLeader = metaLeader;
     this.metaLeaderEpoch = metaLeaderEpoch;
     this.syncOnLeader = syncOnLeader;
+    this.leaderWarmuped = leaderWarmuped;
     this.slotTableUpgrade = slotTableUpgrade;
     this.slotTable = slotTable;
   }
 
-  public static RemoteClusterSlotSyncResponse wrongLeader(
-      String metaLeader, long metaLeaderEpoch) {
-    return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, false, false, null);
+  public static RemoteClusterSlotSyncResponse wrongLeader(String metaLeader, long metaLeaderEpoch) {
+    return new RemoteClusterSlotSyncResponse(
+        metaLeader, metaLeaderEpoch, false, false, false, null);
   }
 
-  public static RemoteClusterSlotSyncResponse notUpgrade(
+  public static RemoteClusterSlotSyncResponse leaderNotWarmuped(
       String metaLeader, long metaLeaderEpoch) {
-    return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, true, true, null);
+    return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, true, false, false, null);
+  }
+
+  public static RemoteClusterSlotSyncResponse notUpgrade(String metaLeader, long metaLeaderEpoch) {
+    return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, true, true, false, null);
   }
 
   public static RemoteClusterSlotSyncResponse upgrade(
       String metaLeader, long metaLeaderEpoch, SlotTable slotTable) {
-    return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, true, true, slotTable);
+    return new RemoteClusterSlotSyncResponse(
+        metaLeader, metaLeaderEpoch, true, true, true, slotTable);
   }
 
   public boolean isSyncOnLeader() {
@@ -61,6 +85,10 @@ public class RemoteClusterSlotSyncResponse implements Serializable {
 
   public boolean isSlotTableUpgrade() {
     return slotTableUpgrade;
+  }
+
+  public boolean isLeaderWarmuped() {
+    return leaderWarmuped;
   }
 
   /**
@@ -92,12 +120,18 @@ public class RemoteClusterSlotSyncResponse implements Serializable {
 
   @Override
   public String toString() {
-    return "RemoteClusterSlotSyncResponse{" +
-            "metaLeader='" + metaLeader + '\'' +
-            ", metaLeaderEpoch=" + metaLeaderEpoch +
-            ", syncOnLeader=" + syncOnLeader +
-            ", slotTableUpgrade=" + slotTableUpgrade +
-            ", slotTable=" + slotTable +
-            '}';
+    return "RemoteClusterSlotSyncResponse{"
+        + "metaLeader='"
+        + metaLeader
+        + '\''
+        + ", metaLeaderEpoch="
+        + metaLeaderEpoch
+        + ", syncOnLeader="
+        + syncOnLeader
+        + ", slotTableUpgrade="
+        + slotTableUpgrade
+        + ", slotTable="
+        + slotTable
+        + '}';
   }
 }

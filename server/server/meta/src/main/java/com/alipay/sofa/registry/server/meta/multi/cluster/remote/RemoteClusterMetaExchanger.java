@@ -1,4 +1,19 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.meta.multi.cluster.remote;
 
 import com.alipay.sofa.registry.common.model.metaserver.MultiClusterSyncInfo;
@@ -6,19 +21,17 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.ChannelHandler;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
-import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfig;
 import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
 import com.alipay.sofa.registry.server.shared.meta.AbstractMetaLeaderExchanger;
 import com.alipay.sofa.registry.store.api.meta.MultiClusterSyncRepository;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author xiaojian.xj
@@ -26,7 +39,8 @@ import java.util.Set;
  */
 public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger("MULTI-CLUSTER", "[Exchanger]");
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger("MULTI-CLUSTER-CLIENT", "[Exchanger]");
 
   @Autowired private MultiClusterMetaServerConfig multiClusterMetaServerConfig;
 
@@ -58,14 +72,15 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
   protected Collection<String> getMetaServerDomains(String dataCenter) {
     MultiClusterSyncInfo info = syncConfigMap.get(dataCenter);
     if (info == null) {
-      // todo xiaojian.xj
-      throw new RuntimeException();
+      throw new RuntimeException(
+          String.format("dataCenter: {} meta domain config not exist.", dataCenter));
     }
     return Collections.singleton(info.getRemoteMetaAddress());
   }
 
   /**
    * update and remove cluster infos according to db
+   *
    * @return
    */
   public void refreshClusterInfos() {
@@ -86,6 +101,7 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
 
   /**
    * get all remote clusters
+   *
    * @return
    */
   public synchronized Set<String> getAllRemoteClusters() {

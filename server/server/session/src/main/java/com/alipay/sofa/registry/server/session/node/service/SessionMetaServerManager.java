@@ -25,9 +25,8 @@ import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
 import com.alipay.sofa.registry.server.shared.meta.AbstractMetaLeaderExchanger;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author chen.zhu

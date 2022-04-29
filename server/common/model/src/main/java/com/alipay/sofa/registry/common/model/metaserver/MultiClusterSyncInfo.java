@@ -126,11 +126,15 @@ public class MultiClusterSyncInfo {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) { return true; }
-    if (o == null || getClass() != o.getClass()) { return false; }
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     MultiClusterSyncInfo that = (MultiClusterSyncInfo) o;
-    return Objects.equal(dataCenter, that.dataCenter) && Objects.equal(remoteDataCenter,
-            that.remoteDataCenter);
+    return Objects.equal(dataCenter, that.dataCenter)
+        && Objects.equal(remoteDataCenter, that.remoteDataCenter);
   }
 
   @Override

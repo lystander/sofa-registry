@@ -34,6 +34,7 @@ import com.alipay.sofa.registry.server.shared.client.manager.ClientManagerServic
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
+import com.alipay.sofa.registry.store.api.elector.AbstractLeaderElector;
 import com.alipay.sofa.registry.store.api.elector.LeaderElector;
 import com.alipay.sofa.registry.store.api.meta.RecoverConfigRepository;
 import com.github.rholder.retry.Retryer;
@@ -149,11 +150,12 @@ public class MetaServerBootstrap {
 
       retryer.call(
           () -> {
+            AbstractLeaderElector.LeaderInfo leaderInfo = leaderElector.getLeaderInfo();
             LOGGER.info(
                 "[MetaBootstrap] retry elector meta leader: {}, epoch:{}",
-                leaderElector.getLeader(),
-                leaderElector.getLeaderEpoch());
-            return !StringUtils.isEmpty(leaderElector.getLeader());
+                leaderInfo.getLeader(),
+                leaderInfo.getEpoch());
+            return !StringUtils.isEmpty(leaderInfo.getLeader());
           });
 
       startScheduler();
@@ -162,20 +164,21 @@ public class MetaServerBootstrap {
       renewNode();
       retryer.call(
           () -> {
-            LeaderInfo leader = localMetaExchanger.getLeader(defaultCommonConfig.getDefaultClusterId());
+            LeaderInfo leader =
+                localMetaExchanger.getLeader(defaultCommonConfig.getDefaultClusterId());
             LOGGER.info(
                 "[MetaBootstrap] retry connect to meta leader: {}, client:{}",
-                    leader.getLeader(),
-                    localMetaExchanger.getClient());
+                leader.getLeader(),
+                localMetaExchanger.getClient());
             return StringUtil.isNotEmpty(leader.getLeader())
                 && localMetaExchanger.getClient() != null;
           });
 
       TaskMetrics.getInstance().registerBolt();
+      AbstractLeaderElector.LeaderInfo leaderInfo = leaderElector.getLeaderInfo();
+
       LOGGER.info(
-          "[MetaBootstrap] leader info: {}, [{}]",
-          leaderElector.getLeader(),
-          leaderElector.getLeaderEpoch());
+          "[MetaBootstrap] leader info: {}, [{}]", leaderInfo.getLeader(), leaderInfo.getEpoch());
       Runtime.getRuntime().addShutdownHook(new Thread(this::doStop));
     } catch (Throwable e) {
       LOGGER.error("Bootstrap Meta Server got error!", e);

@@ -29,7 +29,6 @@ import com.alipay.sofa.registry.store.api.meta.MultiClusterSyncRepository;
 import com.alipay.sofa.registry.store.api.meta.RecoverConfig;
 import java.util.List;
 import java.util.Set;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -38,7 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class MultiClusterSyncJdbcRepository implements MultiClusterSyncRepository, RecoverConfig {
 
-  private static final Logger LOG = LoggerFactory.getLogger("MULTI-CLUSTER", "[UpdateSyncInfo]");
+  private static final Logger LOG =
+      LoggerFactory.getLogger("MULTI-CLUSTER-CLIENT", "[UpdateSyncInfo]");
 
   @Autowired private MultiClusterSyncMapper multiClusterSyncMapper;
 

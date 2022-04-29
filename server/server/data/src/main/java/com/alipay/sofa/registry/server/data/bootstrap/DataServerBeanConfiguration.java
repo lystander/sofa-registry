@@ -47,7 +47,6 @@ import com.alipay.sofa.registry.server.data.timer.CacheCountTask;
 import com.alipay.sofa.registry.server.data.timer.CacheDigestTask;
 import com.alipay.sofa.registry.server.shared.config.CommonConfig;
 import com.alipay.sofa.registry.server.shared.meta.MetaLeaderExchanger;
-import com.alipay.sofa.registry.server.shared.meta.MetaServerManager;
 import com.alipay.sofa.registry.server.shared.providedata.FetchSystemPropertyService;
 import com.alipay.sofa.registry.server.shared.providedata.ProvideDataProcessor;
 import com.alipay.sofa.registry.server.shared.providedata.SystemPropertyProcessorManager;
