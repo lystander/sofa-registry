@@ -25,15 +25,12 @@ import com.alipay.sofa.registry.remoting.jersey.exchange.JerseyExchange;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfigBean;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfig;
-import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfigBean;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfigBeanProperty;
 import com.alipay.sofa.registry.server.meta.cleaner.AppRevisionCleaner;
 import com.alipay.sofa.registry.server.meta.cleaner.InterfaceAppsIndexCleaner;
 import com.alipay.sofa.registry.server.meta.lease.filter.DefaultForbiddenServerManager;
 import com.alipay.sofa.registry.server.meta.lease.filter.RegistryForbiddenServerManager;
-import com.alipay.sofa.registry.server.meta.multi.cluster.DefaultMultiClusterSlotTableSyncer;
-import com.alipay.sofa.registry.server.meta.multi.cluster.remote.RemoteClusterMetaExchanger;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultClientManagerService;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultProvideDataService;
 import com.alipay.sofa.registry.server.meta.provide.data.NodeOperatingService;
@@ -51,7 +48,21 @@ import com.alipay.sofa.registry.server.meta.remoting.handler.HeartbeatRequestHan
 import com.alipay.sofa.registry.server.meta.remoting.handler.RegistryForbiddenServerHandler;
 import com.alipay.sofa.registry.server.meta.remoting.meta.LocalMetaExchanger;
 import com.alipay.sofa.registry.server.meta.remoting.meta.MetaServerRenewService;
-import com.alipay.sofa.registry.server.meta.resource.*;
+import com.alipay.sofa.registry.server.meta.resource.BlacklistDataResource;
+import com.alipay.sofa.registry.server.meta.resource.CircuitBreakerResources;
+import com.alipay.sofa.registry.server.meta.resource.ClientManagerResource;
+import com.alipay.sofa.registry.server.meta.resource.CompressResource;
+import com.alipay.sofa.registry.server.meta.resource.HealthResource;
+import com.alipay.sofa.registry.server.meta.resource.MetaCenterResource;
+import com.alipay.sofa.registry.server.meta.resource.MetaDigestResource;
+import com.alipay.sofa.registry.server.meta.resource.MetaLeaderResource;
+import com.alipay.sofa.registry.server.meta.resource.ProvideDataResource;
+import com.alipay.sofa.registry.server.meta.resource.RecoverConfigResource;
+import com.alipay.sofa.registry.server.meta.resource.RegistryCoreOpsResource;
+import com.alipay.sofa.registry.server.meta.resource.ShutdownSwitchResource;
+import com.alipay.sofa.registry.server.meta.resource.SlotSyncResource;
+import com.alipay.sofa.registry.server.meta.resource.SlotTableResource;
+import com.alipay.sofa.registry.server.meta.resource.StopPushDataResource;
 import com.alipay.sofa.registry.server.meta.resource.filter.LeaderAwareFilter;
 import com.alipay.sofa.registry.server.meta.slot.status.SlotTableStatusService;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
@@ -64,6 +75,14 @@ import com.alipay.sofa.registry.util.DefaultExecutorFactory;
 import com.alipay.sofa.registry.util.NamedThreadFactory;
 import com.alipay.sofa.registry.util.OsUtils;
 import com.alipay.sofa.registry.util.PropertySplitter;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
@@ -72,13 +91,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 /**
  * @author shangyu.wh
@@ -402,26 +414,6 @@ public class MetaServerConfiguration {
     @Bean
     public RegistryCoreOpsResource registryCoreOpsResource() {
       return new RegistryCoreOpsResource();
-    }
-  }
-
-  @Configuration
-  public static class MultiClusterConfiguration {
-
-    @Bean
-    @ConditionalOnMissingBean
-    public MultiClusterMetaServerConfig multiClusterMetaServerConfig() {
-      return new MultiClusterMetaServerConfigBean();
-    }
-
-    @Bean
-    public DefaultMultiClusterSlotTableSyncer multiClusterSlotTableSyncer() {
-      return new DefaultMultiClusterSlotTableSyncer();
-    }
-
-    @Bean
-    public RemoteClusterMetaExchanger remoteClusterMetaExchanger() {
-      return new RemoteClusterMetaExchanger();
     }
   }
 

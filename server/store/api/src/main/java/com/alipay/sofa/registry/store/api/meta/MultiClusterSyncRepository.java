@@ -26,12 +26,20 @@ import java.util.Set;
 public interface MultiClusterSyncRepository {
 
   /**
-   * save or update with cas
+   * insert
    *
    * @param syncInfo
    * @return
    */
-  boolean put(MultiClusterSyncInfo syncInfo);
+  boolean insert(MultiClusterSyncInfo syncInfo);
+
+  /**
+   * update with cas
+   *
+   * @param syncInfo
+   * @return
+   */
+  boolean update(MultiClusterSyncInfo syncInfo, long expectVersion);
 
   /** query MultiClusterSyncInfo */
   public Set<MultiClusterSyncInfo> queryAll();

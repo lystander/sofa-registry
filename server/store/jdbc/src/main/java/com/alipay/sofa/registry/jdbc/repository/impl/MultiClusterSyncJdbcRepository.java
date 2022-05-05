@@ -72,10 +72,29 @@ public class MultiClusterSyncJdbcRepository implements MultiClusterSyncRepositor
   }
 
   @Override
-  public boolean put(MultiClusterSyncInfo syncInfo) {
-    return configer.put(
-        MultiClusterSyncConvertor.convert2Domain(
-            syncInfo, defaultCommonConfig.getClusterId(tableName())));
+  public boolean insert(MultiClusterSyncInfo syncInfo) {
+    try {
+      MultiClusterSyncDomain domain = MultiClusterSyncConvertor.convert2Domain(
+              syncInfo, defaultCommonConfig.getClusterId(tableName()));
+      MultiClusterSyncDomain exist = configer.queryExistVersion(domain);
+      if (exist != null) {
+        LOG.error("multi cluster sync info: {} exist when insert.", syncInfo);
+        return false;
+      }
+      //it will throw duplicate key exception when parallel invocation
+      configer.insert(domain);
+    } catch (Throwable t) {
+      LOG.error("multi cluster sync info: {} insert error", syncInfo, t);
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean update(MultiClusterSyncInfo syncInfo, long expectVersion) {
+    return configer.put(MultiClusterSyncConvertor.convert2Domain(
+            syncInfo, defaultCommonConfig.getClusterId(tableName())), expectVersion);
   }
 
   @Override

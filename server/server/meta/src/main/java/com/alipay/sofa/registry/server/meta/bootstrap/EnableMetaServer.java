@@ -26,5 +26,8 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(MetaServerConfiguration.class)
+@Import({
+    MetaServerConfiguration.class,
+    MultiClusterMetaServerConfiguration.class
+})
 public @interface EnableMetaServer {}

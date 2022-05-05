@@ -72,7 +72,7 @@ public class RemoteClusterSlotSyncHandler
 
     // leader not warmuped
     if (!metaLeaderService.amIStableAsLeader()) {
-      LOGGER.error("request: {} sync on leader not warmuped.}", request);
+      LOGGER.error("request: {} sync on leader not warmuped.", request);
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillFailData(
               RemoteClusterSlotSyncResponse.leaderNotWarmuped(
@@ -80,17 +80,26 @@ public class RemoteClusterSlotSyncHandler
     }
 
     SlotTable slotTable = currentDcMetaServer.getSlotTable();
-
-    if (request.getSlotTableEpoch() > slotTable.getEpoch()) {
-      // it should not happen
-      LOGGER.error("request: {} slotEpoch > local.slotEpoch.", request, slotTable.getEpoch());
-    }
     if (!SlotTableUtils.isValidSlotTable(slotTable)) {
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
-          .fillFailed("slot-table not valid, check meta-server log for detail");
+              .fillFailed("slot-table not valid, check meta-server log for detail");
     }
 
-    return null;
+    // check slot table epoch
+    if (request.getSlotTableEpoch() > slotTable.getEpoch()) {
+      // it should not happen, print error log and return false
+      LOGGER.error("[conflict]request: {} slotEpoch > local.slotEpoch: {}", request, slotTable.getEpoch());
+      return new GenericResponse<RemoteClusterSlotSyncResponse>().fillFailed("slotEpoch conflict");
+    } else if (request.getSlotTableEpoch() == slotTable.getEpoch()) {
+      return new GenericResponse<RemoteClusterSlotSyncResponse>()
+          .fillSucceed(
+              RemoteClusterSlotSyncResponse.notUpgrade(
+                  leaderInfo.getLeader(), leaderInfo.getEpoch()));
+    } else {
+      return new GenericResponse<RemoteClusterSlotSyncResponse>()
+          .fillSucceed(
+              RemoteClusterSlotSyncResponse.upgrade(leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable));
+    }
   }
 
   @Override

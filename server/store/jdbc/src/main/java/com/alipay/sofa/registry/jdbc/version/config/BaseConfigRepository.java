@@ -42,7 +42,7 @@ public abstract class BaseConfigRepository<T extends ConfigEntry> {
     try {
       T exist = queryExistVersion(entry);
       if (exist == null) {
-        // it should throw duplicate key exception when parallel invocation
+        // it will throw duplicate key exception when parallel invocation
         insert(entry);
         return true;
       }
