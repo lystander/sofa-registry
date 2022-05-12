@@ -31,7 +31,11 @@ import com.alipay.sofa.registry.server.session.slot.SlotTableCache;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
 import com.alipay.sofa.registry.server.shared.meta.AbstractMetaServerService;
 import com.google.common.annotations.VisibleForTesting;
+
+import java.util.Collections;
 import java.util.Set;
+
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -81,7 +85,8 @@ public class MetaServerServiceImpl extends AbstractMetaServerService<BaseHeartBe
             slotTableCache.getEpoch(),
             sessionServerConfig.getSessionServerDataCenter(),
             System.currentTimeMillis(),
-            SlotConfig.slotBasicInfo())
+            SlotConfig.slotBasicInfo(),
+            Collections.emptyMap())
         .setSlotTable(slotTableCache.getCurrentSlotTable());
   }
 

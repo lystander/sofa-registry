@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -39,8 +41,11 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
 
-  private static final Logger LOGGER =
+  private static final Logger MULTI_CLUSTER_CLIENT_LOGGER =
       LoggerFactory.getLogger("MULTI-CLUSTER-CLIENT", "[Exchanger]");
+
+  private static final Logger MULTI_CLUSTER_CONFIG_LOGGER =
+          LoggerFactory.getLogger("MULTI-CLUSTER-CONFIG");
 
   @Autowired private MultiClusterMetaServerConfig multiClusterMetaServerConfig;
 
@@ -50,7 +55,7 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
   private volatile Map<String, MultiClusterSyncInfo> syncConfigMap = Maps.newConcurrentMap();
 
   public RemoteClusterMetaExchanger() {
-    super(Exchange.REMOTE_CLUSTER_META, ExchangerModeEnum.REMOTE_DATA_CENTER, LOGGER);
+    super(Exchange.REMOTE_CLUSTER_META, ExchangerModeEnum.REMOTE_DATA_CENTER, MULTI_CLUSTER_CLIENT_LOGGER);
   }
 
   @Override
@@ -85,16 +90,18 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
    */
   public void refreshClusterInfos() {
     Set<MultiClusterSyncInfo> updates = multiClusterSyncRepository.queryAll();
-    Set<String> removes = Sets.difference(syncConfigMap.keySet(), updates);
+    Set<String> remoteDataCenters = updates.stream().map(MultiClusterSyncInfo::getRemoteDataCenter).collect(Collectors.toSet());
+    Set<String> removes = Sets.difference(syncConfigMap.keySet(), remoteDataCenters);
 
     synchronized (this) {
       for (MultiClusterSyncInfo update : updates) {
-        syncConfigMap.put(update.getDataCenter(), update);
+        syncConfigMap.put(update.getRemoteDataCenter(), update);
       }
 
       for (String remove : removes) {
         syncConfigMap.remove(remove);
         removeLeader(remove);
+        MULTI_CLUSTER_CONFIG_LOGGER.info("[refreshClusterInfos]remove remote: {} config.", remove);
       }
     }
   }

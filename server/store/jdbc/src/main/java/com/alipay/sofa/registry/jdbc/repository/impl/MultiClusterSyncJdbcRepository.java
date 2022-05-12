@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class MultiClusterSyncJdbcRepository implements MultiClusterSyncRepository, RecoverConfig {
 
   private static final Logger LOG =
-      LoggerFactory.getLogger("MULTI-CLUSTER-CLIENT", "[UpdateSyncInfo]");
+      LoggerFactory.getLogger("MULTI-CLUSTER-CONFIG", "[UpdateSyncInfo]");
 
   @Autowired private MultiClusterSyncMapper multiClusterSyncMapper;
 

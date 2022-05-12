@@ -505,8 +505,8 @@
         </RollingRandomAccessFile>
 
 
-        <RollingRandomAccessFile name="MULTI-CLUSTER-CLIENT-APPENDER" fileName="${META_LOG_HOME}/registry-multi-cluster-client.log"
-                                 filePattern="${META_LOG_HOME}/registry-multi-cluster-client.log.%d{yyyy-MM-dd}">
+        <RollingRandomAccessFile name="MULTI-CLUSTER-CONFIG-APPENDER" fileName="${META_LOG_HOME}/registry-multi-config.log"
+                                 filePattern="${META_LOG_HOME}/registry-multi-config.log.%d{yyyy-MM-dd}">
             <PatternLayout pattern="[%d{ISO8601}][%p][%t][%c{0}] - %m%n"/>
             <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
             <Policies>
@@ -514,14 +514,14 @@
             </Policies>
             <DefaultRolloverStrategy max="3">
                 <Delete basePath="${META_LOG_HOME}" maxDepth="2">
-                    <IfFileName glob="registry-multi-cluster-client.log.*" />
+                    <IfFileName glob="registry-multi-config.log.*" />
                     <IfLastModified age="10d" />
                 </Delete>
             </DefaultRolloverStrategy>
         </RollingRandomAccessFile>
 
-        <RollingRandomAccessFile name="MULTI-CLUSTER-SRV-APPENDER" fileName="${META_LOG_HOME}/registry-multi-cluster-srv.log"
-                                 filePattern="${META_LOG_HOME}/registry-multi-cluster-srv.log.%d{yyyy-MM-dd}">
+        <RollingRandomAccessFile name="MULTI-CLUSTER-CLIENT-APPENDER" fileName="${META_LOG_HOME}/registry-multi-client.log"
+                                 filePattern="${META_LOG_HOME}/registry-multi-client.log.%d{yyyy-MM-dd}">
             <PatternLayout pattern="[%d{ISO8601}][%p][%t][%c{0}] - %m%n"/>
             <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
             <Policies>
@@ -529,7 +529,22 @@
             </Policies>
             <DefaultRolloverStrategy max="3">
                 <Delete basePath="${META_LOG_HOME}" maxDepth="2">
-                    <IfFileName glob="registry-multi-cluster-srv.log.*" />
+                    <IfFileName glob="registry-multi-client.log.*" />
+                    <IfLastModified age="10d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="MULTI-CLUSTER-SRV-APPENDER" fileName="${META_LOG_HOME}/registry-multi-srv.log"
+                                 filePattern="${META_LOG_HOME}/registry-multi-srv.log.%d{yyyy-MM-dd}">
+            <PatternLayout pattern="[%d{ISO8601}][%p][%t][%c{0}] - %m%n"/>
+            <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="3">
+                <Delete basePath="${META_LOG_HOME}" maxDepth="2">
+                    <IfFileName glob="registry-multi-srv.log.*" />
                     <IfLastModified age="10d" />
                 </Delete>
             </DefaultRolloverStrategy>
@@ -689,6 +704,11 @@
 
         <logger name="CLIENT-MANAGER" level="${LOG_LEVEL}" additivity="false">
             <appender-ref ref="CLIENT-MANAGER-APPENDER"/>
+            <appender-ref ref="COMMON-ERROR-APPENDER"/>
+        </logger>
+
+        <logger name="MULTI-CLUSTER-CONFIG" level="${LOG_LEVEL}" additivity="false">
+            <appender-ref ref="MULTI-CLUSTER-CONFIG-APPENDER"/>
             <appender-ref ref="COMMON-ERROR-APPENDER"/>
         </logger>
 

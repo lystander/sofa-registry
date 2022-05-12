@@ -35,6 +35,7 @@ import com.alipay.sofa.registry.server.data.remoting.DataNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.SessionNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.metaserver.MetaServerServiceImpl;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
+import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;
 import com.alipay.sofa.registry.server.shared.slot.SlotTableRecorder;
 import com.alipay.sofa.registry.task.KeyedTask;
 import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
@@ -51,6 +52,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -68,6 +71,8 @@ public final class SlotManagerImpl implements SlotManager {
 
   private static final Logger SYNC_DIGEST_LOGGER = LoggerFactory.getLogger("SYNC-DIGEST");
 
+  private static final Logger DIFF_LOGGER = LoggerFactory.getLogger("SYNC-DIFF");
+
   private final SlotFunction slotFunction = SlotFunctionRegistry.getFunc();
 
   @Autowired private DataNodeExchanger dataNodeExchanger;
@@ -78,7 +83,8 @@ public final class SlotManagerImpl implements SlotManager {
 
   @Autowired private DataServerConfig dataServerConfig;
 
-  @Autowired private DatumStorage localDatumStorage;
+  @Resource
+  private DatumStorage localDatumStorage;
 
   @Autowired private DataChangeEventCenter dataChangeEventCenter;
 
@@ -325,7 +331,7 @@ public final class SlotManagerImpl implements SlotManager {
     observeFollowerAssignGauge(slotTableStates.table.getFollowerNum(ServerEnv.IP));
   }
 
-  private static final class SlotTableStates {
+  public static final class SlotTableStates {
     volatile SlotTable table = SlotTable.INIT;
     final Map<Integer, SlotState> slotStates = Maps.newConcurrentMap();
   }
@@ -446,7 +452,7 @@ public final class SlotManagerImpl implements SlotManager {
     if (slotState.isAnywaySuccess(sessions)) {
       // after migrated, force to update the version
       // make sure the version is newly than old leader's
-      Map<String, DatumVersion> versions = localDatumStorage.updateVersion(slotState.slotId);
+      Map<String, DatumVersion> versions = localDatumStorage.updateVersion(dataServerConfig.getLocalDataCenter(), slotState.slotId);
       slotState.migrated = true;
       // versions has update, notify change
       dataChangeEventCenter.onChange(
@@ -593,7 +599,7 @@ public final class SlotManagerImpl implements SlotManager {
 
     if (!CollectionUtils.isEmpty(doSyncSet)) {
       final Map<String, Map<String, DatumSummary>> datumSummary =
-          localDatumStorage.getDatumSummary(slotState.slotId, doSyncSet);
+          localDatumStorage.getDatumSummary(dataServerConfig.getLocalDataCenter(), slotState.slotId, doSyncSet);
       for (String sessionIp : doSyncSet) {
         Map<String, DatumSummary> summary = datumSummary.get(sessionIp);
         syncSession(slotState, sessionIp, summary, syncSessionIntervalMs, slotTableEpoch);
@@ -643,7 +649,7 @@ public final class SlotManagerImpl implements SlotManager {
     if (syncLeaderTask == null || syncLeaderTask.isOverAfter(syncLeaderIntervalMs)) {
       // sync leader no need to notify event
       SlotDiffSyncer syncer =
-          new SlotDiffSyncer(dataServerConfig, localDatumStorage, null, sessionLeaseManager);
+          new SlotDiffSyncer(dataServerConfig, localDatumStorage, null, sessionLeaseManager, DIFF_LOGGER);
       SyncContinues continues =
           new SyncContinues() {
             @Override
@@ -652,7 +658,7 @@ public final class SlotManagerImpl implements SlotManager {
             }
           };
       SyncLeaderTask task =
-          new SyncLeaderTask(slotTableEpoch, slot, syncer, dataNodeExchanger, continues);
+          new SyncLeaderTask(dataServerConfig.getLocalDataCenter(), dataServerConfig.getLocalDataCenter(), slotTableEpoch, slot, syncer, dataNodeExchanger, continues, SYNC_DIGEST_LOGGER, SYNC_ERROR_LOGGER);
       slotState.syncLeaderTask = syncLeaderExecutor.execute(slot.getId(), task);
     } else if (!syncLeaderTask.isFinished()) {
       if (System.currentTimeMillis() - syncLeaderTask.getCreateTime() > 5000) {
@@ -670,7 +676,7 @@ public final class SlotManagerImpl implements SlotManager {
       boolean migrate) {
     SlotDiffSyncer syncer =
         new SlotDiffSyncer(
-            dataServerConfig, localDatumStorage, dataChangeEventCenter, sessionLeaseManager);
+            dataServerConfig, localDatumStorage, dataChangeEventCenter, sessionLeaseManager, DIFF_LOGGER);
     SyncContinues continues =
         new SyncContinues() {
           @Override
@@ -858,58 +864,6 @@ public final class SlotManagerImpl implements SlotManager {
     }
   }
 
-  private static final class SyncLeaderTask implements Runnable {
-    final long startTimestamp = System.currentTimeMillis();
-    final long slotTableEpoch;
-    final Slot slot;
-    final SlotDiffSyncer syncer;
-    final DataNodeExchanger dataNodeExchanger;
-    final SyncContinues continues;
-
-    SyncLeaderTask(
-        long slotTableEpoch,
-        Slot slot,
-        SlotDiffSyncer syncer,
-        DataNodeExchanger dataNodeExchanger,
-        SyncContinues continues) {
-      this.slotTableEpoch = slotTableEpoch;
-      this.slot = slot;
-      this.syncer = syncer;
-      this.dataNodeExchanger = dataNodeExchanger;
-      this.continues = continues;
-    }
-
-    @Override
-    public void run() {
-      boolean success = false;
-      try {
-        success =
-            syncer.syncSlotLeader(
-                slot.getId(), slot.getLeader(), dataNodeExchanger, slotTableEpoch, continues);
-        if (!success) {
-          throw new RuntimeException("sync leader failed");
-        }
-      } catch (Throwable e) {
-        SYNC_ERROR_LOGGER.error(
-            "[syncLeader]failed: {}, slot={}", slot.getLeader(), slot.getId(), e);
-        // rethrow silence exception, notify the task is failed
-        throw TaskErrorSilenceException.INSTANCE;
-      } finally {
-        SYNC_DIGEST_LOGGER.info(
-            "{},L,{},{},span={}",
-            success ? 'Y' : 'N',
-            slot.getId(),
-            slot.getLeader(),
-            System.currentTimeMillis() - startTimestamp);
-      }
-    }
-
-    @Override
-    public String toString() {
-      return "SyncLeader{epoch=" + slotTableEpoch + ", slot=" + slot + '}';
-    }
-  }
-
   @Override
   public void triggerUpdateSlotTable(long expectEpoch) {
     // TODO
@@ -937,11 +891,11 @@ public final class SlotManagerImpl implements SlotManager {
   }
 
   private void listenAdd(Slot s) {
-    slotChangeListeners.forEach(listener -> listener.onSlotAdd(s.getId(), getRole(s)));
+    slotChangeListeners.forEach(listener -> listener.onSlotAdd(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
   }
 
   private void listenRemove(Slot s) {
-    slotChangeListeners.forEach(listener -> listener.onSlotRemove(s.getId(), getRole(s)));
+    slotChangeListeners.forEach(listener -> listener.onSlotRemove(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
   }
 
   private static boolean localIsLeader(Slot slot) {

@@ -19,7 +19,10 @@ package com.alipay.sofa.registry.util;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
+
+import com.alipay.sofa.common.log.AssertUtil;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 /**
  * @author qian.lqlq
@@ -39,6 +42,12 @@ public final class ParaCheckUtil {
     if (param == null) {
       throw new IllegalArgumentException(
           StringFormatter.format("{} is not allowed to be null", paraName));
+    }
+  }
+
+  public static void assertTrue(boolean expression, String message) {
+    if (!expression) {
+      throw new IllegalArgumentException(message);
     }
   }
 

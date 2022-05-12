@@ -125,7 +125,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
           // cache the dataInfoId
           final String cacheDataInfoId = WordCache.getWordCache(dataInfoId);
           final DatumVersion v =
-              localDatumStorage.createEmptyDatumIfAbsent(cacheDataInfoId, dataCenter);
+              localDatumStorage.createEmptyDatumIfAbsent(dataCenter, cacheDataInfoId);
           if (v != null) {
             ret.put(dataInfoId, v);
           }

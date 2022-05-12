@@ -70,7 +70,7 @@ public class LocalDatumStorageTest {
     Publisher publisher = TestBaseUtils.createTestPublisher(testDataId);
     v = storage.put(publisher);
     Assert.assertNull(v);
-    v = storage.createEmptyDatumIfAbsent(testDataInfoId, testDc);
+    v = storage.createEmptyDatumIfAbsent(testDc, testDataInfoId);
     Assert.assertNull(v);
     v = storage.put(publisher.getDataInfoId(), Lists.newArrayList(publisher));
     Assert.assertNull(v);

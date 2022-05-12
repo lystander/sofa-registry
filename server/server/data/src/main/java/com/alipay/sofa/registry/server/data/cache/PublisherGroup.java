@@ -381,6 +381,7 @@ public final class PublisherGroup {
     for (Map.Entry<String, PublisherEnvelope> e : pubMap.entrySet()) {
       PublisherEnvelope envelope = e.getValue();
       RegisterVersion v = envelope.getVersionIfPub();
+      // v = null when envelope is unpub
       if (v == null) {
         continue;
       }

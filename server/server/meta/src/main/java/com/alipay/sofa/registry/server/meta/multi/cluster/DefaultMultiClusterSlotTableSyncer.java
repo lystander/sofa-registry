@@ -37,6 +37,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
@@ -91,6 +92,15 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
 
   @Override
   public void loseLeader() {}
+
+  @Override
+  public Map<String, SlotTable> getMultiClusterSlotTable() {
+    Map<String, SlotTable> result = Maps.newHashMapWithExpectedSize(slotStateMap.size());
+    for (Entry<String, RemoteClusterSlotState> entry : slotStateMap.entrySet()) {
+      result.put(entry.getKey(), entry.getValue().slotTable);
+    }
+    return result;
+  }
 
   private final class SlotTableWatcher extends WakeUpLoopRunnable {
 

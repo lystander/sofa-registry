@@ -48,59 +48,42 @@ public final class LocalDatumStorage implements DatumStorage {
   private final SlotFunction slotFunction = SlotFunctionRegistry.getFunc();
   private final Map<Integer, PublisherGroups> publisherGroupsMap = Maps.newConcurrentMap();
 
-  @Autowired private DataServerConfig dataServerConfig;
+  @Autowired
+  private DataServerConfig dataServerConfig;
 
-  private PublisherGroups getPublisherGroups(String dataInfoId) {
-    final Integer slotId = slotFunction.slotOf(dataInfoId);
-    PublisherGroups groups = publisherGroupsMap.get(slotId);
-    if (groups == null) {
-      LOGGER.warn("[nullGroups] {}, {}", slotId, dataInfoId);
-    }
-    return groups;
-  }
+  private final BaseDatumStorage storage = new BaseDatumStorage(dataServerConfig.getLocalDataCenter(), LOGGER);
 
-  private PublisherGroups getPublisherGroups(int slotId) {
-    PublisherGroups groups = publisherGroupsMap.get(slotId);
-    if (groups == null) {
-      LOGGER.warn("[nullGroups] {}", slotId);
-    }
-    return groups;
+  @Override
+  public Datum get(String dataCenter, String dataInfoId) {
+    return storage.get(dataCenter, dataInfoId);
   }
 
   @Override
-  public Datum get(String dataInfoId) {
-    final PublisherGroups groups = getPublisherGroups(dataInfoId);
-    return groups == null ? null : groups.getDatum(dataInfoId);
+  public DatumVersion getVersion(String dataCenter, String dataInfoId) {
+    return storage.getVersion(dataCenter, dataInfoId);
   }
 
   @Override
-  public DatumVersion getVersion(String dataInfoId) {
-    PublisherGroups groups = getPublisherGroups(dataInfoId);
-    return groups == null ? null : groups.getVersion(dataInfoId);
+  public Map<String, DatumVersion> getVersions(String dataCenter, int slotId, Collection<String> targetDataInfoIds) {
+    return storage.getVersions(dataCenter, slotId, targetDataInfoIds);
   }
 
   @Override
-  public Map<String, DatumVersion> getVersions(int slotId, Collection<String> targetDataInfoIds) {
-    PublisherGroups groups = getPublisherGroups(slotId);
-    return groups == null ? Collections.emptyMap() : groups.getVersions(targetDataInfoIds);
-  }
-
-  @Override
-  public Map<String, Datum> getAll() {
+  public Map<String, Datum> getAll(String dataCenter) {
     Map<String, Datum> m = Maps.newHashMapWithExpectedSize(128);
     publisherGroupsMap.values().forEach(g -> m.putAll(g.getAllDatum()));
     return m;
   }
 
   @Override
-  public Map<String, List<Publisher>> getAllPublisher() {
+  public Map<String, List<Publisher>> getAllPublisher(String dataCenter) {
     Map<String, List<Publisher>> m = Maps.newHashMapWithExpectedSize(128);
     publisherGroupsMap.values().forEach(g -> m.putAll(g.getAllPublisher()));
     return m;
   }
 
   @Override
-  public Map<String, Integer> getPubCount() {
+  public Map<String, Integer> getPubCount(String dataCenter) {
     Map<String, Integer> map = Maps.newHashMapWithExpectedSize(128);
     publisherGroupsMap.values().forEach(g -> map.putAll(g.getPubCount()));
     return map;
@@ -114,7 +97,7 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, Publisher>> getPublishers(int slotId) {
+  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId) {
     PublisherGroups groups = getPublisherGroups(slotId);
     if (groups == null) {
       return Collections.emptyMap();
@@ -137,14 +120,14 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public DatumVersion createEmptyDatumIfAbsent(String dataInfoId, String dataCenter) {
+  public DatumVersion createEmptyDatumIfAbsent(String dataCenter, String dataInfoId) {
     PublisherGroups groups = getPublisherGroups(dataInfoId);
     return groups == null ? null : groups.createGroupIfAbsent(dataInfoId).getVersion();
   }
 
   @Override
   public Map<String, DatumVersion> clean(
-      int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
+          String dataCenter, int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
     // clean by sessionProcessId, the sessionProcessId could not be null
     ParaCheckUtil.checkNotNull(sessionProcessId, "sessionProcessId");
     PublisherGroups groups = getPublisherGroups(slotId);
@@ -156,25 +139,26 @@ public final class LocalDatumStorage implements DatumStorage {
 
   // only for http testapi
   @Override
-  public DatumVersion remove(String dataInfoId, ProcessId sessionProcessId) {
+  public DatumVersion remove(String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
     // the sessionProcessId is null when the call from sync leader
     PublisherGroups groups = getPublisherGroups(dataInfoId);
     return groups == null ? null : groups.remove(dataInfoId, sessionProcessId);
   }
 
   @Override
-  public DatumVersion put(String dataInfoId, List<Publisher> publishers) {
+  public DatumVersion put(String dataCenter, String dataInfoId, List<Publisher> publishers) {
     PublisherGroups groups = getPublisherGroups(dataInfoId);
     return groups == null ? null : groups.put(dataInfoId, publishers);
   }
 
   @Override
-  public DatumVersion put(Publisher publisher) {
-    return put(publisher.getDataInfoId(), Collections.singletonList(publisher));
+  public DatumVersion put(String dataCenter, Publisher publisher) {
+    return put(dataCenter, publisher.getDataInfoId(), Collections.singletonList(publisher));
   }
 
   @Override
   public DatumVersion remove(
+      String dataCenter,
       String dataInfoId,
       ProcessId sessionProcessId,
       Map<String, RegisterVersion> removedPublishers) {
@@ -184,7 +168,7 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, DatumSummary>> getDatumSummary(int slotId, Set<String> sessions) {
+  public Map<String, Map<String, DatumSummary>> getDatumSummary(String dataCenter, int slotId, Set<String> sessions) {
     final PublisherGroups groups = publisherGroupsMap.get(slotId);
     if (groups != null) {
       return groups.getSummary(sessions);
@@ -203,7 +187,7 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumSummary> getDatumSummary(int slotId) {
+  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId) {
     final PublisherGroups groups = publisherGroupsMap.get(slotId);
     return groups != null ? groups.getAllSummary() : Collections.emptyMap();
   }
@@ -214,21 +198,21 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Set<ProcessId> getSessionProcessIds() {
+  public Set<ProcessId> getSessionProcessIds(String dataCenter) {
     Set<ProcessId> ids = Sets.newHashSet();
     publisherGroupsMap.values().forEach(g -> ids.addAll(g.getSessionProcessIds()));
     return ids;
   }
 
   @Override
-  public Map<String, Integer> compact(long tombstoneTimestamp) {
+  public Map<String, Integer> compact(String dataCenter, long tombstoneTimestamp) {
     Map<String, Integer> compacts = Maps.newHashMap();
     publisherGroupsMap.values().forEach(g -> compacts.putAll(g.compact(tombstoneTimestamp)));
     return compacts;
   }
 
   @Override
-  public int tombstoneNum() {
+  public int tombstoneNum(String dataCenter) {
     int count = 0;
     for (PublisherGroups groups : publisherGroupsMap.values()) {
       count += groups.tombstoneNum();
@@ -237,7 +221,7 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumVersion> updateVersion(int slotId) {
+  public Map<String, DatumVersion> updateVersion(String dataCenter, int slotId) {
     PublisherGroups groups = publisherGroupsMap.get(slotId);
     if (groups == null) {
       return Collections.emptyMap();
@@ -246,7 +230,7 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public DatumVersion updateVersion(String dataInfoId) {
+  public DatumVersion updateVersion(String dataCenter, String dataInfoId) {
     PublisherGroups groups = getPublisherGroups(dataInfoId);
     return groups == null ? null : groups.updateVersion(dataInfoId);
   }
@@ -254,14 +238,14 @@ public final class LocalDatumStorage implements DatumStorage {
   private final class SlotListener implements SlotChangeListener {
 
     @Override
-    public void onSlotAdd(int slotId, Slot.Role role) {
+    public void onSlotAdd(String dataCenter, int slotId, Slot.Role role) {
       publisherGroupsMap.computeIfAbsent(
           slotId,
           k -> {
-            PublisherGroups groups = new PublisherGroups(dataServerConfig.getLocalDataCenter());
+            PublisherGroups groups = new PublisherGroups(dataCenter);
             LOGGER.info(
                 "{} add publisherGroup {}, role={}, slotNum={}",
-                dataServerConfig.getLocalDataCenter(),
+                dataCenter,
                 slotId,
                 role,
                 publisherGroupsMap.size());
@@ -270,25 +254,15 @@ public final class LocalDatumStorage implements DatumStorage {
     }
 
     @Override
-    public void onSlotRemove(int slotId, Slot.Role role) {
+    public void onSlotRemove(String dataCenter, int slotId, Slot.Role role) {
       boolean removed = publisherGroupsMap.remove(slotId) != null;
       LOGGER.info(
           "{}, remove publisherGroup {}, removed={}, role={}, slotNum={}",
-          dataServerConfig.getLocalDataCenter(),
+          dataCenter,
           slotId,
           removed,
           role,
           publisherGroupsMap.size());
     }
-  }
-
-  @VisibleForTesting
-  public void setDataServerConfig(DataServerConfig dataServerConfig) {
-    this.dataServerConfig = dataServerConfig;
-  }
-
-  @VisibleForTesting
-  public DataServerConfig getDataServerConfig() {
-    return dataServerConfig;
   }
 }

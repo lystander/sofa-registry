@@ -46,27 +46,27 @@ public class DatumCache {
    * @return
    */
   public Datum get(String dataCenter, String dataInfoId) {
-    return localDatumStorage.get(dataInfoId);
+    return localDatumStorage.get(dataCenter, dataInfoId);
   }
 
   public void clean(String dataCenter, String dataInfoId) {
-    localDatumStorage.remove(dataInfoId, null);
+    localDatumStorage.remove(dataCenter, dataInfoId, null);
   }
 
   public DatumVersion getVersion(String dataCenter, String dataInfoId) {
-    // TODO only get local datacenter
-    DatumVersion version = localDatumStorage.getVersion(dataInfoId);
+    // TODO xiaojian.xj only get local datacenter
+    DatumVersion version = localDatumStorage.getVersion(dataCenter, dataInfoId);
     return version;
   }
 
   public Map<String, DatumVersion> getVersions(
       String dataCenter, int slotId, Collection<String> targetDataInfoIds) {
     // local
-    return localDatumStorage.getVersions(slotId, targetDataInfoIds);
+    return localDatumStorage.getVersions(dataCenter, slotId, targetDataInfoIds);
   }
 
   public DatumVersion updateVersion(String dataCenter, String dataInfoId) {
-    return localDatumStorage.updateVersion(dataInfoId);
+    return localDatumStorage.updateVersion(dataCenter, dataInfoId);
   }
 
   /**
@@ -76,20 +76,20 @@ public class DatumCache {
    */
   public Map<String, Map<String, Datum>> getAll() {
     Map<String, Map<String, Datum>> datumMap = new HashMap<>();
-    datumMap.put(dataServerConfig.getLocalDataCenter(), localDatumStorage.getAll());
+    datumMap.put(dataServerConfig.getLocalDataCenter(), localDatumStorage.getAll(dataServerConfig.getLocalDataCenter()));
     return datumMap;
   }
 
   // get without datum.version, it's more efficient than getDatum
   public Map<String, Map<String, List<Publisher>>> getAllPublisher() {
     Map<String, Map<String, List<Publisher>>> datumMap = new HashMap<>();
-    datumMap.put(dataServerConfig.getLocalDataCenter(), localDatumStorage.getAllPublisher());
+    datumMap.put(dataServerConfig.getLocalDataCenter(), localDatumStorage.getAllPublisher(dataServerConfig.getLocalDataCenter()));
     return datumMap;
   }
 
   public Map<String, Map<String, Integer>> getPubCount() {
     Map<String, Map<String, Integer>> map = Maps.newHashMap();
-    map.put(dataServerConfig.getLocalDataCenter(), localDatumStorage.getPubCount());
+    map.put(dataServerConfig.getLocalDataCenter(), localDatumStorage.getPubCount(dataServerConfig.getLocalDataCenter()));
     return map;
   }
 

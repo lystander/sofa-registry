@@ -56,6 +56,12 @@ public class RemoteClusterSlotSyncHandler
     return NodeType.META;
   }
 
+  /**
+   * todo xiaojian.xj filter return leaders, ignore followers
+   * @param channel
+   * @param request
+   * @return
+   */
   @Override
   public GenericResponse<RemoteClusterSlotSyncResponse> doHandle(
       Channel channel, RemoteClusterSlotSyncRequest request) {
@@ -87,7 +93,7 @@ public class RemoteClusterSlotSyncHandler
 
     // check slot table epoch
     if (request.getSlotTableEpoch() > slotTable.getEpoch()) {
-      // it should not happen, print error log and return false
+      // it should not happen, print error log and return false, restart meta leader;
       LOGGER.error("[conflict]request: {} slotEpoch > local.slotEpoch: {}", request, slotTable.getEpoch());
       return new GenericResponse<RemoteClusterSlotSyncResponse>().fillFailed("slotEpoch conflict");
     } else if (request.getSlotTableEpoch() == slotTable.getEpoch()) {
@@ -96,6 +102,7 @@ public class RemoteClusterSlotSyncHandler
               RemoteClusterSlotSyncResponse.notUpgrade(
                   leaderInfo.getLeader(), leaderInfo.getEpoch()));
     } else {
+      LOGGER.info("sync request epoch:{} < newSlotTableEpoch:{}, leader:{}, leaderEpoch:{}, slotTable upgrade: {}", request, slotTable.getEpoch(), leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable);
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillSucceed(
               RemoteClusterSlotSyncResponse.upgrade(leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable));

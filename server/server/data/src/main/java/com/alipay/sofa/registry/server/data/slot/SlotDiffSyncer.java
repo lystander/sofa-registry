@@ -36,6 +36,7 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.exchange.RequestException;
 import com.alipay.sofa.registry.remoting.exchange.message.Response;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
+import com.alipay.sofa.registry.server.data.bootstrap.MultiClusterDataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
@@ -55,22 +56,24 @@ import java.util.*;
  */
 public final class SlotDiffSyncer {
   private static final Logger LOGGER = LoggerFactory.getLogger(SlotDiffSyncer.class);
-  private static final Logger DIFF_LOGGER = LoggerFactory.getLogger("SYNC-DIFF");
+  private final Logger DIFF_LOGGER;
   private final DataServerConfig dataServerConfig;
 
   private final DatumStorage datumStorage;
   private final DataChangeEventCenter dataChangeEventCenter;
   private final SessionLeaseManager sessionLeaseManager;
 
-  SlotDiffSyncer(
+  public SlotDiffSyncer(
       DataServerConfig dataServerConfig,
       DatumStorage datumStorage,
       DataChangeEventCenter dataChangeEventCenter,
-      SessionLeaseManager sessionLeaseManager) {
+      SessionLeaseManager sessionLeaseManager,
+      Logger diffLogger) {
     this.dataServerConfig = dataServerConfig;
     this.datumStorage = datumStorage;
     this.dataChangeEventCenter = dataChangeEventCenter;
     this.sessionLeaseManager = sessionLeaseManager;
+    this.DIFF_LOGGER = diffLogger;
   }
 
   DataSlotDiffPublisherResult processSyncPublisherResp(
@@ -310,7 +313,7 @@ public final class SlotDiffSyncer {
   public boolean syncSession(
       int slotId,
       String sessionIp,
-      SessionNodeExchanger exchanger,
+      ClientSideExchanger exchanger,
       long slotTableEpoch,
       SyncContinues continues,
       Map<String, DatumSummary> summary)
@@ -337,14 +340,15 @@ public final class SlotDiffSyncer {
   }
 
   public boolean syncSlotLeader(
+      String dataCenter,
       int slotId,
       String slotLeaderIp,
-      DataNodeExchanger exchanger,
+      ClientSideExchanger exchanger,
       long slotTableEpoch,
       SyncContinues continues)
       throws RequestException {
     ParaCheckUtil.checkNotBlank(slotLeaderIp, "slotLeaderIp");
-    Map<String, DatumSummary> summary = datumStorage.getDatumSummary(slotId);
+    Map<String, DatumSummary> summary = datumStorage.getDatumSummary(dataCenter, slotId);
     return sync(
         slotId,
         slotLeaderIp,

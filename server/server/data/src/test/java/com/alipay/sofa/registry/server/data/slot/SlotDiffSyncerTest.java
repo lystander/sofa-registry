@@ -548,7 +548,7 @@ public class SlotDiffSyncerTest {
       storage.put(p2.get(0).getDataInfoId(), p2);
       storage.put(p3.get(0).getDataInfoId(), p3);
       // empty d4
-      storage.createEmptyDatumIfAbsent(p4.get(0).getDataInfoId(), dc);
+      storage.createEmptyDatumIfAbsent(dc, p4.get(0).getDataInfoId());
       ms.p1 = p1;
       ms.p2 = p2;
       ms.p3 = p3;

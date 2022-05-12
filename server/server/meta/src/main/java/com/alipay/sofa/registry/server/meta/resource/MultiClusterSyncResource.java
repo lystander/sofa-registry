@@ -42,7 +42,7 @@ import javax.ws.rs.core.MediaType;
 public class MultiClusterSyncResource {
 
   private static final Logger LOG =
-      LoggerFactory.getLogger("MULTI-CLUSTER-CLIENT", "[MultiClusterSyncResource]");
+      LoggerFactory.getLogger("MULTI-CLUSTER-CONFIG", "[MultiClusterSyncResource]");
 
   @Autowired private MultiClusterSyncRepository multiClusterSyncRepository;
 
