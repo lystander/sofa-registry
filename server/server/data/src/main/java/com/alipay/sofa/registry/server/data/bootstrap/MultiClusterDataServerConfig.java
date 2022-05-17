@@ -22,4 +22,14 @@ public interface MultiClusterDataServerConfig {
     int getRemoteSyncSlotLeaderExecutorThreadSize();
 
     int getRemoteSyncSlotLeaderExecutorQueueSize();
+
+    int getSyncSlotLowWaterMark();
+
+    int getSyncSlotHighWaterMark();
+
+    int getRemoteSlotSyncRequestExecutorMinPoolSize();
+
+    int getRemoteSlotSyncRequestExecutorMaxPoolSize();
+
+    int getRemoteSlotSyncRequestExecutorQueueSize();
 }

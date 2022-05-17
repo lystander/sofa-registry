@@ -147,12 +147,12 @@ public class BatchPutDataHandler extends AbstractDataHandler<BatchRequest> {
     return localDatumStorage.put(publisher);
   }
 
-  public Map<String, DatumVersion> dopHandle(
+  public Map<String, DatumVersion> doHandle(
       ClientOffPublisher request, ProcessId sessionProcessId) {
     Map<String, Map<String, RegisterVersion>> publisherMap = request.getPublisherMap();
     Map<String, DatumVersion> ret = Maps.newHashMapWithExpectedSize(publisherMap.size());
     for (Map.Entry<String, Map<String, RegisterVersion>> e : publisherMap.entrySet()) {
-      DatumVersion version = localDatumStorage.remove(e.getKey(), sessionProcessId, e.getValue());
+      DatumVersion version = localDatumStorage.removePublishers(dataServerConfig.getLocalDataCenter(), e.getKey(), sessionProcessId, e.getValue());
       if (version != null) {
         ret.put(e.getKey(), version);
       }

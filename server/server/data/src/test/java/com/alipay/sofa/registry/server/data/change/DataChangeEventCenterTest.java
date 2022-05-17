@@ -27,7 +27,7 @@ import com.alipay.sofa.registry.remoting.bolt.exchange.BoltExchange;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.data.TestBaseUtils;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumCache;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -42,15 +42,15 @@ import org.mockito.Mockito;
 public class DataChangeEventCenterTest {
   private static final String DC = "testDc";
   private DataChangeEventCenter center;
-  private DataServerConfig dataServerConfig;
-  private DatumCache datumCache;
+  private DataServerConfig      dataServerConfig;
+  private DatumStorageDecorator datumStorageDecorator;
 
   private void setCenter() {
     this.center = new DataChangeEventCenter();
     this.dataServerConfig = TestBaseUtils.newDataConfig(DC);
-    this.datumCache = TestBaseUtils.newLocalDatumCache(DC, true);
+    this.datumStorageDecorator = TestBaseUtils.newLocalDatumCache(DC, true);
     center.setDataServerConfig(dataServerConfig);
-    center.setDatumCache(datumCache);
+    center.setDatumCache(datumStorageDecorator);
   }
 
   @Test
@@ -91,7 +91,7 @@ public class DataChangeEventCenterTest {
 
     Publisher pub = TestBaseUtils.createTestPublisher("testDataId");
     center.onChange(Lists.newArrayList(pub.getDataInfoId()), DataChangeType.PUT, DC);
-    datumCache.getLocalDatumStorage().put(pub);
+    datumStorageDecorator.getLocalDatumStorage().put(pub);
     // npe
     Assert.assertTrue(center.handleChanges(channelsMap));
 
@@ -314,7 +314,7 @@ public class DataChangeEventCenterTest {
         .thenThrow(new UnsupportedOperationException());
 
     Publisher pub = TestBaseUtils.createTestPublisher("testDataId");
-    datumCache.getLocalDatumStorage().put(pub);
+    datumStorageDecorator.getLocalDatumStorage().put(pub);
 
     center.init();
     this.dataServerConfig.setNotifyRetryBackoffMillis(1);

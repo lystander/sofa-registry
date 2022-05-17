@@ -4,15 +4,22 @@
  */
 package com.alipay.sofa.registry.server.data.bootstrap;
 
+import com.alipay.sofa.registry.server.data.multi.cluster.dataserver.handler.MultiClusterSlotDiffDigestRequestHandler;
+import com.alipay.sofa.registry.server.data.multi.cluster.dataserver.handler.MultiClusterSlotDiffPublisherRequestHandler;
 import com.alipay.sofa.registry.server.data.multi.cluster.exchanger.RemoteDataNodeExchanger;
 import com.alipay.sofa.registry.server.data.multi.cluster.executor.MultiClusterExecutorManager;
 import com.alipay.sofa.registry.server.data.multi.cluster.slot.MultiClusterSlotManager;
 import com.alipay.sofa.registry.server.data.multi.cluster.slot.MultiClusterSlotManagerImpl;
 import com.alipay.sofa.registry.server.data.multi.cluster.storage.MultiClusterDatumStorage;
+import com.alipay.sofa.registry.server.data.remoting.dataserver.handler.SlotFollowerDiffPublisherRequestHandler;
+import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  *
@@ -44,6 +51,24 @@ public class MultiClusterDataConfiguration {
         public RemoteDataNodeExchanger remoteDataNodeExchanger() {
             return new RemoteDataNodeExchanger();
         }
+
+        @Bean(name = "remoteDataServerHandlers")
+        public Collection<AbstractServerHandler> remoteDataServerHandlers() {
+            Collection<AbstractServerHandler> list = new ArrayList<>();
+            list.add(multiClusterSlotDiffDigestRequestHandler());
+            list.add(multiClusterSlotDiffPublisherRequestHandler());
+            return list;
+        }
+
+        @Bean
+        public AbstractServerHandler multiClusterSlotDiffDigestRequestHandler() {
+            return new MultiClusterSlotDiffDigestRequestHandler();
+        }
+
+        @Bean
+        public AbstractServerHandler multiClusterSlotDiffPublisherRequestHandler() {
+            return new MultiClusterSlotDiffPublisherRequestHandler();
+        }
     }
 
     @Configuration
@@ -53,11 +78,6 @@ public class MultiClusterDataConfiguration {
         @ConditionalOnMissingBean
         public MultiClusterSlotManager multiClusterSlotManager() {
             return new MultiClusterSlotManagerImpl();
-        }
-
-        @Bean
-        public MultiClusterDatumStorage multiClusterDatumStorage() {
-            return new MultiClusterDatumStorage();
         }
     }
 }

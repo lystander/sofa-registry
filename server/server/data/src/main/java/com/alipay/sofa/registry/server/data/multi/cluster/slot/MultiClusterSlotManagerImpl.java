@@ -3,15 +3,18 @@ package com.alipay.sofa.registry.server.data.multi.cluster.slot;
 
 import com.alipay.sofa.registry.common.model.multi.cluster.RemoteSlotTableStatus;
 import com.alipay.sofa.registry.common.model.slot.Slot;
+import com.alipay.sofa.registry.common.model.slot.Slot.Role;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.bootstrap.MultiClusterDataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.multi.cluster.exchanger.RemoteDataNodeExchanger;
 import com.alipay.sofa.registry.server.data.multi.cluster.executor.MultiClusterExecutorManager;
 import com.alipay.sofa.registry.server.data.multi.cluster.loggers.Loggers;
+import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.alipay.sofa.registry.server.data.slot.SlotDiffSyncer;
 import com.alipay.sofa.registry.server.data.slot.SyncContinues;
 import com.alipay.sofa.registry.server.data.slot.SyncLeaderTask;
@@ -22,14 +25,18 @@ import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -43,7 +50,8 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
 
   private static final Logger MULTI_CLUSTER_CLIENT_LOGGER = Loggers.MULTI_CLUSTER_CLIENT_LOGGER;
 
-  private static final Logger MULTI_CLUSTER_SYNC_DIGEST_LOGGER = Loggers.MULTI_CLUSTER_SYNC_DIGEST_LOGGER;
+  private static final Logger MULTI_CLUSTER_SYNC_DIGEST_LOGGER =
+      Loggers.MULTI_CLUSTER_SYNC_DIGEST_LOGGER;
 
   @Autowired private DataServerConfig dataServerConfig;
 
@@ -51,11 +59,13 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
 
   @Autowired private DataChangeEventCenter dataChangeEventCenter;
 
-  @Resource private DatumStorage multiClusterDatumStorage;
+  @Resource private DatumStorageDecorator datumStorageDecorator;
 
   @Autowired private RemoteDataNodeExchanger remoteDataNodeExchanger;
 
   @Autowired private MultiClusterExecutorManager multiClusterExecutorManager;
+
+  @Autowired private SyncSlotAcceptorManager syncSlotAcceptorManager;
 
   private static final Map<String, RemoteSlotTableStates> remoteSlotTableStates =
       Maps.newConcurrentMap();
@@ -65,18 +75,22 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
 
   private final RemoteSyncingWatchDog watchDog = new RemoteSyncingWatchDog();
 
+  private final Set<SlotChangeListener> slotChangeListeners = Sets.newHashSet();
+
   @PostConstruct
   public void init() {
     initSlotChangeListener();
-    initExecutors();
     ConcurrentUtils.createDaemonThread("RemoteSyncingWatchDog", watchDog).start();
   }
 
-  private void initExecutors() {}
+  void initSlotChangeListener() {
+    SlotChangeListener l = datumStorageDecorator.getSlotChangeListener(false);
+    if (l != null) {
+      this.slotChangeListeners.add(l);
+    }
+  }
 
-  void initSlotChangeListener() {}
-
-  private static final class RemoteSlotTableStates {
+  private final class RemoteSlotTableStates {
     private final ReentrantReadWriteLock updateLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = updateLock.writeLock();
     private final ReentrantReadWriteLock.ReadLock readLock = updateLock.readLock();
@@ -96,6 +110,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
       writeLock.lock();
       try {
         for (Slot slot : update.getSlots()) {
+          listenAdd(dataCenter, slot);
           RemoteSlotStates state =
               slotStates.computeIfAbsent(
                   slot.getId(),
@@ -113,7 +128,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
             final Slot slot = e.getValue().slot;
             it.remove();
             // first remove the slot for GetData Access check, then clean the data
-            listenRemove(slot);
+            listenRemove(dataCenter, slot);
             MultiClusterSlotMetrics.observeRemoteLeaderSyncingFinish(dataCenter, slot.getId());
             MULTI_CLUSTER_SLOT_TABLE.info("dataCenter={} remove slot, slot={}", dataCenter, slot);
           }
@@ -130,7 +145,15 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
       return true;
     }
 
-    private void listenRemove(Slot s) {}
+    private void listenAdd(String dataCenter, Slot s) {
+      slotChangeListeners.forEach(
+          listener -> listener.onSlotAdd(dataCenter, s.getId(), Role.Leader));
+    }
+
+    private void listenRemove(String dataCenter, Slot s) {
+      slotChangeListeners.forEach(
+          listener -> listener.onSlotRemove(dataCenter, s.getId(), Role.Leader));
+    }
   }
 
   private static final class RemoteSlotStates {
@@ -161,7 +184,8 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
         this.syncRemoteTask = null;
       }
       this.slot = update;
-      MULTI_CLUSTER_SLOT_TABLE.info("remoteDataCenter={}, update slot={}", remoteDataCenter, update);
+      MULTI_CLUSTER_SLOT_TABLE.info(
+          "remoteDataCenter={}, update slot={}", remoteDataCenter, update);
     }
 
     void completeSyncRemoteLeaderTask() {
@@ -351,9 +375,10 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
       SlotDiffSyncer syncer =
           new SlotDiffSyncer(
               dataServerConfig,
-              multiClusterDatumStorage,
+                  datumStorageDecorator,
               dataChangeEventCenter,
               null,
+              syncSlotAcceptorManager,
               MULTI_CLUSTER_CLIENT_LOGGER);
       SyncContinues continues = () -> isLeader(slot.getLeader());
       SyncLeaderTask task =
@@ -365,6 +390,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
               syncer,
               remoteDataNodeExchanger,
               continues,
+              syncSlotAcceptorManager,
               MULTI_CLUSTER_SYNC_DIGEST_LOGGER,
               MULTI_CLUSTER_SYNC_DIGEST_LOGGER);
       state.syncRemoteTask =

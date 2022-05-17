@@ -27,27 +27,27 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class MultiClusterMetaServerConfigBean implements MultiClusterMetaServerConfig {
   public static final String PREFIX = "meta.remote.server";
 
-  private int remoteMetaServerPort = 9617;
+  private volatile int remoteMetaServerPort = 9617;
 
-  private int remoteClusterRpcTimeoutMillis = 3000;
+  private volatile int remoteClusterRpcTimeoutMillis = 3000;
 
-  private int multiClusterConfigReloadMillis = 60 * 1000;
+  private volatile int multiClusterConfigReloadMillis = 60 * 1000;
 
-  private int multiClusterConfigReloadWorkerSize = 1;
+  private volatile int multiClusterConfigReloadWorkerSize = 1;
 
-  private int multiClusterConfigReloadMaxBufferSize = 5;
+  private volatile int multiClusterConfigReloadMaxBufferSize = 5;
 
-  private int remoteSlotSyncerMillis = 1000;
+  private volatile int remoteSlotSyncerMillis = 1000;
 
-  private int remoteSlotSyncerExecutorPoolSize = 10;
+  private volatile int remoteSlotSyncerExecutorPoolSize = 10;
 
-  private int remoteSlotSyncerExecutorQueueSize = 100;
+  private volatile int remoteSlotSyncerExecutorQueueSize = 100;
 
-  private int remoteClusterHandlerCoreSize = OsUtils.getCpuCount() * 3;
+  private volatile int remoteClusterHandlerCoreSize = OsUtils.getCpuCount() * 3;
 
-  private int remoteClusterHandlerMaxSize = OsUtils.getCpuCount() * 6;
+  private volatile int remoteClusterHandlerMaxSize = OsUtils.getCpuCount() * 6;
 
-  private int remoteClusterHandlerMaxBufferSize = 100;
+  private volatile int remoteClusterHandlerMaxBufferSize = 100;
 
   @Override
   public int getRemoteSlotSyncerMillis() {

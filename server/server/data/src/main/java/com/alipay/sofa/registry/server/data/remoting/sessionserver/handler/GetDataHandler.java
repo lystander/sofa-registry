@@ -27,7 +27,7 @@ import com.alipay.sofa.registry.compress.CompressUtils;
 import com.alipay.sofa.registry.compress.Compressor;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
-import com.alipay.sofa.registry.server.data.cache.DatumCache;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.data.providedata.CompressDatumService;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
@@ -44,8 +44,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: GetDataProcessor.java, v 0.1 2017-12-01 15:48 qian.lqlq Exp $
  */
 public class GetDataHandler extends AbstractDataHandler<GetDataRequest> {
-  private static final Logger LOGGER = DataLog.GET_LOGGER;
-  @Autowired private DatumCache datumCache;
+  private static final Logger                LOGGER = DataLog.GET_LOGGER;
+  @Autowired private   DatumStorageDecorator datumStorageDecorator;
 
   @Autowired private ThreadPoolExecutor getDataProcessorExecutor;
 
@@ -75,7 +75,7 @@ public class GetDataHandler extends AbstractDataHandler<GetDataRequest> {
       GET_DATUM_N_COUNTER.inc();
       return SlotAccessGenericResponse.failedResponse(slotAccessBefore);
     }
-    final Datum datum = datumCache.get(dataCenter, dataInfoId);
+    final Datum datum = datumStorageDecorator.get(dataCenter, dataInfoId);
     // important. double check the slot access. avoid the case:
     // 1. the slot is leader, the first check pass
     // 2. slot moved and data cleaned
@@ -125,8 +125,8 @@ public class GetDataHandler extends AbstractDataHandler<GetDataRequest> {
   }
 
   @VisibleForTesting
-  void setDatumCache(DatumCache datumCache) {
-    this.datumCache = datumCache;
+  void setDatumCache(DatumStorageDecorator datumStorageDecorator) {
+    this.datumStorageDecorator = datumStorageDecorator;
   }
 
   @VisibleForTesting

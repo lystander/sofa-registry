@@ -17,25 +17,67 @@
 package com.alipay.sofa.registry.common.model.slot;
 
 import com.alipay.sofa.registry.common.model.dataserver.DatumDigest;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-11-05 14:24 yuzhi.lyz Exp $
  */
 public class DataSlotDiffDigestRequest implements Serializable {
+
+  private final boolean syncLocal;
+  private final String localDataCenter;
   private final long slotTableEpoch;
   // all dataInfoIds, diff by digest
   private final Map<String, DatumDigest> datumDigest;
   private final int slotId;
 
+  private final SlotDiffAcceptType acceptType;
+
+  private final SyncSlotAcceptorManager acceptorManager;
+
   public DataSlotDiffDigestRequest(
-      long slotTableEpoch, int slotId, Map<String, DatumDigest> datumDigest) {
+      boolean syncLocal,
+      String localDataCenter,
+      long slotTableEpoch,
+      int slotId,
+      Map<String, DatumDigest> datumDigest,
+      SlotDiffAcceptType acceptType,
+      SyncSlotAcceptorManager acceptorManager) {
+    this.syncLocal = syncLocal;
+    this.localDataCenter = localDataCenter;
     this.slotTableEpoch = slotTableEpoch;
     this.slotId = slotId;
     this.datumDigest = datumDigest == null ? Collections.emptyMap() : datumDigest;
+    this.acceptType = acceptType;
+    this.acceptorManager = acceptorManager;
+  }
+
+  public static DataSlotDiffDigestRequest buildLocalRequest(
+      String localDataCenter, long slotTableEpoch, int slotId, Map<String, DatumDigest> datumDigest) {
+    return new DataSlotDiffDigestRequest(
+        true, localDataCenter, slotTableEpoch, slotId, datumDigest, SlotDiffAcceptType.ALL, null);
+  }
+
+  public static DataSlotDiffDigestRequest buildRemoteRequest(
+      String localDataCenter,
+      long slotTableEpoch,
+      int slotId,
+      Map<String, DatumDigest> datumDigest,
+      SyncSlotAcceptorManager acceptorManager) {
+    return new DataSlotDiffDigestRequest(
+            false,
+            localDataCenter,
+        slotTableEpoch,
+        slotId,
+        datumDigest,
+        SlotDiffAcceptType.ACCEPTORS,
+            acceptorManager);
   }
 
   /**
@@ -60,6 +102,36 @@ public class DataSlotDiffDigestRequest implements Serializable {
     return Collections.unmodifiableMap(datumDigest);
   }
 
+  public boolean isSyncLocal() {
+    return syncLocal;
+  }
+  /**
+   * Getter method for property <tt>acceptType</tt>.
+   *
+   * @return property value of acceptType
+   */
+  public SlotDiffAcceptType getAcceptType() {
+    return acceptType;
+  }
+
+  /**
+   * Getter method for property <tt>acceptorManager</tt>.
+   *
+   * @return property value of acceptorManager
+   */
+  public SyncSlotAcceptorManager getAcceptorManager() {
+    return acceptorManager;
+  }
+
+  /**
+   * Getter method for property <tt>localDataCenter</tt>.
+   *
+   * @return property value of localDataCenter
+   */
+  public String getLocalDataCenter() {
+    return localDataCenter;
+  }
+
   @Override
   public String toString() {
     return "DiffDigest{"
@@ -70,5 +142,11 @@ public class DataSlotDiffDigestRequest implements Serializable {
         + ", digests="
         + datumDigest.size()
         + '}';
+  }
+
+  public static enum SlotDiffAcceptType {
+    ALL,
+    ACCEPTORS,
+    ;
   }
 }

@@ -29,7 +29,7 @@ import com.alipay.sofa.registry.remoting.Server;
 import com.alipay.sofa.registry.remoting.bolt.BoltChannel;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumCache;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.data.remoting.metaserver.MetaServerServiceImpl;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Lists;
@@ -59,7 +59,8 @@ public class DataDigestResource {
 
   @Autowired DataServerConfig dataServerConfig;
 
-  @Autowired DatumCache datumCache;
+  @Autowired
+  DatumStorageDecorator datumStorageDecorator;
 
   @GET
   @Path("datum/query")
@@ -80,7 +81,7 @@ public class DataDigestResource {
     }
     String dataInfoId = DataInfo.toDataInfoId(dataId, instanceId, group);
     Map<String, Datum> retList = new HashMap<>();
-    retList.put(dataCenter, datumCache.get(dataCenter, dataInfoId));
+    retList.put(dataCenter, datumStorageDecorator.get(dataCenter, dataInfoId));
     return retList;
   }
 
@@ -93,7 +94,7 @@ public class DataDigestResource {
       map.forEach(
           (clientConnectId, sessionConnectId) -> {
             ConnectId connectId = ConnectId.of(clientConnectId, sessionConnectId);
-            Map<String, Publisher> publisherMap = datumCache.getByConnectId(connectId);
+            Map<String, Publisher> publisherMap = datumStorageDecorator.getByConnectId(connectId);
             if (publisherMap != null && !publisherMap.isEmpty()) {
               ret.put(connectId.toString(), publisherMap);
             }
@@ -113,7 +114,7 @@ public class DataDigestResource {
     StringBuilder sb = new StringBuilder("CacheDigest");
     try {
 
-      Map<String, Map<String, Datum>> allMap = datumCache.getAll();
+      Map<String, Map<String, Datum>> allMap = datumStorageDecorator.getLocalAll();
       if (!allMap.isEmpty()) {
         for (Entry<String, Map<String, Datum>> dataCenterEntry : allMap.entrySet()) {
           String dataCenter = dataCenterEntry.getKey();
@@ -189,7 +190,7 @@ public class DataDigestResource {
   @Produces(MediaType.APPLICATION_JSON)
   public Collection<String> getDataInfoIdList() {
     try {
-      Map<String, Map<String, Datum>> allMap = datumCache.getAll();
+      Map<String, Map<String, Datum>> allMap = datumStorageDecorator.getLocalAll();
       if (CollectionUtils.isEmpty(allMap)) {
         return Collections.emptyList();
       }

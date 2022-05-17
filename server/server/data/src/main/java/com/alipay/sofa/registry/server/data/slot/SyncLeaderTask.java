@@ -5,6 +5,7 @@
 package com.alipay.sofa.registry.server.data.slot;
 
 import com.alipay.sofa.registry.common.model.slot.Slot;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;
 import com.alipay.sofa.registry.task.TaskErrorSilenceException;
@@ -27,7 +28,8 @@ public class SyncLeaderTask implements Runnable {
     private final Slot                slot;
     private final SlotDiffSyncer      syncer;
     private final ClientSideExchanger clientSideExchanger;
-    private final SyncContinues       continues;
+    private final SyncContinues           continues;
+    private final SyncSlotAcceptorManager acceptorManager;
 
     private final Logger SYNC_DIGEST_LOGGER;
     private final Logger SYNC_ERROR_LOGGER;
@@ -41,6 +43,7 @@ public class SyncLeaderTask implements Runnable {
             SlotDiffSyncer syncer,
             ClientSideExchanger clientSideExchanger,
             SyncContinues continues,
+            SyncSlotAcceptorManager acceptorManager,
             Logger syncDigestLogger,
             Logger syncErrorLogger) {
         this.localDataCenter = localDataCenter;
@@ -52,6 +55,7 @@ public class SyncLeaderTask implements Runnable {
         this.syncer = syncer;
         this.clientSideExchanger = clientSideExchanger;
         this.continues = continues;
+        this.acceptorManager = acceptorManager;
 
         this.SYNC_DIGEST_LOGGER = syncDigestLogger;
         this.SYNC_ERROR_LOGGER = syncErrorLogger;
@@ -63,19 +67,20 @@ public class SyncLeaderTask implements Runnable {
         try {
             success =
                     syncer.syncSlotLeader(
-                            syncDataCenter, slot.getId(), slot.getLeader(), clientSideExchanger, slotTableEpoch, continues);
+                            localDataCenter, syncDataCenter, syncLocalDataCenter, slot.getId(), slot.getLeader(), clientSideExchanger, slotTableEpoch, continues, acceptorManager);
             if (!success) {
                 throw new RuntimeException(StringFormatter.format("{} sync leader failed", syncDataCenter));
             }
         } catch (Throwable e) {
             SYNC_ERROR_LOGGER.error(
-                    "[syncLeader]syncDataCenter={}, failed: {}, slot={}", syncDataCenter, slot.getLeader(), slot.getId(), e);
+                    "[syncLeader]syncLocal={}, syncDataCenter={}, failed={}, slot={}", syncDataCenter, syncDataCenter, slot.getLeader(), slot.getId(), e);
             // rethrow silence exception, notify the task is failed
             throw TaskErrorSilenceException.INSTANCE;
         } finally {
             SYNC_DIGEST_LOGGER.info(
-                    "[syncLeader]{},{},{},{},span={}",
+                    "[syncLeader]{},{},{},{},{},span={}",
                     success ? 'Y' : 'N',
+                    syncLocalDataCenter ? 'Y' : 'N',
                     syncDataCenter,
                     slot.getId(),
                     slot.getLeader(),

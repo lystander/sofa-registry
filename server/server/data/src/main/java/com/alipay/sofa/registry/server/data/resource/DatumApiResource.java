@@ -29,7 +29,7 @@ import com.alipay.sofa.registry.common.model.store.UnPublisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumCache;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
@@ -37,6 +37,7 @@ import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.google.common.collect.Lists;
 import java.util.*;
+import javax.annotation.Resource;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -59,9 +60,11 @@ public class DatumApiResource {
 
   @Autowired DataServerConfig dataServerConfig;
 
-  @Autowired DatumCache datumCache;
+  @Autowired
+  DatumStorageDecorator datumStorageDecorator;
 
-  @Autowired DatumStorage localDatumStorage;
+  @Resource
+  DatumStorage localDatumStorage;
 
   @Autowired AbstractServerHandler batchPutDataHandler;
 
@@ -82,7 +85,7 @@ public class DatumApiResource {
       return CommonResponse.buildFailedResponse(e.getMessage());
     }
 
-    Datum datum = datumCache.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+    Datum datum = datumStorageDecorator.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
     if (datum == null) {
       return getNotFoundResponse(datumParam);
     }
@@ -98,7 +101,7 @@ public class DatumApiResource {
       dataCenter = dataServerConfig.getLocalDataCenter();
     }
 
-    Map<String, Map<String, Integer>> pubCount = datumCache.getPubCount();
+    Map<String, Map<String, Integer>> pubCount = datumStorageDecorator.getLocalPubCount();
     return pubCount.get(dataCenter);
   }
 
@@ -118,13 +121,13 @@ public class DatumApiResource {
       return CommonResponse.buildFailedResponse(e.getMessage());
     }
 
-    Datum datum = datumCache.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+    Datum datum = datumStorageDecorator.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
     if (datum == null) {
       return getNotFoundResponse(datumParam);
     }
-    datumCache.clean(datumParam.getDataCenter(), datumParam.getDataInfoId());
+    datumStorageDecorator.cleanLocal(datumParam.getDataCenter(), datumParam.getDataInfoId());
     // get the newly datum
-    datum = datumCache.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+    datum = datumStorageDecorator.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
     return createResponse(datum);
   }
 
@@ -147,7 +150,7 @@ public class DatumApiResource {
       validateAndCorrect(datumParam);
 
       // build pub
-      Datum datum = datumCache.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+      Datum datum = datumStorageDecorator.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
       if (datum == null) {
         return getNotFoundResponse(datumParam);
       }
@@ -163,7 +166,7 @@ public class DatumApiResource {
       batchRequest.setSlotLeaderEpoch(slot.getLeaderEpoch());
       batchPutDataHandler.doHandle(null, batchRequest);
       // get the newly datum
-      datum = datumCache.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+      datum = datumStorageDecorator.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
       return createResponse(datum);
     } catch (RuntimeException e) {
       LOGGER.error(e.getMessage(), e);
@@ -185,7 +188,7 @@ public class DatumApiResource {
       validateAndCorrect(datumParam);
 
       // build pub
-      Datum datum = datumCache.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+      Datum datum = datumStorageDecorator.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
       if (datum == null) {
         return getNotFoundResponse(datumParam);
       }
@@ -201,7 +204,7 @@ public class DatumApiResource {
       batchRequest.setSlotLeaderEpoch(slot.getLeaderEpoch());
       batchPutDataHandler.doHandle(null, batchRequest);
       // get the newly datum
-      datum = datumCache.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+      datum = datumStorageDecorator.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
       return createResponse(datum);
     } catch (RuntimeException e) {
       LOGGER.error(e.getMessage(), e);

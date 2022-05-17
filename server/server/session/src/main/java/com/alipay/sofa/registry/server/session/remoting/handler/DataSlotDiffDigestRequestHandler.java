@@ -89,7 +89,7 @@ public class DataSlotDiffDigestRequestHandler
 
     DataSlotDiffDigestResult result =
         DataSlotDiffUtils.diffDigestResult(digestMap, existingPublishers);
-    DataSlotDiffUtils.logDiffResult(result, targetSlot);
+    DataSlotDiffUtils.logDiffResult(result, targetSlot, LOGGER);
     return result;
   }
 

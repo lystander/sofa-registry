@@ -46,6 +46,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -60,7 +62,7 @@ public final class SessionLeaseManager {
   private static final int MIN_LEASE_SEC = 5;
 
   @Autowired DataServerConfig dataServerConfig;
-  @Autowired DatumStorage localDatumStorage;
+  @Resource DatumStorage     localDatumStorage;
 
   @Autowired Exchange boltExchange;
 
@@ -158,7 +160,7 @@ public final class SessionLeaseManager {
             // deadlineTs, ensure that the cleanup ends within the expected time
             final long deadlineTimestamp = start + deadlineMillis;
             CleanLeaseContinues continues = new CleanLeaseContinues(deadlineTimestamp);
-            Map<String, DatumVersion> versionMap = localDatumStorage.clean(i, p, continues);
+            Map<String, DatumVersion> versionMap = localDatumStorage.cleanBySessionId(i, p, continues);
             if (!versionMap.isEmpty()) {
               dataChangeEventCenter.onChange(
                   versionMap.keySet(), DataChangeType.LEASE, dataServerConfig.getLocalDataCenter());

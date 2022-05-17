@@ -20,7 +20,7 @@ import com.alipay.sofa.registry.jdbc.config.JdbcConfiguration;
 import com.alipay.sofa.registry.remoting.bolt.exchange.BoltExchange;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.remoting.jersey.exchange.JerseyExchange;
-import com.alipay.sofa.registry.server.data.cache.DatumCache;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.cache.LocalDatumStorage;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
@@ -119,14 +119,8 @@ public class DataServerBeanConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public DatumCache datumCache() {
-      return new DatumCache();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public DatumStorage localDatumStorage() {
-      return new LocalDatumStorage();
+    public DatumStorageDecorator datumStorageDecorator(DataServerConfig dataServerConfig) {
+      return new DatumStorageDecorator(dataServerConfig);
     }
 
     @Bean

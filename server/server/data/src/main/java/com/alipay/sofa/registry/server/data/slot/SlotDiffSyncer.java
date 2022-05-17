@@ -29,6 +29,7 @@ import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherResult;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.WordCache;
 import com.alipay.sofa.registry.log.Logger;
@@ -36,15 +37,15 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.exchange.RequestException;
 import com.alipay.sofa.registry.remoting.exchange.message.Response;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.bootstrap.MultiClusterDataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
-import com.alipay.sofa.registry.server.data.remoting.DataNodeExchanger;
-import com.alipay.sofa.registry.server.data.remoting.SessionNodeExchanger;
+import com.alipay.sofa.registry.server.data.multi.cluster.slot.MultiClusterSlotMetrics.RemoteSyncLeader;
 import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
+import com.alipay.sofa.registry.util.StringFormatter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -59,42 +60,59 @@ public final class SlotDiffSyncer {
   private final Logger DIFF_LOGGER;
   private final DataServerConfig dataServerConfig;
 
-  private final DatumStorage datumStorage;
+  private final DatumStorageDecorator datumStorageDecorator;
   private final DataChangeEventCenter dataChangeEventCenter;
   private final SessionLeaseManager sessionLeaseManager;
 
+  private final SyncSlotAcceptorManager syncSlotAcceptorManager;
+
   public SlotDiffSyncer(
       DataServerConfig dataServerConfig,
-      DatumStorage datumStorage,
+      DatumStorageDecorator datumStorageDecorator,
       DataChangeEventCenter dataChangeEventCenter,
       SessionLeaseManager sessionLeaseManager,
+      SyncSlotAcceptorManager syncSlotAcceptorManager,
       Logger diffLogger) {
     this.dataServerConfig = dataServerConfig;
-    this.datumStorage = datumStorage;
+    this.datumStorageDecorator = datumStorageDecorator;
     this.dataChangeEventCenter = dataChangeEventCenter;
     this.sessionLeaseManager = sessionLeaseManager;
+    this.syncSlotAcceptorManager = syncSlotAcceptorManager;
     this.DIFF_LOGGER = diffLogger;
   }
 
   DataSlotDiffPublisherResult processSyncPublisherResp(
+      boolean syncLocal,
+      String syncDataCenter,
       int slotId,
       GenericResponse<DataSlotDiffPublisherResult> resp,
       String targetAddress,
       Map<String, DatumSummary> summaryMap) {
     if (resp == null || !resp.isSuccess()) {
-      LOGGER.error("DiffPublisherFailed, slotId={} from {}, resp={}", slotId, targetAddress, resp);
+      LOGGER.error(
+          "DiffPublisherFailed, syncLocal={}, syncDataCenter={}, slotId={} from {}, resp={}",
+          syncLocal,
+          syncDataCenter,
+          slotId,
+          targetAddress,
+          resp);
       return null;
     }
     DataSlotDiffPublisherResult result = resp.getData();
 
     // sync from session
     final ProcessId sessionProcessId = result.getSessionProcessId();
-    if (sessionProcessId != null) {
+    if (syncLocal && sessionProcessId != null) {
       sessionLeaseManager.renewSession(sessionProcessId);
     }
 
     if (result.isEmpty()) {
-      DIFF_LOGGER.info("DiffPublisherEmpty, slotId={} from {}", slotId, targetAddress);
+      DIFF_LOGGER.info(
+          "DiffPublisherEmpty, syncLocal={}, syncDataCenter={}, slotId={} from {}",
+          syncLocal,
+          syncDataCenter,
+          slotId,
+          targetAddress);
       return result;
     }
 
@@ -104,7 +122,7 @@ public final class SlotDiffSyncer {
       final String dataInfoId = WordCache.getWordCache(e.getKey());
       final List<Publisher> publishers = e.getValue();
       Publisher.internPublisher(publishers);
-      if (datumStorage.put(dataInfoId, publishers) != null) {
+      if (datumStorageDecorator.putPublisher(syncDataCenter, dataInfoId, publishers) != null) {
         changeDataIds.add(dataInfoId);
       }
     }
@@ -115,20 +133,23 @@ public final class SlotDiffSyncer {
       final DatumSummary summary = summaryMap.get(dataInfoId);
       if (summary == null) {
         throw new IllegalArgumentException(
-            "sync publisher with not exist local DatumSummary:" + dataInfoId);
+            StringFormatter.format(
+                "dataCenter: {} sync publisher with not exist local DatumSummary: {}",
+                syncDataCenter,
+                dataInfoId));
       }
       Map<String, RegisterVersion> versionMap = summary.getPublisherVersions(registerIds);
-      if (datumStorage.remove(dataInfoId, sessionProcessId, versionMap) != null) {
+      if (datumStorageDecorator.removePublishers(syncDataCenter, dataInfoId, sessionProcessId, versionMap)
+          != null) {
         changeDataIds.add(dataInfoId);
       }
     }
-    if (sessionProcessId != null && !changeDataIds.isEmpty()) {
-      // only trigger event when sync from session
-      dataChangeEventCenter.onChange(
-          changeDataIds, DataChangeType.SYNC, dataServerConfig.getLocalDataCenter());
-    }
+
+    triggerDataChange(syncLocal, syncDataCenter, sessionProcessId, changeDataIds);
     DIFF_LOGGER.info(
-        "DiffPublisher, slotId={} from {}, updatedP {}:{}, removedP {}:{}",
+        "DiffPublisher, synLocal={}, syncDataCenter={}, slotId={} from {}, updatedP {}:{}, removedP {}:{}",
+        syncLocal ? 'Y' : 'N',
+        syncDataCenter,
         slotId,
         targetAddress,
         result.getUpdatedPublishers().size(),
@@ -139,6 +160,9 @@ public final class SlotDiffSyncer {
   }
 
   boolean syncPublishers(
+      String localDataCenter,
+      boolean syncLocal,
+      String syncDataCenter,
       int slotId,
       String targetAddress,
       ClientSideExchanger exchanger,
@@ -156,19 +180,23 @@ public final class SlotDiffSyncer {
         return true;
       }
       // maybe to many publishers, spit round
+      int pubSize = DatumSummary.countPublisherSize(round.values());
       if (syncSession) {
-        SyncSession.observeSyncSessionPub(slotId, DatumSummary.countPublisherSize(round.values()));
+        SyncSession.observeSyncSessionPub(slotId, pubSize);
+      } else if (syncLocal) {
+        SyncLeader.observeSyncLeaderPub(slotId, pubSize);
       } else {
-        SyncLeader.observeSyncLeaderPub(slotId, DatumSummary.countPublisherSize(round.values()));
+        RemoteSyncLeader.observeSyncLeaderPub(syncDataCenter, slotId, pubSize);
       }
+
       DataSlotDiffPublisherRequest request =
-          new DataSlotDiffPublisherRequest(slotTableEpoch, slotId, round.values());
+          new DataSlotDiffPublisherRequest(localDataCenter, slotTableEpoch, slotId, round.values());
 
       GenericResponse<DataSlotDiffPublisherResult> resp =
           (GenericResponse<DataSlotDiffPublisherResult>)
               exchanger.requestRaw(targetAddress, request).getResult();
       DataSlotDiffPublisherResult result =
-          processSyncPublisherResp(slotId, resp, targetAddress, round);
+          processSyncPublisherResp(syncLocal, syncDataCenter, slotId, resp, targetAddress, round);
       if (result == null) {
         return false;
       }
@@ -189,6 +217,9 @@ public final class SlotDiffSyncer {
   }
 
   boolean sync(
+      String localDataCenter,
+      String syncDataCenter,
+      boolean syncLocal,
       int slotId,
       String targetAddress,
       ClientSideExchanger exchanger,
@@ -200,17 +231,27 @@ public final class SlotDiffSyncer {
     final boolean syncSession = summaryTargetIp != null;
     if (syncSession) {
       SyncSession.observeSyncSessionId(slotId, summaryMap.size());
-    } else {
+    } else if (syncLocal) {
       SyncLeader.observeSyncLeaderId(slotId, summaryMap.size());
+    } else {
+      RemoteSyncLeader.observeSyncLeaderId(syncDataCenter, slotId, summaryMap.size());
     }
     Map<String, DatumDigest> digestMap = PublisherDigestUtil.digest(summaryMap);
     DataSlotDiffDigestRequest request =
-        new DataSlotDiffDigestRequest(slotTableEpoch, slotId, digestMap);
+        syncLocal
+            ? DataSlotDiffDigestRequest.buildLocalRequest(
+                localDataCenter, slotTableEpoch, slotId, digestMap)
+            : DataSlotDiffDigestRequest.buildRemoteRequest(
+                localDataCenter,
+                slotTableEpoch,
+                slotId,
+                digestMap,
+                new SyncSlotAcceptorManager(syncSlotAcceptorManager.getAcceptors()));
     Response exchangeResp = exchanger.requestRaw(targetAddress, request);
     GenericResponse<DataSlotDiffDigestResult> resp =
         (GenericResponse<DataSlotDiffDigestResult>) exchangeResp.getResult();
     DataSlotDiffDigestResult result =
-        processSyncDigestResp(slotId, resp, targetAddress, summaryMap);
+        processSyncDigestResp(syncLocal, syncDataCenter, slotId, resp, targetAddress, summaryMap);
     if (result == null) {
       return false;
     }
@@ -220,6 +261,9 @@ public final class SlotDiffSyncer {
     }
     final Map<String, DatumSummary> newSummaryMap = getSummaryForSyncPublishers(result, summaryMap);
     return syncPublishers(
+        localDataCenter,
+        syncLocal,
+        syncDataCenter,
         slotId,
         targetAddress,
         exchanger,
@@ -244,6 +288,8 @@ public final class SlotDiffSyncer {
   }
 
   DataSlotDiffDigestResult processSyncDigestResp(
+      boolean syncLocal,
+      String syncDataCenter,
       int slotId,
       GenericResponse<DataSlotDiffDigestResult> resp,
       String targetAddress,
@@ -271,7 +317,8 @@ public final class SlotDiffSyncer {
     // it maybe trigger a empty push with bigger datum.version which created by new empty
     final Set<String> changeDataIds = Sets.newHashSet();
     for (String removeDataInfoId : result.getRemovedDataInfoIds()) {
-      if (datumStorage.remove(
+      if (datumStorageDecorator.removePublishers(
+              syncDataCenter,
               removeDataInfoId,
               sessionProcessId,
               summaryMap.get(removeDataInfoId).getPublisherVersions())
@@ -280,13 +327,11 @@ public final class SlotDiffSyncer {
       }
     }
 
-    if (sessionProcessId != null && !changeDataIds.isEmpty()) {
-      // only trigger event when sync from session
-      dataChangeEventCenter.onChange(
-          changeDataIds, DataChangeType.SYNC, dataServerConfig.getLocalDataCenter());
-    }
+    triggerDataChange(syncLocal, syncDataCenter, sessionProcessId, changeDataIds);
     DIFF_LOGGER.info(
-        "DiffDigest, slotId={} from {}, update={}, add={}, remove={}, adds={}, removes={}",
+        "DiffDigest, syncLocal={}, syncDataCenter={}, slotId={} from {}, update={}, add={}, remove={}, adds={}, removes={}",
+        syncLocal ? 'Y' : 'N',
+        syncDataCenter,
         slotId,
         targetAddress,
         result.getUpdatedDataInfoIds().size(),
@@ -295,6 +340,35 @@ public final class SlotDiffSyncer {
         result.getAddedDataInfoIds(),
         result.getRemovedDataInfoIds());
     return result;
+  }
+
+  private void triggerDataChange(
+      boolean syncLocal,
+      String syncDataCenter,
+      ProcessId sessionProcessId,
+      Set<String> changeDataIds) {
+    if (needTrigger(syncLocal, sessionProcessId) && !changeDataIds.isEmpty()) {
+      dataChangeEventCenter.onChange(
+          changeDataIds,
+          syncLocal ? DataChangeType.SYNC : DataChangeType.SYNC_REMOTE,
+          syncDataCenter);
+    }
+  }
+
+  /**
+   * need to trigger change: 1.sync remote data; 2.sync local session;
+   *
+   * @param syncLocal
+   * @param sessionProcessId
+   * @return
+   */
+  private boolean needTrigger(boolean syncLocal, ProcessId sessionProcessId) {
+    if (!syncLocal) {
+      // sync remote, need to trigger change
+      return true;
+    }
+    // sync local session, need to trigger change
+    return sessionProcessId != null;
   }
 
   /**
@@ -311,6 +385,7 @@ public final class SlotDiffSyncer {
    * @throws RequestException
    */
   public boolean syncSession(
+      String syncDataCenter,
       int slotId,
       String sessionIp,
       ClientSideExchanger exchanger,
@@ -324,11 +399,15 @@ public final class SlotDiffSyncer {
     // can not change to CollectionUtils.isEmpty
     if (summary == null) {
       Map<String, Map<String, DatumSummary>> datumSummary =
-          datumStorage.getDatumSummary(slotId, Collections.singleton(sessionIp));
+              datumStorageDecorator.getDatumSummary(
+              dataServerConfig.getLocalDataCenter(), slotId, Collections.singleton(sessionIp));
       summary = datumSummary.get(sessionIp);
     }
 
     return sync(
+        syncDataCenter,
+        syncDataCenter,
+        true,
         slotId,
         sessionIp,
         exchanger,
@@ -340,16 +419,23 @@ public final class SlotDiffSyncer {
   }
 
   public boolean syncSlotLeader(
-      String dataCenter,
+      String localDataCenter,
+      String syncDataCenter,
+      boolean syncLocal,
       int slotId,
       String slotLeaderIp,
       ClientSideExchanger exchanger,
       long slotTableEpoch,
-      SyncContinues continues)
+      SyncContinues continues,
+      SyncSlotAcceptorManager acceptorManager)
       throws RequestException {
     ParaCheckUtil.checkNotBlank(slotLeaderIp, "slotLeaderIp");
-    Map<String, DatumSummary> summary = datumStorage.getDatumSummary(dataCenter, slotId);
+    Map<String, DatumSummary> summary =
+            datumStorageDecorator.getDatumSummary(syncDataCenter, slotId, acceptorManager);
     return sync(
+        localDataCenter,
+        syncDataCenter,
+        syncLocal,
         slotId,
         slotLeaderIp,
         exchanger,
@@ -380,7 +466,7 @@ public final class SlotDiffSyncer {
 
   @VisibleForTesting
   DatumStorage getDatumStorage() {
-    return datumStorage;
+    return datumStorageDecorator;
   }
 
   @VisibleForTesting

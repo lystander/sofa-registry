@@ -23,61 +23,65 @@ import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.slot.Slot;
-import com.alipay.sofa.registry.common.model.slot.func.SlotFunction;
-import com.alipay.sofa.registry.common.model.slot.func.SlotFunctionRegistry;
+import com.alipay.sofa.registry.common.model.slot.Slot.Role;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
-import com.alipay.sofa.registry.util.ParaCheckUtil;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+
 import java.util.*;
+
+import com.alipay.sofa.registry.util.ParaCheckUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
 
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-12-02 19:40 yuzhi.lyz Exp $
  */
 public final class LocalDatumStorage implements DatumStorage {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LocalDatumStorage.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LocalDatumStorage.class, "[LocalStorage]");
 
-  @Autowired
-  private DataServerConfig dataServerConfig;
+  private final BaseDatumStorage storage;
 
-  private final BaseDatumStorage storage = new BaseDatumStorage(dataServerConfig.getLocalDataCenter(), LOGGER);
+  public LocalDatumStorage(String dataCenter) {
+    this.storage = new BaseDatumStorage(dataCenter, LOGGER);
+  }
 
   @Override
   public Datum get(String dataCenter, String dataInfoId) {
-    return storage.get(dataCenter, dataInfoId);
+    return storage.get(dataInfoId);
   }
 
   @Override
   public DatumVersion getVersion(String dataCenter, String dataInfoId) {
-    return storage.getVersion(dataCenter, dataInfoId);
+    return storage.getVersion(dataInfoId);
   }
 
   @Override
   public Map<String, DatumVersion> getVersions(String dataCenter, int slotId, Collection<String> targetDataInfoIds) {
-    return storage.getVersions(dataCenter, slotId, targetDataInfoIds);
+    return storage.getVersions(slotId, targetDataInfoIds);
   }
 
   @Override
   public Map<String, Datum> getAll(String dataCenter) {
-    return storage.getAll(dataCenter);
+    return storage.getAll();
   }
 
   @Override
   public Map<String, List<Publisher>> getAllPublisher(String dataCenter) {
-    return storage.getAllPublisher(dataCenter);
+    return storage.getAllPublisher();
   }
 
   @Override
   public Map<String, Integer> getPubCount(String dataCenter) {
-    return storage.getPubCount(dataCenter);
+    return storage.getPubCount();
+  }
+
+  @Override
+  public void putPublisherGroups(String dataCenter, int slotId) {
+    storage.putPublisherGroups(slotId);
   }
 
   @Override
@@ -87,53 +91,71 @@ public final class LocalDatumStorage implements DatumStorage {
 
   @Override
   public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId) {
-    return storage.getPublishers(dataCenter, slotId);
+    return storage.getPublishers(slotId);
+  }
+
+  @Override
+  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+    ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
+    return storage.getPublishers(slotId, acceptorManager);
   }
 
   @Override
   public DatumVersion createEmptyDatumIfAbsent(String dataCenter, String dataInfoId) {
-    return storage.createEmptyDatumIfAbsent(dataCenter, dataInfoId);
+    return storage.createEmptyDatumIfAbsent(dataInfoId);
   }
 
   @Override
-  public Map<String, DatumVersion> clean(
+  public Map<String, DatumVersion> cleanBySessionId(
           String dataCenter, int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
-    return storage.clean(dataCenter, slotId, sessionProcessId, cleanContinues);
+    return storage.clean(slotId, sessionProcessId, cleanContinues);
+  }
+
+  @Override
+  public boolean removePublisherGroups(String dataCenter, int slotId) {
+    return storage.removePublisherGroups(slotId);
   }
 
   // only for http testapi
   @Override
-  public DatumVersion remove(String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
-    return storage.remove(dataCenter, dataInfoId, sessionProcessId);
+  public DatumVersion removePublishers(String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
+    return storage.removePublishers(dataInfoId, sessionProcessId);
   }
 
   @Override
-  public DatumVersion put(String dataCenter, String dataInfoId, List<Publisher> publishers) {
-    return storage.put(dataCenter, dataInfoId, publishers);
+  public DatumVersion putPublisher(String dataCenter, String dataInfoId, List<Publisher> publishers) {
+    return storage.putPublisher(dataInfoId, publishers);
   }
 
   @Override
-  public DatumVersion put(String dataCenter, Publisher publisher) {
-    return put(dataCenter, publisher.getDataInfoId(), Collections.singletonList(publisher));
+  public DatumVersion putPublisher(String dataCenter, Publisher publisher) {
+    return putPublisher(dataCenter, publisher.getDataInfoId(), Collections.singletonList(publisher));
   }
 
   @Override
-  public DatumVersion remove(
+  public DatumVersion removePublishers(
       String dataCenter,
       String dataInfoId,
       ProcessId sessionProcessId,
       Map<String, RegisterVersion> removedPublishers) {
-    return storage.remove(dataCenter, dataInfoId, sessionProcessId, removedPublishers);
+    return storage.removePublishers(dataInfoId, sessionProcessId, removedPublishers);
   }
 
   @Override
   public Map<String, Map<String, DatumSummary>> getDatumSummary(String dataCenter, int slotId, Set<String> sessions) {
-    return storage.getDatumSummary(dataCenter, slotId, sessions);
+    return storage.getDatumSummary(slotId, sessions);
   }
 
   @Override
   public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId) {
-    return storage.getDatumSummary(dataCenter, slotId);
+    return storage.getDatumSummary(slotId);
+  }
+
+  @Override
+  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+    ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
+
+    return storage.getAcceptDatumSummary(slotId, acceptorManager);
   }
 
   @Override
@@ -143,70 +165,50 @@ public final class LocalDatumStorage implements DatumStorage {
 
   @Override
   public Set<ProcessId> getSessionProcessIds(String dataCenter) {
-    Set<ProcessId> ids = Sets.newHashSet();
-    publisherGroupsMap.values().forEach(g -> ids.addAll(g.getSessionProcessIds()));
-    return ids;
+    return storage.getSessionProcessIds();
   }
 
   @Override
   public Map<String, Integer> compact(String dataCenter, long tombstoneTimestamp) {
-    Map<String, Integer> compacts = Maps.newHashMap();
-    publisherGroupsMap.values().forEach(g -> compacts.putAll(g.compact(tombstoneTimestamp)));
-    return compacts;
+    return storage.compact(tombstoneTimestamp);
   }
 
   @Override
   public int tombstoneNum(String dataCenter) {
-    int count = 0;
-    for (PublisherGroups groups : publisherGroupsMap.values()) {
-      count += groups.tombstoneNum();
-    }
-    return count;
+    return storage.tombstoneNum();
   }
 
   @Override
   public Map<String, DatumVersion> updateVersion(String dataCenter, int slotId) {
-    PublisherGroups groups = publisherGroupsMap.get(slotId);
-    if (groups == null) {
-      return Collections.emptyMap();
-    }
-    return groups.updateVersion();
+    return storage.updateVersion(slotId);
   }
 
   @Override
   public DatumVersion updateVersion(String dataCenter, String dataInfoId) {
-    PublisherGroups groups = getPublisherGroups(dataInfoId);
-    return groups == null ? null : groups.updateVersion(dataInfoId);
+    return storage.updateVersion(dataInfoId);
   }
 
   private final class SlotListener implements SlotChangeListener {
 
     @Override
     public void onSlotAdd(String dataCenter, int slotId, Slot.Role role) {
-      publisherGroupsMap.computeIfAbsent(
-          slotId,
-          k -> {
-            PublisherGroups groups = new PublisherGroups(dataCenter);
-            LOGGER.info(
-                "{} add publisherGroup {}, role={}, slotNum={}",
-                dataCenter,
-                slotId,
-                role,
-                publisherGroupsMap.size());
-            return groups;
-          });
+      putPublisherGroups(dataCenter, slotId);
+      LOGGER.info(
+              "{} add publisherGroup {}, role={},",
+              dataCenter,
+              slotId,
+              role);
     }
 
     @Override
     public void onSlotRemove(String dataCenter, int slotId, Slot.Role role) {
-      boolean removed = publisherGroupsMap.remove(slotId) != null;
+      boolean removed = removePublisherGroups(dataCenter, slotId);
       LOGGER.info(
-          "{}, remove publisherGroup {}, removed={}, role={}, slotNum={}",
+          "{}, remove publisherGroup {}, removed={}, role={}",
           dataCenter,
           slotId,
           removed,
-          role,
-          publisherGroupsMap.size());
+          role);
     }
   }
 }

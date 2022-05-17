@@ -43,6 +43,8 @@ import java.util.Collections;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Resource;
+
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-12-04 14:59 yuzhi.lyz Exp $
@@ -60,7 +62,8 @@ public abstract class AbstractDataHandler<T> extends AbstractServerHandler<T> {
 
   @Autowired protected SlotManager slotManager;
 
-  @Autowired protected DatumStorage localDatumStorage;
+  @Resource
+  protected DatumStorage localDatumStorage;
 
   @Autowired protected SessionLeaseManager sessionLeaseManager;
 

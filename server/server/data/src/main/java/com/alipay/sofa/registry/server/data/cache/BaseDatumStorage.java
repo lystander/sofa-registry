@@ -10,13 +10,17 @@ import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
+import com.alipay.sofa.registry.common.model.slot.Slot;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.func.SlotFunction;
 import com.alipay.sofa.registry.common.model.slot.func.SlotFunctionRegistry;
 import com.alipay.sofa.registry.common.model.store.Publisher;
+import com.alipay.sofa.registry.exception.SofaRegistryRuntimeException;
 import com.alipay.sofa.registry.log.Logger;
-import com.alipay.sofa.registry.log.LoggerFactory;
+import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collection;
@@ -30,15 +34,15 @@ import java.util.Set;
  * @author xiaojian.xj
  * @version : BaseDatumStorage.java, v 0.1 2022年05月12日 11:54 xiaojian.xj Exp $
  */
-public class BaseDatumStorage implements DatumStorage {
+public class BaseDatumStorage {
 
     private final Logger logger;
 
     private final        String dataCenter;
 
-    protected final SlotFunction slotFunction = SlotFunctionRegistry.getFunc();
+    private final SlotFunction slotFunction = SlotFunctionRegistry.getFunc();
 
-    protected final Map<Integer, PublisherGroups> publisherGroupsMap = Maps.newConcurrentMap();
+    private final Map<Integer, PublisherGroups> publisherGroupsMap = Maps.newConcurrentMap();
 
     public BaseDatumStorage(String dataCenter, Logger logger) {
         this.dataCenter = dataCenter;
@@ -49,7 +53,7 @@ public class BaseDatumStorage implements DatumStorage {
         final Integer slotId = slotFunction.slotOf(dataInfoId);
         PublisherGroups groups = publisherGroupsMap.get(slotId);
         if (groups == null) {
-            logger.warn("[nullGroups] {}, {}", slotId, dataInfoId);
+            logger.warn("[nullGroups]dataCenter={},slotId={},dataInfoId={}", dataCenter, slotId, dataInfoId);
         }
         return groups;
     }
@@ -57,59 +61,57 @@ public class BaseDatumStorage implements DatumStorage {
     private PublisherGroups getPublisherGroups(int slotId) {
         PublisherGroups groups = publisherGroupsMap.get(slotId);
         if (groups == null) {
-            logger.warn("[nullGroups] {}", slotId);
+            logger.warn("[nullGroups]dataCenter={},slotId={}", dataCenter, slotId);
         }
         return groups;
     }
 
-    @Override
-    public Datum get(String dataCenter, String dataInfoId) {
+    public Datum get(String dataInfoId) {
         final PublisherGroups groups = getPublisherGroups(dataInfoId);
         return groups == null ? null : groups.getDatum(dataInfoId);
     }
 
-    @Override
-    public DatumVersion getVersion(String dataCenter, String dataInfoId) {
+    public DatumVersion getVersion(String dataInfoId) {
         PublisherGroups groups = getPublisherGroups(dataInfoId);
         return groups == null ? null : groups.getVersion(dataInfoId);
     }
 
-    @Override
-    public Map<String, DatumVersion> getVersions(String dataCenter, int slotId, Collection<String> targetDataInfoIds) {
+    public Map<String, DatumVersion> getVersions(int slotId, Collection<String> targetDataInfoIds) {
         PublisherGroups groups = getPublisherGroups(slotId);
         return groups == null ? Collections.emptyMap() : groups.getVersions(targetDataInfoIds);
     }
 
-    @Override
-    public Map<String, Datum> getAll(String dataCenter) {
+    public Map<String, Datum> getAll() {
         Map<String, Datum> m = Maps.newHashMapWithExpectedSize(128);
         publisherGroupsMap.values().forEach(g -> m.putAll(g.getAllDatum()));
         return m;
     }
 
-    @Override
-    public Map<String, List<Publisher>> getAllPublisher(String dataCenter) {
+    public Map<String, List<Publisher>> getAllPublisher() {
         Map<String, List<Publisher>> m = Maps.newHashMapWithExpectedSize(128);
         publisherGroupsMap.values().forEach(g -> m.putAll(g.getAllPublisher()));
         return m;
     }
 
-    @Override
-    public Map<String, Integer> getPubCount(String dataCenter) {
+    public Map<String, Integer> getPubCount() {
         Map<String, Integer> map = Maps.newHashMapWithExpectedSize(128);
         publisherGroupsMap.values().forEach(g -> map.putAll(g.getPubCount()));
         return map;
     }
 
-    @Override
     public Map<String, Publisher> getByConnectId(ConnectId connectId) {
         Map<String, Publisher> m = Maps.newHashMapWithExpectedSize(64);
         publisherGroupsMap.values().forEach(g -> m.putAll(g.getByConnectId(connectId)));
         return m;
     }
 
-    @Override
-    public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId) {
+    public Map<String, Map<String, Publisher>> getPublishers(int slotId) {
+        return getPublishers(slotId, null);
+    }
+
+    public Map<String, Map<String, Publisher>> getPublishers(int slotId, SyncSlotAcceptorManager acceptorManager) {
+        ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
+
         PublisherGroups groups = getPublisherGroups(slotId);
         if (groups == null) {
             return Collections.emptyMap();
@@ -118,6 +120,10 @@ public class BaseDatumStorage implements DatumStorage {
         Map<String, Map<String, Publisher>> ret = Maps.newHashMapWithExpectedSize(publisherMap.size());
         for (Map.Entry<String, List<Publisher>> publishers : publisherMap.entrySet()) {
             final String dataInfoId = publishers.getKey();
+            if (acceptorManager != null && !acceptorManager.accept(dataInfoId)) {
+                continue;
+            }
+
             final List<Publisher> list = publishers.getValue();
             // only copy the non empty publishers
             if (!list.isEmpty()) {
@@ -131,15 +137,13 @@ public class BaseDatumStorage implements DatumStorage {
         return ret;
     }
 
-    @Override
-    public DatumVersion createEmptyDatumIfAbsent(String dataCenter, String dataInfoId) {
+    public DatumVersion createEmptyDatumIfAbsent(String dataInfoId) {
         PublisherGroups groups = getPublisherGroups(dataInfoId);
         return groups == null ? null : groups.createGroupIfAbsent(dataInfoId).getVersion();
     }
 
-    @Override
     public Map<String, DatumVersion> clean(
-            String dataCenter, int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
+            int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
         // clean by sessionProcessId, the sessionProcessId could not be null
         ParaCheckUtil.checkNotNull(sessionProcessId, "sessionProcessId");
         PublisherGroups groups = getPublisherGroups(slotId);
@@ -150,27 +154,22 @@ public class BaseDatumStorage implements DatumStorage {
     }
 
     // only for http testapi
-    @Override
-    public DatumVersion remove(String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
+    public DatumVersion removePublishers(String dataInfoId, ProcessId sessionProcessId) {
         // the sessionProcessId is null when the call from sync leader
         PublisherGroups groups = getPublisherGroups(dataInfoId);
         return groups == null ? null : groups.remove(dataInfoId, sessionProcessId);
     }
 
-    @Override
-    public DatumVersion put(String dataCenter, String dataInfoId, List<Publisher> publishers) {
+    public DatumVersion putPublisher(String dataInfoId, List<Publisher> publishers) {
         PublisherGroups groups = getPublisherGroups(dataInfoId);
         return groups == null ? null : groups.put(dataInfoId, publishers);
     }
 
-    @Override
-    public DatumVersion put(String dataCenter, Publisher publisher) {
-        return put(dataCenter, publisher.getDataInfoId(), Collections.singletonList(publisher));
+    public DatumVersion putPublisher(Publisher publisher) {
+        return putPublisher(publisher.getDataInfoId(), Collections.singletonList(publisher));
     }
 
-    @Override
-    public DatumVersion remove(
-            String dataCenter,
+    public DatumVersion removePublishers(
             String dataInfoId,
             ProcessId sessionProcessId,
             Map<String, RegisterVersion> removedPublishers) {
@@ -179,8 +178,7 @@ public class BaseDatumStorage implements DatumStorage {
         return groups == null ? null : groups.remove(dataInfoId, sessionProcessId, removedPublishers);
     }
 
-    @Override
-    public Map<String, Map<String, DatumSummary>> getDatumSummary(String dataCenter, int slotId, Set<String> sessions) {
+    public Map<String, Map<String, DatumSummary>> getDatumSummary(int slotId, Set<String> sessions) {
         final PublisherGroups groups = publisherGroupsMap.get(slotId);
         if (groups != null) {
             return groups.getSummary(sessions);
@@ -198,14 +196,16 @@ public class BaseDatumStorage implements DatumStorage {
         return summaries;
     }
 
-    @Override
-    public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId) {
-        final PublisherGroups groups = publisherGroupsMap.get(slotId);
-        return groups != null ? groups.getAllSummary() : Collections.emptyMap();
+    public Map<String, DatumSummary> getDatumSummary(int slotId) {
+        return getAcceptDatumSummary(slotId, null);
     }
 
-    @Override
-    public Map<String, DatumVersion> updateVersion(String dataCenter, int slotId) {
+    public Map<String, DatumSummary> getAcceptDatumSummary(int slotId, SyncSlotAcceptorManager acceptorManager) {
+        final PublisherGroups groups = publisherGroupsMap.get(slotId);
+        return groups != null ? groups.getAcceptSummary(acceptorManager) : Collections.emptyMap();
+    }
+
+    public Map<String, DatumVersion> updateVersion(int slotId) {
         PublisherGroups groups = publisherGroupsMap.get(slotId);
         if (groups == null) {
             return Collections.emptyMap();
@@ -213,9 +213,55 @@ public class BaseDatumStorage implements DatumStorage {
         return groups.updateVersion();
     }
 
-    @Override
-    public DatumVersion updateVersion(String dataCenter, String dataInfoId) {
+    public DatumVersion updateVersion(String dataInfoId) {
         PublisherGroups groups = getPublisherGroups(dataInfoId);
         return groups == null ? null : groups.updateVersion(dataInfoId);
     }
+
+    public Set<ProcessId> getSessionProcessIds() {
+        Set<ProcessId> ids = Sets.newHashSet();
+        publisherGroupsMap.values().forEach(g -> ids.addAll(g.getSessionProcessIds()));
+        return ids;
+    }
+
+    public Map<String, Integer> compact(long tombstoneTimestamp) {
+        Map<String, Integer> compacts = Maps.newHashMap();
+        publisherGroupsMap.values().forEach(g -> compacts.putAll(g.compact(tombstoneTimestamp)));
+        return compacts;
+    }
+
+    public void putPublisherGroups(int slotId) {
+        publisherGroupsMap.computeIfAbsent(
+                slotId,
+                k -> {
+                    PublisherGroups groups = new PublisherGroups(dataCenter);
+                    logger.info(
+                            "{} add publisherGroup {}, role={}, slotNum={}",
+                            dataCenter,
+                            slotId,
+                            publisherGroupsMap.size());
+                    return groups;
+                });
+    }
+
+    public boolean removePublisherGroups(int slotId) {
+        boolean removed = publisherGroupsMap.remove(slotId) != null;
+        logger.info(
+                "{}, remove publisherGroup {}, removed={}, slotNum={}",
+                dataCenter,
+                slotId,
+                removed,
+                publisherGroupsMap.size());
+        return removed;
+    }
+
+    public int tombstoneNum() {
+        int count = 0;
+        for (PublisherGroups groups : publisherGroupsMap.values()) {
+            count += groups.tombstoneNum();
+        }
+        return count;
+    }
+
+
 }

@@ -28,6 +28,7 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
@@ -84,7 +85,7 @@ public final class SlotManagerImpl implements SlotManager {
   @Autowired private DataServerConfig dataServerConfig;
 
   @Resource
-  private DatumStorage localDatumStorage;
+  private DatumStorageDecorator datumStorageDecorator;
 
   @Autowired private DataChangeEventCenter dataChangeEventCenter;
 
@@ -117,7 +118,7 @@ public final class SlotManagerImpl implements SlotManager {
   }
 
   void initSlotChangeListener() {
-    SlotChangeListener l = localDatumStorage.getSlotChangeListener();
+    SlotChangeListener l = datumStorageDecorator.getSlotChangeListener(true);
     if (l != null) {
       this.slotChangeListeners.add(l);
     }
@@ -452,7 +453,7 @@ public final class SlotManagerImpl implements SlotManager {
     if (slotState.isAnywaySuccess(sessions)) {
       // after migrated, force to update the version
       // make sure the version is newly than old leader's
-      Map<String, DatumVersion> versions = localDatumStorage.updateVersion(dataServerConfig.getLocalDataCenter(), slotState.slotId);
+      Map<String, DatumVersion> versions = datumStorageDecorator.updateVersion(dataServerConfig.getLocalDataCenter(), slotState.slotId);
       slotState.migrated = true;
       // versions has update, notify change
       dataChangeEventCenter.onChange(
@@ -599,7 +600,7 @@ public final class SlotManagerImpl implements SlotManager {
 
     if (!CollectionUtils.isEmpty(doSyncSet)) {
       final Map<String, Map<String, DatumSummary>> datumSummary =
-          localDatumStorage.getDatumSummary(dataServerConfig.getLocalDataCenter(), slotState.slotId, doSyncSet);
+              datumStorageDecorator.getDatumSummary(dataServerConfig.getLocalDataCenter(), slotState.slotId, doSyncSet);
       for (String sessionIp : doSyncSet) {
         Map<String, DatumSummary> summary = datumSummary.get(sessionIp);
         syncSession(slotState, sessionIp, summary, syncSessionIntervalMs, slotTableEpoch);
@@ -649,7 +650,7 @@ public final class SlotManagerImpl implements SlotManager {
     if (syncLeaderTask == null || syncLeaderTask.isOverAfter(syncLeaderIntervalMs)) {
       // sync leader no need to notify event
       SlotDiffSyncer syncer =
-          new SlotDiffSyncer(dataServerConfig, localDatumStorage, null, sessionLeaseManager, DIFF_LOGGER);
+          new SlotDiffSyncer(dataServerConfig, datumStorageDecorator, null, sessionLeaseManager, null, DIFF_LOGGER);
       SyncContinues continues =
           new SyncContinues() {
             @Override
@@ -658,7 +659,7 @@ public final class SlotManagerImpl implements SlotManager {
             }
           };
       SyncLeaderTask task =
-          new SyncLeaderTask(dataServerConfig.getLocalDataCenter(), dataServerConfig.getLocalDataCenter(), slotTableEpoch, slot, syncer, dataNodeExchanger, continues, SYNC_DIGEST_LOGGER, SYNC_ERROR_LOGGER);
+          new SyncLeaderTask(dataServerConfig.getLocalDataCenter(), dataServerConfig.getLocalDataCenter(), slotTableEpoch, slot, syncer, dataNodeExchanger, continues, null, SYNC_DIGEST_LOGGER, SYNC_ERROR_LOGGER);
       slotState.syncLeaderTask = syncLeaderExecutor.execute(slot.getId(), task);
     } else if (!syncLeaderTask.isFinished()) {
       if (System.currentTimeMillis() - syncLeaderTask.getCreateTime() > 5000) {
@@ -676,7 +677,7 @@ public final class SlotManagerImpl implements SlotManager {
       boolean migrate) {
     SlotDiffSyncer syncer =
         new SlotDiffSyncer(
-            dataServerConfig, localDatumStorage, dataChangeEventCenter, sessionLeaseManager, DIFF_LOGGER);
+            dataServerConfig, datumStorageDecorator, dataChangeEventCenter, sessionLeaseManager, null, DIFF_LOGGER);
     SyncContinues continues =
         new SyncContinues() {
           @Override
@@ -687,6 +688,7 @@ public final class SlotManagerImpl implements SlotManager {
         };
     SyncSessionTask task =
         new SyncSessionTask(
+            dataServerConfig.getLocalDataCenter(),
             migrate,
             slotTableEpoch,
             slot,
@@ -793,6 +795,7 @@ public final class SlotManagerImpl implements SlotManager {
 
   private static final class SyncSessionTask implements Runnable {
     final long startTimestamp = System.currentTimeMillis();
+    final String syncDataCenter;
     final boolean migrating;
     final long slotTableEpoch;
     final Slot slot;
@@ -803,6 +806,7 @@ public final class SlotManagerImpl implements SlotManager {
     final Map<String, DatumSummary> summary;
 
     SyncSessionTask(
+        String syncDataCenter,
         boolean migrating,
         long slotTableEpoch,
         Slot slot,
@@ -811,6 +815,7 @@ public final class SlotManagerImpl implements SlotManager {
         SessionNodeExchanger sessionNodeExchanger,
         SyncContinues continues,
         Map<String, DatumSummary> summary) {
+      this.syncDataCenter = syncDataCenter;
       this.migrating = migrating;
       this.slotTableEpoch = slotTableEpoch;
       this.slot = slot;
@@ -827,7 +832,7 @@ public final class SlotManagerImpl implements SlotManager {
 
         success =
             syncer.syncSession(
-                slot.getId(), sessionIp, sessionNodeExchanger, slotTableEpoch, continues, summary);
+                    syncDataCenter, slot.getId(), sessionIp, sessionNodeExchanger, slotTableEpoch, continues, summary);
         if (!success) {
           // sync failed
           throw new RuntimeException("sync session failed");
@@ -910,11 +915,6 @@ public final class SlotManagerImpl implements SlotManager {
   @VisibleForTesting
   void setDataServerConfig(DataServerConfig dataServerConfig) {
     this.dataServerConfig = dataServerConfig;
-  }
-
-  @VisibleForTesting
-  void setLocalDatumStorage(DatumStorage localDatumStorage) {
-    this.localDatumStorage = localDatumStorage;
   }
 
   @VisibleForTesting

@@ -25,7 +25,7 @@ import com.alipay.sofa.registry.common.model.slot.SlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.store.WordCache;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
-import com.alipay.sofa.registry.server.data.cache.DatumCache;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -41,8 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: GetDataVersionsProcessor.java, v 0.1 2017-12-06 19:56 qian.lqlq Exp $
  */
 public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRequest> {
-  private static final Logger LOGGER = DataLog.GET_LOGGER;
-  @Autowired private DatumCache datumCache;
+  private static final Logger                LOGGER = DataLog.GET_LOGGER;
+  @Autowired private   DatumStorageDecorator datumStorageDecorator;
 
   @Autowired private ThreadPoolExecutor getDataProcessorExecutor;
 
@@ -70,7 +70,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
     }
     final Map<String, DatumVersion> interests = request.getInterests();
     Map<String /*dataInfoId*/, DatumVersion> getVersions =
-        datumCache.getVersions(dataCenter, slotId, interests.keySet());
+        datumStorageDecorator.getVersions(dataCenter, slotId, interests.keySet());
     // double check slot access, @see GetDataHandler
     final SlotAccess slotAccessAfter =
         checkAccess(slotId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
@@ -105,7 +105,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
           //    bigger than current datum.version=V1, the publisher-B would not push to
           // subscriber-A.
           // so, we need to compare the push.version and datum.version
-          DatumVersion updateVer = datumCache.updateVersion(dataCenter, dataInfoId);
+          DatumVersion updateVer = datumStorageDecorator.updateVersion(dataCenter, dataInfoId);
           ret.put(dataInfoId, updateVer);
           LOGGER.info(
               "updateV,{},{},{},interestVer={},currentVer={},updateVer={}",
@@ -150,7 +150,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
   }
 
   @VisibleForTesting
-  void setDatumCache(DatumCache datumCache) {
-    this.datumCache = datumCache;
+  void setDatumCache(DatumStorageDecorator datumStorageDecorator) {
+    this.datumStorageDecorator = datumStorageDecorator;
   }
 }

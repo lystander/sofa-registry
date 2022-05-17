@@ -4,6 +4,7 @@
  */
 package com.alipay.sofa.registry.server.data.multi.cluster.slot;
 
+import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 
@@ -43,6 +44,56 @@ public class MultiClusterSlotMetrics {
                     .labelNames("dataCenter", "slot")
                     .register();
 
+    public static final class RemoteSyncLeader {
+        private static final Counter REMOTE_SYNC_LEADER_ID_COUNTER =
+                Counter.build()
+                        .namespace("data")
+                        .subsystem("sync")
+                        .name("remote_leader_id_total")
+                        .help("count remote sync leader dataInfoIds")
+                        .labelNames("dataCenter", "slot")
+                        .register();
+
+        private static final Counter REMOTE_SYNC_LEADER_ID_NUM_COUNTER =
+                Counter.build()
+                        .namespace("data")
+                        .subsystem("sync")
+                        .name("remote_leader_id_num_total")
+                        .help("count remote sync leader dataInfoId's num")
+                        .labelNames("dataCenter", "slot")
+                        .register();
+
+        private static final Counter REMOTE_SYNC_LEADER_PUB_COUNTER =
+                Counter.build()
+                        .namespace("data")
+                        .subsystem("sync")
+                        .name("remote_leader_pub_total")
+                        .help("count remote sync leader pubs")
+                        .labelNames("dataCenter", "slot")
+                        .register();
+
+        private static final Counter REMOTE_SYNC_LEADER_PUB_NUM_COUNTER =
+                Counter.build()
+                        .namespace("data")
+                        .subsystem("sync")
+                        .name("remote_leader_pub_num_total")
+                        .help("count remote sync leader pub's num")
+                        .labelNames("dataCenter", "slot")
+                        .register();
+
+        public static void observeSyncLeaderId(String dataCenter, int slotId, int idNum) {
+            final String str = String.valueOf(slotId);
+            REMOTE_SYNC_LEADER_ID_COUNTER.labels(dataCenter, str).inc();
+            REMOTE_SYNC_LEADER_ID_NUM_COUNTER.labels(dataCenter, str).inc(idNum);
+        }
+
+        public static void observeSyncLeaderPub(String dataCenter, int slotId, int pubNum) {
+            final String str = String.valueOf(slotId);
+            REMOTE_SYNC_LEADER_PUB_COUNTER.labels(dataCenter, str).inc();
+            REMOTE_SYNC_LEADER_PUB_NUM_COUNTER.labels(dataCenter, str).inc(pubNum);
+        }
+    }
+
     static void observeRemoteLeaderAssignGauge(String dataCenter, int num) {
         REMOTE_LEADER_ASSIGN_GAUGE.labels(dataCenter).set(num);
     }
@@ -58,5 +109,6 @@ public class MultiClusterSlotMetrics {
     static void observeRemoteLeaderSyncingHistogram(String dataCenter, int slotId, long millis) {
         REMOTE_LEADER_SYNCING_HISTOGRAM.labels(dataCenter, String.valueOf(slotId)).observe(millis / 1000d);
     }
+
 
 }

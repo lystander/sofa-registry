@@ -32,7 +32,7 @@ import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.remoting.Server;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumCache;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.alipay.sofa.registry.task.FastRejectedExecutionException;
 import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
@@ -59,7 +59,7 @@ public class DataChangeEventCenter {
 
   @Autowired private DataServerConfig dataServerConfig;
 
-  @Autowired private DatumCache datumCache;
+  @Autowired private DatumStorageDecorator datumStorageDecorator;
 
   @Autowired private Exchange boltExchange;
 
@@ -265,12 +265,12 @@ public class DataChangeEventCenter {
   private void notifyTempPub(Channel channel, Datum datum) {
     // has temp pub, need to update the datum.version, we use the cache.datum.version as
     // push.version
-    final DatumVersion v = datumCache.updateVersion(datum.getDataCenter(), datum.getDataInfoId());
+    final DatumVersion v = datumStorageDecorator.updateVersion(datum.getDataCenter(), datum.getDataInfoId());
     if (v == null) {
       LOGGER.warn("not owns the DataInfoId when temp pub to {},{}", channel, datum.getDataInfoId());
       return;
     }
-    Datum existDatum = datumCache.get(datum.getDataCenter(), datum.getDataInfoId());
+    Datum existDatum = datumStorageDecorator.get(datum.getDataCenter(), datum.getDataInfoId());
     if (existDatum != null) {
       datum.addPublishers(existDatum.getPubMap());
     }
@@ -361,7 +361,7 @@ public class DataChangeEventCenter {
           Maps.newHashMapWithExpectedSize(event.getDataInfoIds().size());
       final String dataCenter = event.getDataCenter();
       for (String dataInfoId : event.getDataInfoIds()) {
-        DatumVersion datumVersion = datumCache.getVersion(dataCenter, dataInfoId);
+        DatumVersion datumVersion = datumStorageDecorator.getVersion(dataCenter, dataInfoId);
         if (datumVersion != null) {
           changes.put(dataInfoId, datumVersion);
         }
@@ -473,8 +473,8 @@ public class DataChangeEventCenter {
   }
 
   @VisibleForTesting
-  void setDatumCache(DatumCache datumCache) {
-    this.datumCache = datumCache;
+  void setDatumCache(DatumStorageDecorator datumStorageDecorator) {
+    this.datumStorageDecorator = datumStorageDecorator;
   }
 
   @VisibleForTesting

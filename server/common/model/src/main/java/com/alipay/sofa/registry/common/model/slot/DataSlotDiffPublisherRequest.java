@@ -27,19 +27,31 @@ import java.util.List;
  * @version v 0.1 2020-11-05 14:24 yuzhi.lyz Exp $
  */
 public class DataSlotDiffPublisherRequest implements Serializable {
+
+  private final String localDataCenter;
   private final long slotTableEpoch;
   // parts of the summary to diff sync
   private final List<DatumSummary> datumSummaries;
   private final int slotId;
 
   public DataSlotDiffPublisherRequest(
-      long slotTableEpoch, int slotId, Collection<DatumSummary> datumSummaries) {
+          String localDataCenter, long slotTableEpoch, int slotId, Collection<DatumSummary> datumSummaries) {
+    this.localDataCenter = localDataCenter;
     this.slotTableEpoch = slotTableEpoch;
     this.slotId = slotId;
     this.datumSummaries =
         datumSummaries == null
             ? Lists.newArrayListWithCapacity(0)
             : Lists.newArrayList(datumSummaries);
+  }
+
+  /**
+   * Getter method for property <tt>localDataCenter</tt>.
+   *
+   * @return property value of localDataCenter
+   */
+  public String getLocalDataCenter() {
+    return localDataCenter;
   }
 
   /**
