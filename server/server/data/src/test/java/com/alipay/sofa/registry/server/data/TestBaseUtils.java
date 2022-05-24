@@ -33,7 +33,7 @@ import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.URL;
 import com.alipay.sofa.registry.remoting.bolt.BoltChannel;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.cache.LocalDatumStorage;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
 import com.alipay.sofa.registry.task.FastRejectedExecutionException;
@@ -130,8 +130,8 @@ public final class TestBaseUtils {
     return new DataServerConfig(commonConfig);
   }
 
-  public static DatumStorageDecorator newLocalDatumCache(String localDataCenter, boolean init) {
-    DatumStorageDecorator cache = new DatumStorageDecorator();
+  public static DatumStorageDelegate newLocalDatumCache(String localDataCenter, boolean init) {
+    DatumStorageDelegate cache = new DatumStorageDelegate();
     LocalDatumStorage storage = TestBaseUtils.newLocalStorage(localDataCenter, init);
     cache.setLocalDatumStorage(storage);
     cache.setDataServerConfig(storage.getDataServerConfig());

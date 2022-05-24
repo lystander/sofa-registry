@@ -39,14 +39,14 @@ import org.apache.commons.lang.StringUtils;
  * @author qian.lqlq
  * @version $Id: DatumCache.java, v 0.1 2017-12-06 20:50 qian.lqlq Exp $
  */
-public class DatumStorageDecorator implements DatumStorage {
+public class DatumStorageDelegate implements DatumStorage {
 
   private final String localDataCenter;
   private final DatumStorage localDatumStorage;
 
   private final DatumStorage multiClusterDatumStorage;
 
-  public DatumStorageDecorator(DataServerConfig dataServerConfig) {
+  public DatumStorageDelegate(DataServerConfig dataServerConfig) {
     this.localDataCenter = dataServerConfig.getLocalDataCenter();
     this.localDatumStorage = new LocalDatumStorage(localDataCenter);
     this.multiClusterDatumStorage = new MultiClusterDatumStorage();

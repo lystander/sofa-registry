@@ -38,7 +38,7 @@ import com.alipay.sofa.registry.remoting.exchange.RequestException;
 import com.alipay.sofa.registry.remoting.exchange.message.Response;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
@@ -60,7 +60,7 @@ public final class SlotDiffSyncer {
   private final Logger DIFF_LOGGER;
   private final DataServerConfig dataServerConfig;
 
-  private final DatumStorageDecorator datumStorageDecorator;
+  private final DatumStorageDelegate  datumStorageDelegate;
   private final DataChangeEventCenter dataChangeEventCenter;
   private final SessionLeaseManager sessionLeaseManager;
 
@@ -68,13 +68,13 @@ public final class SlotDiffSyncer {
 
   public SlotDiffSyncer(
       DataServerConfig dataServerConfig,
-      DatumStorageDecorator datumStorageDecorator,
+      DatumStorageDelegate datumStorageDelegate,
       DataChangeEventCenter dataChangeEventCenter,
       SessionLeaseManager sessionLeaseManager,
       SyncSlotAcceptorManager syncSlotAcceptorManager,
       Logger diffLogger) {
     this.dataServerConfig = dataServerConfig;
-    this.datumStorageDecorator = datumStorageDecorator;
+    this.datumStorageDelegate = datumStorageDelegate;
     this.dataChangeEventCenter = dataChangeEventCenter;
     this.sessionLeaseManager = sessionLeaseManager;
     this.syncSlotAcceptorManager = syncSlotAcceptorManager;
@@ -122,7 +122,7 @@ public final class SlotDiffSyncer {
       final String dataInfoId = WordCache.getWordCache(e.getKey());
       final List<Publisher> publishers = e.getValue();
       Publisher.internPublisher(publishers);
-      if (datumStorageDecorator.putPublisher(syncDataCenter, dataInfoId, publishers) != null) {
+      if (datumStorageDelegate.putPublisher(syncDataCenter, dataInfoId, publishers) != null) {
         changeDataIds.add(dataInfoId);
       }
     }
@@ -139,7 +139,7 @@ public final class SlotDiffSyncer {
                 dataInfoId));
       }
       Map<String, RegisterVersion> versionMap = summary.getPublisherVersions(registerIds);
-      if (datumStorageDecorator.removePublishers(syncDataCenter, dataInfoId, sessionProcessId, versionMap)
+      if (datumStorageDelegate.removePublishers(syncDataCenter, dataInfoId, sessionProcessId, versionMap)
           != null) {
         changeDataIds.add(dataInfoId);
       }
@@ -317,7 +317,7 @@ public final class SlotDiffSyncer {
     // it maybe trigger a empty push with bigger datum.version which created by new empty
     final Set<String> changeDataIds = Sets.newHashSet();
     for (String removeDataInfoId : result.getRemovedDataInfoIds()) {
-      if (datumStorageDecorator.removePublishers(
+      if (datumStorageDelegate.removePublishers(
               syncDataCenter,
               removeDataInfoId,
               sessionProcessId,
@@ -399,7 +399,7 @@ public final class SlotDiffSyncer {
     // can not change to CollectionUtils.isEmpty
     if (summary == null) {
       Map<String, Map<String, DatumSummary>> datumSummary =
-              datumStorageDecorator.getDatumSummary(
+              datumStorageDelegate.getDatumSummary(
               dataServerConfig.getLocalDataCenter(), slotId, Collections.singleton(sessionIp));
       summary = datumSummary.get(sessionIp);
     }
@@ -431,7 +431,7 @@ public final class SlotDiffSyncer {
       throws RequestException {
     ParaCheckUtil.checkNotBlank(slotLeaderIp, "slotLeaderIp");
     Map<String, DatumSummary> summary =
-            datumStorageDecorator.getDatumSummary(syncDataCenter, slotId, acceptorManager);
+            datumStorageDelegate.getDatumSummary(syncDataCenter, slotId, acceptorManager);
     return sync(
         localDataCenter,
         syncDataCenter,
@@ -466,7 +466,7 @@ public final class SlotDiffSyncer {
 
   @VisibleForTesting
   DatumStorage getDatumStorage() {
-    return datumStorageDecorator;
+    return datumStorageDelegate;
   }
 
   @VisibleForTesting

@@ -22,7 +22,7 @@ import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.LoopRunnable;
 import com.alipay.sofa.registry.util.NamedThreadFactory;
@@ -46,7 +46,7 @@ public class CacheCountTask {
       LoggerFactory.getLogger(CacheCountTask.class, "[CacheCountTask]");
   private static final Logger COUNT_LOGGER = LoggerFactory.getLogger("CACHE-COUNT");
 
-  @Autowired private DatumStorageDecorator datumStorageDecorator;
+  @Autowired private DatumStorageDelegate datumStorageDelegate;
 
   @Autowired private DataServerConfig dataServerConfig;
 
@@ -79,7 +79,7 @@ public class CacheCountTask {
   }
 
   boolean printTotal() {
-    Map<String, Map<String, List<Publisher>>> allMap = datumStorageDecorator.getLocalAllPublisher();
+    Map<String, Map<String, List<Publisher>>> allMap = datumStorageDelegate.getLocalAllPublisher();
     Map<String, List<Publisher>> pubs = allMap.get(dataServerConfig.getLocalDataCenter());
     if (pubs.isEmpty()) {
       COUNT_LOGGER.info(
@@ -97,7 +97,7 @@ public class CacheCountTask {
 
   boolean count() {
     try {
-      Map<String, Map<String, List<Publisher>>> allMap = datumStorageDecorator.getLocalAllPublisher();
+      Map<String, Map<String, List<Publisher>>> allMap = datumStorageDelegate.getLocalAllPublisher();
       if (!allMap.isEmpty()) {
         for (Entry<String, Map<String, List<Publisher>>> dataCenterEntry : allMap.entrySet()) {
           final String dataCenter = dataCenterEntry.getKey();
@@ -172,8 +172,8 @@ public class CacheCountTask {
   }
 
   @VisibleForTesting
-  void setDatumCache(DatumStorageDecorator datumStorageDecorator) {
-    this.datumStorageDecorator = datumStorageDecorator;
+  void setDatumCache(DatumStorageDelegate datumStorageDelegate) {
+    this.datumStorageDelegate = datumStorageDelegate;
   }
 
   @VisibleForTesting

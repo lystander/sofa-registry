@@ -33,7 +33,7 @@ public class DatumCacheTest {
 
   @Test
   public void test() {
-    DatumStorageDecorator cache = TestBaseUtils.newLocalDatumCache(testDc, true);
+    DatumStorageDelegate cache = TestBaseUtils.newLocalDatumCache(testDc, true);
     LocalDatumStorage storage = (LocalDatumStorage) cache.getLocalDatumStorage();
 
     Publisher publisher = TestBaseUtils.createTestPublisher(testDataId);

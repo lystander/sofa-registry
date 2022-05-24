@@ -28,6 +28,7 @@ public final class SlotAccess implements Serializable {
     Migrating,
     Moved,
     MisMatch,
+    UnSupport,
   }
 
   private final int slotId;

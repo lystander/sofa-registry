@@ -22,7 +22,7 @@ import com.alipay.sofa.registry.common.model.store.URL;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.StringFormatter;
 import com.google.common.annotations.VisibleForTesting;
@@ -41,7 +41,7 @@ import org.springframework.util.CollectionUtils;
 public class CacheDigestTask {
   private static final Logger LOGGER = LoggerFactory.getLogger("CACHE-DIGEST");
 
-  @Autowired private DatumStorageDecorator datumStorageDecorator;
+  @Autowired private DatumStorageDelegate datumStorageDelegate;
 
   @Autowired private DataServerConfig dataServerConfig;
 
@@ -70,7 +70,7 @@ public class CacheDigestTask {
 
   boolean dump() {
     try {
-      Map<String, Map<String, Datum>> allMap = datumStorageDecorator.getLocalAll();
+      Map<String, Map<String, Datum>> allMap = datumStorageDelegate.getLocalAll();
       if (!allMap.isEmpty()) {
         for (Entry<String, Map<String, Datum>> dataCenterEntry : allMap.entrySet()) {
           String dataCenter = dataCenterEntry.getKey();
@@ -123,8 +123,8 @@ public class CacheDigestTask {
   }
 
   @VisibleForTesting
-  void setDatumCache(DatumStorageDecorator datumStorageDecorator) {
-    this.datumStorageDecorator = datumStorageDecorator;
+  void setDatumCache(DatumStorageDelegate datumStorageDelegate) {
+    this.datumStorageDelegate = datumStorageDelegate;
   }
 
   @VisibleForTesting

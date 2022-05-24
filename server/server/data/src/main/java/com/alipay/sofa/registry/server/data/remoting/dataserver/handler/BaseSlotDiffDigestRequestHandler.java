@@ -16,8 +16,8 @@ import com.alipay.sofa.registry.exception.UnSupportOperationException;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
+import com.alipay.sofa.registry.server.data.slot.SlotAccessor;
 import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
@@ -37,9 +37,11 @@ public abstract class BaseSlotDiffDigestRequestHandler extends AbstractServerHan
     private final Logger logger;
 
     @Resource
-    private DatumStorageDecorator datumStorageDecorator;
+    private DatumStorageDelegate datumStorageDelegate;
 
     @Autowired private SlotManager slotManager;
+
+    @Autowired private SlotAccessor slotAccessor;
 
     @Autowired private DataServerConfig dataServerConfig;
 
@@ -52,17 +54,17 @@ public abstract class BaseSlotDiffDigestRequestHandler extends AbstractServerHan
         try {
             slotManager.triggerUpdateSlotTable(request.getSlotTableEpoch());
             final int slotId = request.getSlotId();
-            if (!slotManager.isLeader(slotId)) {
+            if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), slotId)) {
                 logger.warn("sync slot request from {}, not leader of {}", request.getLocalDataCenter(), slotId);
                 return new GenericResponse().fillFailed("not leader of " + slotId);
             }
 
             Map<String, Map<String, Publisher>> existingPublishers;
             if (request.getAcceptType() == SlotDiffAcceptType.ALL) {
-                existingPublishers = datumStorageDecorator.getPublishers(dataServerConfig.getLocalDataCenter(),
+                existingPublishers = datumStorageDelegate.getPublishers(dataServerConfig.getLocalDataCenter(),
                         request.getSlotId());
             } else if (request.getAcceptType() == SlotDiffAcceptType.ACCEPTORS) {
-                existingPublishers = datumStorageDecorator.getPublishers(dataServerConfig.getLocalDataCenter(),
+                existingPublishers = datumStorageDelegate.getPublishers(dataServerConfig.getLocalDataCenter(),
                         request.getSlotId(), request.getAcceptorManager());
             } else {
                 throw new UnSupportOperationException("DiffSyncDigest unsupport request.slotDiffAcceptType: " + request.getAcceptType());

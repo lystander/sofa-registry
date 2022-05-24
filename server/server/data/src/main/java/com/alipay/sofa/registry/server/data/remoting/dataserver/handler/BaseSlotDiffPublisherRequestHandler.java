@@ -14,8 +14,8 @@ import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
+import com.alipay.sofa.registry.server.data.slot.SlotAccessor;
 import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
@@ -37,11 +37,13 @@ public abstract class BaseSlotDiffPublisherRequestHandler
     private final Logger logger;
 
     @Resource
-    private DatumStorageDecorator datumStorageDecorator;
+    private DatumStorageDelegate datumStorageDelegate;
 
     @Autowired private DataServerConfig dataServerConfig;
 
     @Autowired private SlotManager slotManager;
+
+    @Autowired private SlotAccessor slotAccessor;
 
     public BaseSlotDiffPublisherRequestHandler(Logger logger) {
         this.logger = logger;
@@ -58,7 +60,7 @@ public abstract class BaseSlotDiffPublisherRequestHandler
         try {
             slotManager.triggerUpdateSlotTable(request.getSlotTableEpoch());
             final int slotId = request.getSlotId();
-            if (!slotManager.isLeader(slotId)) {
+            if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), slotId)) {
                 logger.warn("sync slot request from {}, not leader of {}", request.getLocalDataCenter(), slotId);
                 return new GenericResponse().fillFailed("not leader of " + slotId);
             }
@@ -66,7 +68,7 @@ public abstract class BaseSlotDiffPublisherRequestHandler
                     calcDiffResult(
                             slotId,
                             request.getDatumSummaries(),
-                            datumStorageDecorator.getPublishers(dataServerConfig.getLocalDataCenter(), request.getSlotId()));
+                            datumStorageDelegate.getPublishers(dataServerConfig.getLocalDataCenter(), request.getSlotId()));
             result.setSlotTableEpoch(slotManager.getSlotTableEpoch());
             return new GenericResponse().fillSucceed(result);
         } catch (Throwable e) {

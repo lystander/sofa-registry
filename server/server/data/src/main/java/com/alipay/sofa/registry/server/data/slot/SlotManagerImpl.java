@@ -27,8 +27,7 @@ import com.alipay.sofa.registry.common.model.slot.func.SlotFunctionRegistry;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
@@ -36,7 +35,6 @@ import com.alipay.sofa.registry.server.data.remoting.DataNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.SessionNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.metaserver.MetaServerServiceImpl;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
-import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;
 import com.alipay.sofa.registry.server.shared.slot.SlotTableRecorder;
 import com.alipay.sofa.registry.task.KeyedTask;
 import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
@@ -85,7 +83,7 @@ public final class SlotManagerImpl implements SlotManager {
   @Autowired private DataServerConfig dataServerConfig;
 
   @Resource
-  private DatumStorageDecorator datumStorageDecorator;
+  private DatumStorageDelegate datumStorageDelegate;
 
   @Autowired private DataChangeEventCenter dataChangeEventCenter;
 
@@ -118,7 +116,7 @@ public final class SlotManagerImpl implements SlotManager {
   }
 
   void initSlotChangeListener() {
-    SlotChangeListener l = datumStorageDecorator.getSlotChangeListener(true);
+    SlotChangeListener l = datumStorageDelegate.getSlotChangeListener(true);
     if (l != null) {
       this.slotChangeListeners.add(l);
     }
@@ -150,13 +148,13 @@ public final class SlotManagerImpl implements SlotManager {
   }
 
   @Override
-  public Slot getSlot(int slotId) {
+  public Slot getSlot(String dataCenter, int slotId) {
     final SlotState state = slotTableStates.slotStates.get(slotId);
     return state == null ? null : state.slot;
   }
 
   @Override
-  public SlotAccess checkSlotAccess(int slotId, long srcSlotEpoch, long srcLeaderEpoch) {
+  public SlotAccess checkSlotAccess(String dataCenter, int slotId, long srcSlotEpoch, long srcLeaderEpoch) {
     SlotTable currentSlotTable;
     SlotState state;
     updateLock.readLock().lock();
@@ -252,13 +250,13 @@ public final class SlotManagerImpl implements SlotManager {
   }
 
   @Override
-  public boolean isLeader(int slotId) {
+  public boolean isLeader(String dataCenter, int slotId) {
     final SlotState state = slotTableStates.slotStates.get(slotId);
     return state != null && localIsLeader(state.slot);
   }
 
   @Override
-  public boolean isFollower(int slotId) {
+  public boolean isFollower(String dataCenter, int slotId) {
     final SlotState state = slotTableStates.slotStates.get(slotId);
     return state != null && state.slot.getFollowers().contains(ServerEnv.IP);
   }
@@ -453,7 +451,7 @@ public final class SlotManagerImpl implements SlotManager {
     if (slotState.isAnywaySuccess(sessions)) {
       // after migrated, force to update the version
       // make sure the version is newly than old leader's
-      Map<String, DatumVersion> versions = datumStorageDecorator.updateVersion(dataServerConfig.getLocalDataCenter(), slotState.slotId);
+      Map<String, DatumVersion> versions = datumStorageDelegate.updateVersion(dataServerConfig.getLocalDataCenter(), slotState.slotId);
       slotState.migrated = true;
       // versions has update, notify change
       dataChangeEventCenter.onChange(
@@ -600,7 +598,7 @@ public final class SlotManagerImpl implements SlotManager {
 
     if (!CollectionUtils.isEmpty(doSyncSet)) {
       final Map<String, Map<String, DatumSummary>> datumSummary =
-              datumStorageDecorator.getDatumSummary(dataServerConfig.getLocalDataCenter(), slotState.slotId, doSyncSet);
+              datumStorageDelegate.getDatumSummary(dataServerConfig.getLocalDataCenter(), slotState.slotId, doSyncSet);
       for (String sessionIp : doSyncSet) {
         Map<String, DatumSummary> summary = datumSummary.get(sessionIp);
         syncSession(slotState, sessionIp, summary, syncSessionIntervalMs, slotTableEpoch);
@@ -650,12 +648,12 @@ public final class SlotManagerImpl implements SlotManager {
     if (syncLeaderTask == null || syncLeaderTask.isOverAfter(syncLeaderIntervalMs)) {
       // sync leader no need to notify event
       SlotDiffSyncer syncer =
-          new SlotDiffSyncer(dataServerConfig, datumStorageDecorator, null, sessionLeaseManager, null, DIFF_LOGGER);
+          new SlotDiffSyncer(dataServerConfig, datumStorageDelegate, null, sessionLeaseManager, null, DIFF_LOGGER);
       SyncContinues continues =
           new SyncContinues() {
             @Override
             public boolean continues() {
-              return isFollower(slot.getId());
+              return isFollower(dataServerConfig.getLocalDataCenter(), slot.getId());
             }
           };
       SyncLeaderTask task =
@@ -677,13 +675,13 @@ public final class SlotManagerImpl implements SlotManager {
       boolean migrate) {
     SlotDiffSyncer syncer =
         new SlotDiffSyncer(
-            dataServerConfig, datumStorageDecorator, dataChangeEventCenter, sessionLeaseManager, null, DIFF_LOGGER);
+            dataServerConfig, datumStorageDelegate, dataChangeEventCenter, sessionLeaseManager, null, DIFF_LOGGER);
     SyncContinues continues =
         new SyncContinues() {
           @Override
           public boolean continues() {
             // if not leader, the syncing need to break
-            return isLeader(slot.getId());
+            return isLeader(dataServerConfig.getLocalDataCenter(), slot.getId());
           }
         };
     SyncSessionTask task =

@@ -24,7 +24,7 @@ import com.alipay.sofa.registry.common.model.slot.SlotConfig;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.server.data.TestBaseUtils;
 import com.alipay.sofa.registry.server.data.cache.CleanContinues;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.BatchPutDataHandler;
 import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
@@ -41,9 +41,9 @@ public class DatumApiResourceTest {
   private DatumApiResource newResource() {
     DatumApiResource resource = new DatumApiResource();
     resource.dataServerConfig = TestBaseUtils.newDataConfig("testDc");
-    DatumStorageDecorator datumStorageDecorator = TestBaseUtils.newLocalDatumCache("testDc", true);
-    resource.datumStorageDecorator = datumStorageDecorator;
-    resource.localDatumStorage = datumStorageDecorator.getLocalDatumStorage();
+    DatumStorageDelegate datumStorageDelegate = TestBaseUtils.newLocalDatumCache("testDc", true);
+    resource.datumStorageDelegate = datumStorageDelegate;
+    resource.localDatumStorage = datumStorageDelegate.getLocalDatumStorage();
     resource.slotManager = Mockito.mock(SlotManager.class);
     resource.batchPutDataHandler = Mockito.mock(BatchPutDataHandler.class);
     return resource;

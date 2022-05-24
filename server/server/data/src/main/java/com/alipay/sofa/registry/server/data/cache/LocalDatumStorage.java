@@ -159,7 +159,7 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public SlotChangeListener getSlotChangeListener() {
+  public SlotChangeListener getSlotChangeListener(boolean localDataCenter) {
     return new SlotListener();
   }
 

@@ -274,7 +274,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
   }
 
   @Override
-  public SlotChangeListener getSlotChangeListener() {
+  public SlotChangeListener getSlotChangeListener(boolean localDataCenter) {
     return listener;
   }
 

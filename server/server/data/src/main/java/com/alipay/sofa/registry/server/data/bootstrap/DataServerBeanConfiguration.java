@@ -20,9 +20,7 @@ import com.alipay.sofa.registry.jdbc.config.JdbcConfiguration;
 import com.alipay.sofa.registry.remoting.bolt.exchange.BoltExchange;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.remoting.jersey.exchange.JerseyExchange;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
-import com.alipay.sofa.registry.server.data.cache.LocalDatumStorage;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
 import com.alipay.sofa.registry.server.data.providedata.CompressDatumService;
@@ -41,6 +39,8 @@ import com.alipay.sofa.registry.server.data.resource.DataDigestResource;
 import com.alipay.sofa.registry.server.data.resource.DatumApiResource;
 import com.alipay.sofa.registry.server.data.resource.HealthResource;
 import com.alipay.sofa.registry.server.data.resource.SlotTableStatusResource;
+import com.alipay.sofa.registry.server.data.slot.SlotAccessor;
+import com.alipay.sofa.registry.server.data.slot.SlotAccessorDelegate;
 import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.data.slot.SlotManagerImpl;
 import com.alipay.sofa.registry.server.data.timer.CacheCountTask;
@@ -119,14 +119,20 @@ public class DataServerBeanConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public DatumStorageDecorator datumStorageDecorator(DataServerConfig dataServerConfig) {
-      return new DatumStorageDecorator(dataServerConfig);
+    public DatumStorageDelegate datumStorageDelegate(DataServerConfig dataServerConfig) {
+      return new DatumStorageDelegate(dataServerConfig);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public SlotManager slotManager() {
       return new SlotManagerImpl();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SlotAccessor slotAccessor() {
+      return new SlotAccessorDelegate();
     }
 
     @Bean

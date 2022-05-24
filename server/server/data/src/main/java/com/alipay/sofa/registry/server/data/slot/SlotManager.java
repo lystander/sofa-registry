@@ -27,21 +27,11 @@ import java.util.List;
  * @author yuzhi.lyz
  * @version v 0.1 2020-10-30 10:46 yuzhi.lyz Exp $
  */
-public interface SlotManager {
-
-  int slotOf(String dataInfoId);
-
-  Slot getSlot(int slotId);
-
-  SlotAccess checkSlotAccess(int slotId, long srcSlotEpoch, long srcLeaderEpoch);
+public interface SlotManager extends SlotAccessor {
 
   boolean hasSlot();
 
   List<BaseSlotStatus> getSlotStatuses();
-
-  boolean isLeader(int slotId);
-
-  boolean isFollower(int slotId);
 
   boolean updateSlotTable(SlotTable slotTable);
 

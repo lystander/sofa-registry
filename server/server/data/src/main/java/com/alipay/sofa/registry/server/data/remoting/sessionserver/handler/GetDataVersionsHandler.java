@@ -25,7 +25,7 @@ import com.alipay.sofa.registry.common.model.slot.SlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.store.WordCache;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -41,8 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: GetDataVersionsProcessor.java, v 0.1 2017-12-06 19:56 qian.lqlq Exp $
  */
 public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRequest> {
-  private static final Logger                LOGGER = DataLog.GET_LOGGER;
-  @Autowired private   DatumStorageDecorator datumStorageDecorator;
+  private static final Logger               LOGGER = DataLog.GET_LOGGER;
+  @Autowired private   DatumStorageDelegate datumStorageDelegate;
 
   @Autowired private ThreadPoolExecutor getDataProcessorExecutor;
 
@@ -64,16 +64,16 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
     final int slotId = request.getSlotId();
     final String dataCenter = request.getDataCenter();
     final SlotAccess slotAccessBefore =
-        checkAccess(slotId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
+        checkAccess(dataCenter, slotId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
     if (!slotAccessBefore.isAccept()) {
       return SlotAccessGenericResponse.failedResponse(slotAccessBefore);
     }
     final Map<String, DatumVersion> interests = request.getInterests();
     Map<String /*dataInfoId*/, DatumVersion> getVersions =
-        datumStorageDecorator.getVersions(dataCenter, slotId, interests.keySet());
+        datumStorageDelegate.getVersions(dataCenter, slotId, interests.keySet());
     // double check slot access, @see GetDataHandler
     final SlotAccess slotAccessAfter =
-        checkAccess(slotId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
+        checkAccess(dataCenter, slotId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
     if (slotAccessAfter.getSlotLeaderEpoch() != slotAccessBefore.getSlotLeaderEpoch()) {
       return SlotAccessGenericResponse.failedResponse(
           slotAccessAfter, "slotLeaderEpoch has change, prev=" + slotAccessBefore);
@@ -105,7 +105,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
           //    bigger than current datum.version=V1, the publisher-B would not push to
           // subscriber-A.
           // so, we need to compare the push.version and datum.version
-          DatumVersion updateVer = datumStorageDecorator.updateVersion(dataCenter, dataInfoId);
+          DatumVersion updateVer = datumStorageDelegate.updateVersion(dataCenter, dataInfoId);
           ret.put(dataInfoId, updateVer);
           LOGGER.info(
               "updateV,{},{},{},interestVer={},currentVer={},updateVer={}",
@@ -125,7 +125,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
           // cache the dataInfoId
           final String cacheDataInfoId = WordCache.getWordCache(dataInfoId);
           final DatumVersion v =
-              localDatumStorage.createEmptyDatumIfAbsent(dataCenter, cacheDataInfoId);
+                  datumStorageDelegate.createEmptyDatumIfAbsent(dataCenter, cacheDataInfoId);
           if (v != null) {
             ret.put(dataInfoId, v);
           }
@@ -150,7 +150,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
   }
 
   @VisibleForTesting
-  void setDatumCache(DatumStorageDecorator datumStorageDecorator) {
-    this.datumStorageDecorator = datumStorageDecorator;
+  void setDatumCache(DatumStorageDelegate datumStorageDelegate) {
+    this.datumStorageDelegate = datumStorageDelegate;
   }
 }

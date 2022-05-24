@@ -27,7 +27,7 @@ import com.alipay.sofa.registry.compress.CompressUtils;
 import com.alipay.sofa.registry.compress.Compressor;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
-import com.alipay.sofa.registry.server.data.cache.DatumStorageDecorator;
+import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.providedata.CompressDatumService;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
@@ -44,8 +44,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: GetDataProcessor.java, v 0.1 2017-12-01 15:48 qian.lqlq Exp $
  */
 public class GetDataHandler extends AbstractDataHandler<GetDataRequest> {
-  private static final Logger                LOGGER = DataLog.GET_LOGGER;
-  @Autowired private   DatumStorageDecorator datumStorageDecorator;
+  private static final Logger               LOGGER = DataLog.GET_LOGGER;
+  @Autowired private   DatumStorageDelegate datumStorageDelegate;
 
   @Autowired private ThreadPoolExecutor getDataProcessorExecutor;
 
@@ -70,12 +70,12 @@ public class GetDataHandler extends AbstractDataHandler<GetDataRequest> {
     final String dataInfoId = request.getDataInfoId();
     final String dataCenter = request.getDataCenter();
     final SlotAccess slotAccessBefore =
-        checkAccess(dataInfoId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
+        checkAccess(dataCenter, dataInfoId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
     if (!slotAccessBefore.isAccept()) {
       GET_DATUM_N_COUNTER.inc();
       return SlotAccessGenericResponse.failedResponse(slotAccessBefore);
     }
-    final Datum datum = datumStorageDecorator.get(dataCenter, dataInfoId);
+    final Datum datum = datumStorageDelegate.get(dataCenter, dataInfoId);
     // important. double check the slot access. avoid the case:
     // 1. the slot is leader, the first check pass
     // 2. slot moved and data cleaned
@@ -85,7 +85,7 @@ public class GetDataHandler extends AbstractDataHandler<GetDataRequest> {
     // push empty
     // so, need a double check slot access, make sure the slot's leader not change in the getting
     final SlotAccess slotAccessAfter =
-        checkAccess(dataInfoId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
+        checkAccess(dataCenter, dataInfoId, request.getSlotTableEpoch(), request.getSlotLeaderEpoch());
     if (slotAccessAfter.getSlotLeaderEpoch() != slotAccessBefore.getSlotLeaderEpoch()) {
       // the slot's leader has change
       GET_DATUM_N_COUNTER.inc();
@@ -125,8 +125,8 @@ public class GetDataHandler extends AbstractDataHandler<GetDataRequest> {
   }
 
   @VisibleForTesting
-  void setDatumCache(DatumStorageDecorator datumStorageDecorator) {
-    this.datumStorageDecorator = datumStorageDecorator;
+  void setDatumCache(DatumStorageDelegate datumStorageDelegate) {
+    this.datumStorageDelegate = datumStorageDelegate;
   }
 
   @VisibleForTesting
