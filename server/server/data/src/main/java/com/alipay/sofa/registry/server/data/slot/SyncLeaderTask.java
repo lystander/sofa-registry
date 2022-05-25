@@ -5,6 +5,7 @@
 package com.alipay.sofa.registry.server.data.slot;
 
 import com.alipay.sofa.registry.common.model.slot.Slot;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;

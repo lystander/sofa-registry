@@ -22,7 +22,6 @@ import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author yuzhi.lyz

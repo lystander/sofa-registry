@@ -7,6 +7,7 @@ import com.alipay.sofa.registry.common.model.slot.Slot;
 import com.alipay.sofa.registry.common.model.slot.Slot.Role;
 import com.alipay.sofa.registry.common.model.slot.SlotAccess;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.exception.UnSupportOperationException;
 import com.alipay.sofa.registry.log.Logger;
@@ -66,7 +67,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
 
   @Autowired private MultiClusterExecutorManager multiClusterExecutorManager;
 
-  @Autowired private SyncSlotAcceptorManager syncSlotAcceptorManager;
+  @Resource private SyncSlotAcceptorManager remoteSyncDataAcceptorManager;
 
   private static final Map<String, RemoteSlotTableStates> remoteSlotTableStates =
       Maps.newConcurrentMap();
@@ -459,7 +460,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
                   datumStorageDelegate,
               dataChangeEventCenter,
               null,
-              syncSlotAcceptorManager,
+                  remoteSyncDataAcceptorManager,
               MULTI_CLUSTER_CLIENT_LOGGER);
       SyncContinues continues = () -> isLeader(slot.getLeader());
       SyncLeaderTask task =
@@ -471,7 +472,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
               syncer,
               remoteDataNodeExchanger,
               continues,
-              syncSlotAcceptorManager,
+                  remoteSyncDataAcceptorManager,
               MULTI_CLUSTER_SYNC_DIGEST_LOGGER,
               MULTI_CLUSTER_SYNC_DIGEST_LOGGER);
       state.syncRemoteTask =

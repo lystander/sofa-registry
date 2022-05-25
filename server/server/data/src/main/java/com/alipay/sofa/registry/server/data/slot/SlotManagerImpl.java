@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.slot.*;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.func.SlotFunction;
 import com.alipay.sofa.registry.common.model.slot.func.SlotFunctionRegistry;
 import com.alipay.sofa.registry.log.Logger;
@@ -91,6 +92,12 @@ public final class SlotManagerImpl implements SlotManager {
 
   @Autowired(required = false)
   private List<SlotTableRecorder> recorders;
+
+  @Resource
+  private SyncSlotAcceptorManager localSyncSessionAccessorManager;
+
+  @Resource
+  private SyncSlotAcceptorManager localSyncDataAccessorManager;
 
   private final List<SlotChangeListener> slotChangeListeners = new ArrayList<>();
 
@@ -648,7 +655,7 @@ public final class SlotManagerImpl implements SlotManager {
     if (syncLeaderTask == null || syncLeaderTask.isOverAfter(syncLeaderIntervalMs)) {
       // sync leader no need to notify event
       SlotDiffSyncer syncer =
-          new SlotDiffSyncer(dataServerConfig, datumStorageDelegate, null, sessionLeaseManager, null, DIFF_LOGGER);
+          new SlotDiffSyncer(dataServerConfig, datumStorageDelegate, null, sessionLeaseManager, localSyncDataAccessorManager, DIFF_LOGGER);
       SyncContinues continues =
           new SyncContinues() {
             @Override
@@ -675,7 +682,7 @@ public final class SlotManagerImpl implements SlotManager {
       boolean migrate) {
     SlotDiffSyncer syncer =
         new SlotDiffSyncer(
-            dataServerConfig, datumStorageDelegate, dataChangeEventCenter, sessionLeaseManager, null, DIFF_LOGGER);
+            dataServerConfig, datumStorageDelegate, dataChangeEventCenter, sessionLeaseManager, localSyncSessionAccessorManager, DIFF_LOGGER);
     SyncContinues continues =
         new SyncContinues() {
           @Override

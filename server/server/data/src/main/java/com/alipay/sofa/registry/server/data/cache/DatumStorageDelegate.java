@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;

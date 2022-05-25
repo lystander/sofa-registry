@@ -16,6 +16,10 @@
  */
 package com.alipay.sofa.registry.server.data.bootstrap;
 
+import com.alipay.sofa.registry.common.model.slot.filter.LocalSyncDataAccessorManager;
+import com.alipay.sofa.registry.common.model.slot.filter.LocalSyncSessionAccessorManager;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.jdbc.config.JdbcConfiguration;
 import com.alipay.sofa.registry.remoting.bolt.exchange.BoltExchange;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
@@ -144,6 +148,16 @@ public class DataServerBeanConfiguration {
     @Bean
     public DiskSlotTableRecorder diskSlotTableRecorder() {
       return new DiskSlotTableRecorder();
+    }
+
+    @Bean
+    public SyncSlotAcceptorManager localSyncSessionAccessorManager() {
+      return new LocalSyncSessionAccessorManager();
+    }
+
+    @Bean
+    public SyncSlotAcceptorManager localSyncDataAccessorManager() {
+      return new LocalSyncDataAccessorManager();
     }
   }
 

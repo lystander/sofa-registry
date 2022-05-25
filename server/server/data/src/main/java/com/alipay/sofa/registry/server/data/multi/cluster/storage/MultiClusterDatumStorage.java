@@ -8,21 +8,17 @@ import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.slot.Slot;
-import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
-import com.alipay.sofa.registry.common.model.slot.func.SlotFunction;
-import com.alipay.sofa.registry.common.model.slot.func.SlotFunctionRegistry;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.exception.UnSupportOperationException;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
-import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.BaseDatumStorage;
 import com.alipay.sofa.registry.server.data.cache.CleanContinues;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Maps;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -102,7 +98,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId, RemoteSyncDataAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     BaseDatumStorage storage = storageMap.get(dataCenter);
@@ -259,7 +255,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, RemoteSyncDataAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     BaseDatumStorage storage = storageMap.get(dataCenter);

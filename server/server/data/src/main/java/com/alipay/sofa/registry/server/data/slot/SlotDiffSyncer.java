@@ -29,6 +29,7 @@ import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherResult;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.WordCache;
@@ -246,7 +247,7 @@ public final class SlotDiffSyncer {
                 slotTableEpoch,
                 slotId,
                 digestMap,
-                new SyncSlotAcceptorManager(syncSlotAcceptorManager.getAcceptors()));
+                syncSlotAcceptorManager);
     Response exchangeResp = exchanger.requestRaw(targetAddress, request);
     GenericResponse<DataSlotDiffDigestResult> resp =
         (GenericResponse<DataSlotDiffDigestResult>) exchangeResp.getResult();

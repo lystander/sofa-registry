@@ -23,18 +23,16 @@ import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.slot.Slot;
-import com.alipay.sofa.registry.common.model.slot.Slot.Role;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
-import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 
 import java.util.*;
 
 import com.alipay.sofa.registry.util.ParaCheckUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yuzhi.lyz
