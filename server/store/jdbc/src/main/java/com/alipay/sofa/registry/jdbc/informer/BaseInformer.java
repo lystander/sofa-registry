@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.registry.jdbc.informer;
 
+import com.alipay.sofa.registry.jdbc.notify.DBEntryNotify;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
@@ -49,6 +50,9 @@ public abstract class BaseInformer<T extends DbEntry, C extends DbEntryContainer
   private final Logger logger;
   private static final int DB_INSERT_DELAY_MS = 1000;
   private volatile boolean allSynced = false;
+
+  protected final DBEntryNotify dbEntryNotify = new DBEntryNotify();
+
 
   public BaseInformer(String name, Logger logger) {
     this.name = name;
@@ -119,7 +123,10 @@ public abstract class BaseInformer<T extends DbEntry, C extends DbEntryContainer
         break;
       }
       for (T entry : entries) {
+        //important call onEntry firstly, then notify;
+        //if call onEntry after notify, it may cause dirty data at a moment;
         callable.onEntry(entry);
+        dbEntryNotify.notify(entry);
         curStart = Math.max(curStart, entry.getId());
       }
       ConcurrentUtils.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
