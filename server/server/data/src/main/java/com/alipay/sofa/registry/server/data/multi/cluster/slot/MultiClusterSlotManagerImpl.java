@@ -19,6 +19,7 @@ import com.alipay.sofa.registry.server.data.multi.cluster.exchanger.RemoteDataNo
 import com.alipay.sofa.registry.server.data.multi.cluster.executor.MultiClusterExecutorManager;
 import com.alipay.sofa.registry.server.data.multi.cluster.loggers.Loggers;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
+import com.alipay.sofa.registry.server.data.slot.SlotChangeListenerManager;
 import com.alipay.sofa.registry.server.data.slot.SlotDiffSyncer;
 import com.alipay.sofa.registry.server.data.slot.SyncContinues;
 import com.alipay.sofa.registry.server.data.slot.SyncLeaderTask;
@@ -63,6 +64,9 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
 
   @Resource private DatumStorageDelegate datumStorageDelegate;
 
+  @Autowired
+  private SlotChangeListenerManager slotChangeListenerManager;
+
   @Autowired private RemoteDataNodeExchanger remoteDataNodeExchanger;
 
   @Autowired private MultiClusterExecutorManager multiClusterExecutorManager;
@@ -77,20 +81,11 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
 
   private final RemoteSyncingWatchDog watchDog = new RemoteSyncingWatchDog();
 
-  private final Set<SlotChangeListener> slotChangeListeners = Sets.newHashSet();
-
   @PostConstruct
   public void init() {
-    initSlotChangeListener();
     ConcurrentUtils.createDaemonThread("RemoteSyncingWatchDog", watchDog).start();
   }
 
-  void initSlotChangeListener() {
-    SlotChangeListener l = datumStorageDelegate.getSlotChangeListener(false);
-    if (l != null) {
-      this.slotChangeListeners.add(l);
-    }
-  }
 
   @Override
   public int slotOf(String dataInfoId) {
@@ -203,8 +198,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
           }
         }
         this.slotTable = update;
-        MultiClusterSlotMetrics.observeRemoteLeaderAssignGauge(
-            dataCenter, this.slotTable.getLeaderNum(ServerEnv.IP));
+        MultiClusterSlotMetrics.observeRemoteLeaderAssignGauge(dataCenter, this.slotTable.getLeaderNum(ServerEnv.IP));
       } catch (Throwable t) {
         MULTI_CLUSTER_SLOT_TABLE.error("[updateSlotTable]update slot table:{} error.", update, t);
         return false;
@@ -228,12 +222,12 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
     }
 
     private void listenAdd(String dataCenter, Slot s) {
-      slotChangeListeners.forEach(
+      slotChangeListenerManager.remoteListeners().forEach(
           listener -> listener.onSlotAdd(dataCenter, s.getId(), Role.Leader));
     }
 
     private void listenRemove(String dataCenter, Slot s) {
-      slotChangeListeners.forEach(
+      slotChangeListenerManager.remoteListeners().forEach(
           listener -> listener.onSlotRemove(dataCenter, s.getId(), Role.Leader));
     }
   }
@@ -409,8 +403,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
       if (update == null) {
         continue;
       }
-      RemoteSlotTableStates remoteStates =
-          MultiClusterSlotManagerImpl.remoteSlotTableStates.get(dataCenter);
+      RemoteSlotTableStates remoteStates = remoteSlotTableStates.get(dataCenter);
       SlotTable current = remoteStates.slotTable;
       if (update.getEpoch() <= current.getEpoch()) {
         MULTI_CLUSTER_SLOT_TABLE.warn(

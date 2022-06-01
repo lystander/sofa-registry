@@ -16,6 +16,8 @@
  */
 package com.alipay.sofa.registry.server.data.remoting.dataserver.handler;
 
+import com.alipay.sofa.registry.common.model.GenericResponse;
+import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,5 +42,19 @@ public class SlotFollowerDiffDigestRequestHandler extends BaseSlotDiffDigestRequ
   @Override
   public Executor getExecutor() {
     return slotSyncRequestProcessorExecutor;
+  }
+
+  @Override
+  protected boolean preCheck(DataSlotDiffDigestRequest request) {
+    if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), request.getSlotId())) {
+      LOGGER.warn("sync slot request from {}, not leader of {}", request.getLocalDataCenter(), request.getSlotId());
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  protected boolean postCheck(DataSlotDiffDigestRequest request) {
+    return true;
   }
 }

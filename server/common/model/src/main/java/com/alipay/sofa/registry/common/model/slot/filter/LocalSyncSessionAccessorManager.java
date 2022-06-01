@@ -6,7 +6,7 @@ package com.alipay.sofa.registry.common.model.slot.filter;
 
 import com.google.common.collect.Sets;
 
-import java.util.Set;
+import javax.annotation.PostConstruct;
 
 /**
  *
@@ -15,7 +15,14 @@ import java.util.Set;
  */
 public class LocalSyncSessionAccessorManager extends BaseSyncSlotAcceptorManager {
 
+    // todo xiaojian.xj
+    private final static SyncSlotAcceptor groupAcceptor = new SyncSlotGroupAcceptor(Sets.newHashSet(), Sets.newHashSet());
     public LocalSyncSessionAccessorManager() {
         super(Sets.newConcurrentHashSet());
+    }
+
+    @PostConstruct
+    public void init() {
+        register(groupAcceptor);
     }
 }

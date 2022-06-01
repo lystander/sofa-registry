@@ -4,6 +4,7 @@
  */
 package com.alipay.sofa.registry.server.data.multi.cluster.dataserver.handler;
 
+import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.multi.cluster.executor.MultiClusterExecutorManager;
@@ -38,5 +39,21 @@ public class MultiClusterSlotDiffDigestRequestHandler extends BaseSlotDiffDigest
     @Override
     public Executor getExecutor() {
         return multiClusterExecutorManager.getRemoteSlotSyncProcessorExecutor();
+    }
+
+    @Override
+    protected boolean preCheck(DataSlotDiffDigestRequest request) {
+        if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), request.getSlotId())) {
+            LOGGER.warn("sync slot request from {}, not leader of {}", request.getLocalDataCenter(), request.getSlotId());
+            return false;
+        }
+
+        // todo xiaojian.xj check slot status
+        return true;
+    }
+
+    @Override
+    protected boolean postCheck(DataSlotDiffDigestRequest request) {
+        return false;
     }
 }

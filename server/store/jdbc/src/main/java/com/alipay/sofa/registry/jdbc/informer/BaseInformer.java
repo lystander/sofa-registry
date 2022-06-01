@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.jdbc.informer;
 
 import com.alipay.sofa.registry.jdbc.notify.DBEntryNotify;
 import com.alipay.sofa.registry.log.Logger;
+import com.alipay.sofa.registry.store.api.meta.DbEntry;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Lists;
@@ -181,6 +182,10 @@ public abstract class BaseInformer<T extends DbEntry, C extends DbEntryContainer
       }
       ConcurrentUtils.sleepUninterruptibly(50, TimeUnit.MILLISECONDS);
     }
+  }
+
+  public DBEntryNotify getDbEntryNotify() {
+    return dbEntryNotify;
   }
 
   protected abstract C containerFactory();

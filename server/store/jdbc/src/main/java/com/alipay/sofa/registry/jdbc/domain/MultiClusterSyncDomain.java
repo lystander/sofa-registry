@@ -16,7 +16,7 @@
  */
 package com.alipay.sofa.registry.jdbc.domain;
 
-import com.alipay.sofa.registry.jdbc.informer.DbEntry;
+import com.alipay.sofa.registry.store.api.meta.DbEntry;
 import com.alipay.sofa.registry.jdbc.version.config.ConfigEntry;
 import java.util.Date;
 

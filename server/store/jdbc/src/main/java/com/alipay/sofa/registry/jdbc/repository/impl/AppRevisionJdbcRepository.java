@@ -33,6 +33,7 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.store.api.date.DateNowRepository;
+import com.alipay.sofa.registry.store.api.meta.EntryNotify;
 import com.alipay.sofa.registry.store.api.meta.RecoverConfig;
 import com.alipay.sofa.registry.store.api.repository.AppRevisionRepository;
 import com.alipay.sofa.registry.util.StringFormatter;
@@ -251,6 +252,11 @@ public class AppRevisionJdbcRepository implements AppRevisionRepository, Recover
   @Override
   public String tableName() {
     return TableEnum.APP_REVISION.getTableName();
+  }
+
+  @Override
+  public void registerNotify(EntryNotify notify) {
+    informer.getDbEntryNotify().register(notify);
   }
 
   class Informer extends BaseInformer<AppRevisionDomain, AppRevisionContainer> {

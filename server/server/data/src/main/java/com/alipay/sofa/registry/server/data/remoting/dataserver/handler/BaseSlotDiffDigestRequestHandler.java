@@ -41,23 +41,26 @@ public abstract class BaseSlotDiffDigestRequestHandler extends AbstractServerHan
 
     @Autowired private SlotManager slotManager;
 
-    @Autowired private SlotAccessor slotAccessor;
+    @Autowired protected SlotAccessor slotAccessor;
 
-    @Autowired private DataServerConfig dataServerConfig;
+    @Autowired protected DataServerConfig dataServerConfig;
 
     public BaseSlotDiffDigestRequestHandler(Logger logger) {
         this.logger = logger;
     }
 
+    protected abstract boolean preCheck(DataSlotDiffDigestRequest request);
+
+    protected abstract boolean postCheck(DataSlotDiffDigestRequest request);
+
     @Override
     public Object doHandle(Channel channel, DataSlotDiffDigestRequest request) {
         try {
-            slotManager.triggerUpdateSlotTable(request.getSlotTableEpoch());
             final int slotId = request.getSlotId();
-            if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), slotId)) {
-                logger.warn("sync slot request from {}, not leader of {}", request.getLocalDataCenter(), slotId);
-                return new GenericResponse().fillFailed("not leader of " + slotId);
+            if (!preCheck(request)) {
+                return new GenericResponse().fillFailed("pre check fail of: " + slotId);
             }
+            slotManager.triggerUpdateSlotTable(request.getSlotTableEpoch());
 
             Map<String, Map<String, Publisher>> existingPublishers;
             if (request.getAcceptType() == SlotDiffAcceptType.ALL) {
@@ -76,6 +79,10 @@ public abstract class BaseSlotDiffDigestRequestHandler extends AbstractServerHan
                             request.getDatumDigest(),
                             existingPublishers);
             result.setSlotTableEpoch(slotManager.getSlotTableEpoch());
+
+            if (!postCheck(request)) {
+                return new GenericResponse().fillFailed("post check fail of: " + slotId);
+            }
             return new GenericResponse().fillSucceed(result);
         } catch (Throwable e) {
             String msg =

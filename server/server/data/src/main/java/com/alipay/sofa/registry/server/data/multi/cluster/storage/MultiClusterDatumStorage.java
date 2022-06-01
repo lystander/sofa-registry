@@ -9,6 +9,7 @@ import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.slot.Slot;
 import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.exception.UnSupportOperationException;
 import com.alipay.sofa.registry.log.Logger;
@@ -98,7 +99,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId, RemoteSyncDataAcceptorManager acceptorManager) {
+  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     BaseDatumStorage storage = storageMap.get(dataCenter);
@@ -255,7 +256,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, RemoteSyncDataAcceptorManager acceptorManager) {
+  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     BaseDatumStorage storage = storageMap.get(dataCenter);

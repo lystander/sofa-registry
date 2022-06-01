@@ -27,6 +27,7 @@ import com.alipay.sofa.registry.remoting.jersey.exchange.JerseyExchange;
 import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.MetadataSlotChangeListener;
 import com.alipay.sofa.registry.server.data.providedata.CompressDatumService;
 import com.alipay.sofa.registry.server.data.providedata.FetchStopPushService;
 import com.alipay.sofa.registry.server.data.remoting.DataMetaServerManager;
@@ -45,6 +46,7 @@ import com.alipay.sofa.registry.server.data.resource.HealthResource;
 import com.alipay.sofa.registry.server.data.resource.SlotTableStatusResource;
 import com.alipay.sofa.registry.server.data.slot.SlotAccessor;
 import com.alipay.sofa.registry.server.data.slot.SlotAccessorDelegate;
+import com.alipay.sofa.registry.server.data.slot.SlotChangeListenerManager;
 import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.data.slot.SlotManagerImpl;
 import com.alipay.sofa.registry.server.data.timer.CacheCountTask;
@@ -131,6 +133,12 @@ public class DataServerBeanConfiguration {
     @ConditionalOnMissingBean
     public SlotManager slotManager() {
       return new SlotManagerImpl();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SlotChangeListenerManager slotChangeListenerManager() {
+      return new SlotChangeListenerManager();
     }
 
     @Bean

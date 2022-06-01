@@ -4,7 +4,8 @@
  */
 package com.alipay.sofa.registry.jdbc.notify;
 
-import com.alipay.sofa.registry.jdbc.informer.DbEntry;
+import com.alipay.sofa.registry.store.api.meta.DbEntry;
+import com.alipay.sofa.registry.store.api.meta.EntryNotify;
 import com.google.common.collect.Sets;
 
 import java.util.Set;

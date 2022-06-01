@@ -6,6 +6,8 @@ package com.alipay.sofa.registry.server.data.bootstrap;
 
 import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.AppRevisionPublish;
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.ServiceAppsPublish;
 import com.alipay.sofa.registry.server.data.multi.cluster.dataserver.handler.MultiClusterSlotDiffDigestRequestHandler;
 import com.alipay.sofa.registry.server.data.multi.cluster.dataserver.handler.MultiClusterSlotDiffPublisherRequestHandler;
 import com.alipay.sofa.registry.server.data.multi.cluster.exchanger.RemoteDataNodeExchanger;
@@ -85,6 +87,16 @@ public class MultiClusterDataConfiguration {
         @Bean
         public SyncSlotAcceptorManager remoteSyncDataAcceptorManager() {
             return new RemoteSyncDataAcceptorManager();
+        }
+
+        @Bean
+        public AppRevisionPublish appRevisionPublish() {
+            return new AppRevisionPublish();
+        }
+
+        @Bean
+        public ServiceAppsPublish serviceAppsPublish() {
+            return new ServiceAppsPublish();
         }
     }
 }

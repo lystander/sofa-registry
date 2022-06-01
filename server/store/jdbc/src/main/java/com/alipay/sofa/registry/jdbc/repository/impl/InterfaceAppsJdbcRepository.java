@@ -27,6 +27,7 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.store.api.date.DateNowRepository;
+import com.alipay.sofa.registry.store.api.meta.EntryNotify;
 import com.alipay.sofa.registry.store.api.meta.RecoverConfig;
 import com.alipay.sofa.registry.store.api.repository.InterfaceAppsRepository;
 import com.alipay.sofa.registry.util.StringFormatter;
@@ -130,6 +131,11 @@ public class InterfaceAppsJdbcRepository implements InterfaceAppsRepository, Rec
   @Override
   public String tableName() {
     return TableEnum.INTERFACE_APP_INDEX.getTableName();
+  }
+
+  @Override
+  public void registerNotify(EntryNotify notify) {
+    informer.getDbEntryNotify().register(notify);
   }
 
   class Informer extends BaseInformer<InterfaceAppsIndexDomain, InterfaceAppsIndexContainer> {

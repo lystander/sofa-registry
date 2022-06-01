@@ -32,6 +32,8 @@ import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.AppRevisionPublish;
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.ServiceAppsPublish;
 import com.alipay.sofa.registry.server.data.remoting.DataNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.SessionNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.metaserver.MetaServerServiceImpl;
@@ -99,7 +101,8 @@ public final class SlotManagerImpl implements SlotManager {
   @Resource
   private SyncSlotAcceptorManager localSyncDataAccessorManager;
 
-  private final List<SlotChangeListener> slotChangeListeners = new ArrayList<>();
+  @Autowired
+  private SlotChangeListenerManager slotChangeListenerManager;
 
   private KeyedThreadPoolExecutor migrateSessionExecutor;
   private KeyedThreadPoolExecutor syncSessionExecutor;
@@ -117,17 +120,10 @@ public final class SlotManagerImpl implements SlotManager {
 
   @PostConstruct
   public void init() {
-    initSlotChangeListener();
     initExecutors();
     ConcurrentUtils.createDaemonThread("SyncingWatchDog", watchDog).start();
   }
 
-  void initSlotChangeListener() {
-    SlotChangeListener l = datumStorageDelegate.getSlotChangeListener(true);
-    if (l != null) {
-      this.slotChangeListeners.add(l);
-    }
-  }
 
   void initExecutors() {
     this.migrateSessionExecutor =
@@ -901,11 +897,11 @@ public final class SlotManagerImpl implements SlotManager {
   }
 
   private void listenAdd(Slot s) {
-    slotChangeListeners.forEach(listener -> listener.onSlotAdd(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
+    slotChangeListenerManager.localListeners().forEach(listener -> listener.onSlotAdd(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
   }
 
   private void listenRemove(Slot s) {
-    slotChangeListeners.forEach(listener -> listener.onSlotRemove(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
+    slotChangeListenerManager.localListeners().forEach(listener -> listener.onSlotRemove(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
   }
 
   private static boolean localIsLeader(Slot slot) {

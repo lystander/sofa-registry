@@ -19,9 +19,12 @@ public class SyncSlotGroupAcceptor implements SyncSlotAcceptor {
 
     private final String NAME = "SyncSlotGroupAcceptor";
     private final Set<String> acceptGroups;
+    private final Set<String> filterGroups;
 
-    public SyncSlotGroupAcceptor(Set<String> acceptGroups) {
+
+    public SyncSlotGroupAcceptor(Set<String> acceptGroups, Set<String> filterGroups) {
         this.acceptGroups = acceptGroups;
+        this.filterGroups = filterGroups;
     }
 
     @Override

@@ -2,9 +2,7 @@
  * Alipay.com Inc.
  * Copyright (c) 2004-2022 All Rights Reserved.
  */
-package com.alipay.sofa.registry.jdbc.notify;
-
-import com.alipay.sofa.registry.jdbc.informer.DbEntry;
+package com.alipay.sofa.registry.store.api.meta;
 
 /**
  *
