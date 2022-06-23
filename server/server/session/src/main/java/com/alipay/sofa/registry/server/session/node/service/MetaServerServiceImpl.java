@@ -35,7 +35,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.Collections;
 import java.util.Set;
 
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -54,7 +53,7 @@ public class MetaServerServiceImpl extends AbstractMetaServerService<BaseHeartBe
 
   @Override
   protected long getCurrentSlotTableEpoch() {
-    return slotTableCache.getEpoch();
+    return slotTableCache.getEpoch(sessionServerConfig.getSessionServerDataCenter());
   }
 
   @Override
@@ -72,22 +71,24 @@ public class MetaServerServiceImpl extends AbstractMetaServerService<BaseHeartBe
       dataNodeExchanger.notifyConnectServerAsync();
     }
     if (result.getSlotTable() != null && result.getSlotTable() != SlotTable.INIT) {
-      slotTableCache.updateSlotTable(result.getSlotTable());
+      slotTableCache.updateLocalSlotTable(result.getSlotTable());
     } else {
       RENEWER_LOGGER.warn("[handleRenewResult] no slot table result");
     }
+
+    slotTableCache.updateRemoteSlotTable(result.getRemoteSlotTableStatus());
   }
 
   @Override
   protected HeartbeatRequest createRequest() {
     return new HeartbeatRequest(
             createNode(),
-            slotTableCache.getEpoch(),
+            slotTableCache.getEpoch(sessionServerConfig.getSessionServerDataCenter()),
             sessionServerConfig.getSessionServerDataCenter(),
             System.currentTimeMillis(),
             SlotConfig.slotBasicInfo(),
-            Collections.emptyMap())
-        .setSlotTable(slotTableCache.getCurrentSlotTable());
+            slotTableCache.getRemoteSlotTableEpoch())
+        .setSlotTable(slotTableCache.getLocalSlotTable());
   }
 
   @Override

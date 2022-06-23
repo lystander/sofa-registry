@@ -20,6 +20,7 @@ import static com.alipay.sofa.registry.server.data.change.ChangeMetrics.SKIP_SAM
 
 import com.alipay.sofa.registry.common.model.ConnectId;
 import com.alipay.sofa.registry.common.model.ProcessId;
+import com.alipay.sofa.registry.common.model.PublisherGroupType;
 import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
@@ -67,6 +68,8 @@ public final class PublisherGroup {
 
   final String group;
 
+  final PublisherGroupType groupType;
+
   // if the delete publisher from session, mark unpub
   final Map<String /*registerId*/, PublisherEnvelope> pubMap = Maps.newConcurrentMap();
 
@@ -83,6 +86,7 @@ public final class PublisherGroup {
     this.dataId = WordCache.getWordCache(dataInfo.getDataId());
     this.instanceId = WordCache.getWordCache(dataInfo.getInstanceId());
     this.group = WordCache.getWordCache(dataInfo.getGroup());
+    this.groupType = PublisherGroupType.of(dataInfoId);
     if (DatumVersionUtil.useConfregVersionGen()) {
       this.version = DatumVersionUtil.confregNextId(0);
     } else {

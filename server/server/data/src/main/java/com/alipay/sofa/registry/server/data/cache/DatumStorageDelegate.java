@@ -28,9 +28,11 @@ import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.multi.cluster.storage.MultiClusterDatumStorage;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.util.*;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -51,6 +53,14 @@ public class DatumStorageDelegate implements DatumStorage {
     this.localDataCenter = dataServerConfig.getLocalDataCenter();
     this.localDatumStorage = new LocalDatumStorage(localDataCenter);
     this.multiClusterDatumStorage = new MultiClusterDatumStorage();
+  }
+
+  @Override
+  public Set<String> allDataCenters() {
+    Set<String> allDataCenters = Sets.newLinkedHashSetWithExpectedSize(6);
+    allDataCenters.add(localDataCenter);
+    allDataCenters.addAll(multiClusterDatumStorage.allDataCenters());
+    return allDataCenters;
   }
 
   /**

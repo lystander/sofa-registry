@@ -19,5 +19,9 @@ message ReceivedDataPb {
     string encoding = 10;
     bytes body = 11;
     int32 originBodySize = 12;
+
+    map<string, bytes> multiData = 13;
+    map<string, int64> multiVersion = 14;
+    repeated string localSegmentZones = 15;
 }
 

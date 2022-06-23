@@ -26,11 +26,16 @@ import com.alipay.sofa.registry.compress.CompressUtils;
 import com.alipay.sofa.registry.compress.CompressedItem;
 import com.alipay.sofa.registry.compress.Compressor;
 import com.alipay.sofa.registry.core.model.DataBox;
+import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.SystemUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
 import org.apache.commons.collections.CollectionUtils;
 
 /**
@@ -69,6 +74,10 @@ public final class DatumUtils {
     Map<String, Long> versions = Maps.newHashMapWithExpectedSize(datumMap.size());
     datumMap.forEach((k, v) -> versions.put(k, v.getVersion()));
     return versions;
+  }
+
+  public static MultiSubDatum newEmptyMultiSubDatum(Subscriber subscriber, String datacenter, long version) {
+    return MultiSubDatum.of(newEmptySubDatum(subscriber, datacenter, version));
   }
 
   public static SubDatum newEmptySubDatum(Subscriber subscriber, String datacenter, long version) {
@@ -169,6 +178,15 @@ public final class DatumUtils {
             compressedItem.getOriginSize(),
             compressedItem.getEncoding(),
             datum.getPubNum()));
+  }
+
+  public static MultiSubDatum decompressMultiSubDatum(MultiSubDatum multiSubDatum) {
+    ParaCheckUtil.checkNotEmpty(multiSubDatum.getDatumMap(), "multiSubDatum.datumMap");
+    Map<String, SubDatum> datumMap = Maps.newHashMapWithExpectedSize(multiSubDatum.size());
+    for (Entry<String, SubDatum> entry : multiSubDatum.getDatumMap().entrySet()) {
+      datumMap.put(entry.getKey(), decompressSubDatum(entry.getValue()));
+    }
+    return new MultiSubDatum(multiSubDatum.getDataInfoId(), datumMap);
   }
 
   public static SubDatum decompressSubDatum(SubDatum datum) {

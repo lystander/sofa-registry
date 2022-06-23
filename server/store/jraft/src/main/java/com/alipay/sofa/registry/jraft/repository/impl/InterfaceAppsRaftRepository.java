@@ -19,8 +19,12 @@ package com.alipay.sofa.registry.jraft.repository.impl;
 import com.alipay.sofa.registry.common.model.appmeta.InterfaceMapping;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
+import com.alipay.sofa.registry.store.api.meta.EntryNotify;
 import com.alipay.sofa.registry.store.api.repository.InterfaceAppsRepository;
+
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -55,5 +59,15 @@ public class InterfaceAppsRaftRepository implements InterfaceAppsRepository {
   @Override
   public long getDataVersion() {
     return 0;
+  }
+
+  @Override
+  public Set<String> getAllDataInfoIds() {
+    return Collections.EMPTY_SET;
+  }
+
+  @Override
+  public void registerNotify(EntryNotify notify) {
+
   }
 }

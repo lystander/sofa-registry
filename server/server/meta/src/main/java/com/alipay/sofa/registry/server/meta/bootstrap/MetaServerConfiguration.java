@@ -65,6 +65,7 @@ import com.alipay.sofa.registry.server.meta.resource.SlotTableResource;
 import com.alipay.sofa.registry.server.meta.resource.StopPushDataResource;
 import com.alipay.sofa.registry.server.meta.resource.filter.LeaderAwareFilter;
 import com.alipay.sofa.registry.server.meta.slot.status.SlotTableStatusService;
+import com.alipay.sofa.registry.server.shared.config.CommonConfig;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.server.shared.resource.MetricsResource;
 import com.alipay.sofa.registry.server.shared.resource.SlotGenericResource;
@@ -118,10 +119,16 @@ public class MetaServerConfiguration {
 
   @Configuration
   protected static class MetaServerConfigBeanConfiguration {
+
+    @Bean
+    public CommonConfig commonConfig() {
+      return new CommonConfig();
+    }
+
     @Bean
     @ConditionalOnMissingBean
-    public MetaServerConfig metaServerConfig() {
-      return new MetaServerConfigBean();
+    public MetaServerConfig metaServerConfig(CommonConfig commonConfig) {
+      return new MetaServerConfigBean(commonConfig);
     }
 
     @Bean

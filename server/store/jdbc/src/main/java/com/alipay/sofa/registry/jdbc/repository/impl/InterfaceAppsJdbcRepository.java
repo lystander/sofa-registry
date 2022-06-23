@@ -129,6 +129,11 @@ public class InterfaceAppsJdbcRepository implements InterfaceAppsRepository, Rec
   }
 
   @Override
+  public Set<String> getAllDataInfoIds() {
+    return informer.containerFactory().interfaces();
+  }
+
+  @Override
   public String tableName() {
     return TableEnum.INTERFACE_APP_INDEX.getTableName();
   }

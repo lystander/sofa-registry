@@ -51,8 +51,7 @@ public class DefaultCommonConfigBean implements DefaultCommonConfig {
 
   @Autowired private RecoverConfigRepository recoverConfigRepository;
 
-  @Override
-  public String getDefaultClusterId() {
+  private String getDefaultClusterId() {
     if (StringUtils.isNotBlank(clusterId)) {
       return clusterId;
     }

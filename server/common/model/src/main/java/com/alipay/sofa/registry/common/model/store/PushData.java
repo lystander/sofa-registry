@@ -17,30 +17,53 @@
 package com.alipay.sofa.registry.common.model.store;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.Map;
 
 public class PushData<T> {
   private final T payload;
-  private final int dataCount;
+  private final int totalDataCount;
+  private final Map<String, Integer> dataCountMap;
   private final String encode;
   private final int encodeSize;
 
-  public PushData(T payload, int dataCount) {
-    this(payload, dataCount, StringUtils.EMPTY, 0);
+  public PushData(T payload, Map<String, Integer> dataCountMap) {
+    this(payload, dataCountMap, StringUtils.EMPTY, 0);
   }
 
-  public PushData(T payload, int dataCount, String encode, int encodeSize) {
+  public PushData(T payload, Map<String, Integer> dataCountMap, String encode, int encodeSize) {
     this.payload = payload;
-    this.dataCount = dataCount;
     this.encode = encode;
     this.encodeSize = encodeSize;
+    if (dataCountMap == null) {
+      dataCountMap = Collections.EMPTY_MAP;
+    }
+    this.dataCountMap = dataCountMap;
+    this.totalDataCount = dataCountMap.values().stream().mapToInt(Integer::intValue).sum();
   }
 
   public T getPayload() {
     return payload;
   }
 
-  public int getDataCount() {
-    return dataCount;
+  /**
+   * Getter method for property <tt>totalDataCount</tt>.
+   *
+   * @return property value of totalDataCount
+   */
+  public int getTotalDataCount() {
+    return totalDataCount;
+  }
+
+  /**
+   * Getter method for property <tt>dataCountMap</tt>.
+   *
+   * @return property value of dataCountMap
+   */
+  public Map<String, Integer> getDataCountMap() {
+    return dataCountMap;
   }
 
   public String getEncode() {

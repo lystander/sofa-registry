@@ -103,6 +103,23 @@ public final class SubscriberUtils {
     return acceptEncodes;
   }
 
+  public static boolean getAndAssertAcceptMulti(Collection<Subscriber> subscribers) {
+    Iterator<Subscriber> iterator = subscribers.iterator();
+    Subscriber first = iterator.next();
+    boolean acceptMulti = first.acceptMulti();
+    while (iterator.hasNext()) {
+      Subscriber subscriber = iterator.next();
+      if (acceptMulti != subscriber.acceptMulti()) {
+        throw new RuntimeException(
+                StringFormatter.format(
+                        "conflict acceptMulti, one is {}, anther is {}",
+                        first.shortDesc(),
+                        subscriber.shortDesc()));
+      }
+    }
+    return acceptMulti;
+  }
+
   public static void assertClientVersion(
       Collection<Subscriber> subscribers, BaseInfo.ClientVersion clientVersion) {
     for (Subscriber sub : subscribers) {

@@ -37,12 +37,4 @@ public class BaseSyncSlotAcceptorManager implements SyncSlotAcceptorManager {
         acceptors.add(acceptor);
     }
 
-    /**
-     * Getter method for property <tt>acceptors</tt>.
-     *
-     * @return property value of acceptors
-     */
-    public Set<SyncSlotAcceptor> getAcceptors() {
-        return Sets.newConcurrentHashSet(acceptors);
-    }
 }

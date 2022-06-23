@@ -30,7 +30,6 @@ public class SyncLeaderTask implements Runnable {
     private final SlotDiffSyncer      syncer;
     private final ClientSideExchanger clientSideExchanger;
     private final SyncContinues           continues;
-    private final SyncSlotAcceptorManager acceptorManager;
 
     private final Logger SYNC_DIGEST_LOGGER;
     private final Logger SYNC_ERROR_LOGGER;
@@ -44,7 +43,6 @@ public class SyncLeaderTask implements Runnable {
             SlotDiffSyncer syncer,
             ClientSideExchanger clientSideExchanger,
             SyncContinues continues,
-            SyncSlotAcceptorManager acceptorManager,
             Logger syncDigestLogger,
             Logger syncErrorLogger) {
         this.localDataCenter = localDataCenter;
@@ -56,7 +54,6 @@ public class SyncLeaderTask implements Runnable {
         this.syncer = syncer;
         this.clientSideExchanger = clientSideExchanger;
         this.continues = continues;
-        this.acceptorManager = acceptorManager;
 
         this.SYNC_DIGEST_LOGGER = syncDigestLogger;
         this.SYNC_ERROR_LOGGER = syncErrorLogger;
@@ -68,7 +65,7 @@ public class SyncLeaderTask implements Runnable {
         try {
             success =
                     syncer.syncSlotLeader(
-                            localDataCenter, syncDataCenter, syncLocalDataCenter, slot.getId(), slot.getLeader(), clientSideExchanger, slotTableEpoch, continues, acceptorManager);
+                            localDataCenter, syncDataCenter, syncLocalDataCenter, slot.getId(), slot.getLeader(), clientSideExchanger, slotTableEpoch, continues);
             if (!success) {
                 throw new RuntimeException(StringFormatter.format("{} sync leader failed", syncDataCenter));
             }

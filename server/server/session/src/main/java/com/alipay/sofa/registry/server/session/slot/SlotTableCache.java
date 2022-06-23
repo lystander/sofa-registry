@@ -16,8 +16,11 @@
  */
 package com.alipay.sofa.registry.server.session.slot;
 
+import com.alipay.sofa.registry.common.model.multi.cluster.RemoteSlotTableStatus;
 import com.alipay.sofa.registry.common.model.slot.Slot;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
+
+import java.util.Map;
 
 /**
  * @author yuzhi.lyz
@@ -38,7 +41,7 @@ public interface SlotTableCache {
    * @param dataInfoId the data info id
    * @return the get slot
    */
-  Slot getSlot(String dataInfoId);
+  Slot getSlot(String dataCenter, String dataInfoId);
 
   /**
    * Gets get slot.
@@ -46,7 +49,7 @@ public interface SlotTableCache {
    * @param slotId the slot id
    * @return the get slot
    */
-  Slot getSlot(int slotId);
+  Slot getSlot(String dataCenter, int slotId);
 
   /**
    * Gets get leader.
@@ -54,14 +57,14 @@ public interface SlotTableCache {
    * @param slotId the slot id
    * @return the get leader
    */
-  String getLeader(int slotId);
+  String getLeader(String dataCenter, int slotId);
 
   /**
    * Gets get epoch.
    *
    * @return the get epoch
    */
-  long getEpoch();
+  long getEpoch(String dataCenter);
 
   /**
    * Update slot table boolean.
@@ -69,12 +72,16 @@ public interface SlotTableCache {
    * @param slotTable the slot table
    * @return the boolean
    */
-  boolean updateSlotTable(SlotTable slotTable);
+  boolean updateLocalSlotTable(SlotTable slotTable);
+
+  boolean updateRemoteSlotTable(Map<String, RemoteSlotTableStatus> remoteSlotTableStatus);
 
   /**
    * Gets get current slot table.
    *
    * @return the get current slot table
    */
-  SlotTable getCurrentSlotTable();
+  SlotTable getLocalSlotTable();
+
+  Map<String, Long> getRemoteSlotTableEpoch();
 }

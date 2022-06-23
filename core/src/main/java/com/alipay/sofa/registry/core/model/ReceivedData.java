@@ -19,6 +19,7 @@ package com.alipay.sofa.registry.core.model;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The type Received data multi.
@@ -47,6 +48,15 @@ public class ReceivedData implements Serializable {
   private Long version;
 
   private String localZone;
+
+  /**
+   * support multi dataCenter
+   */
+  private Map<String/*dataCenter*/, Map<String/*zone*/, List<DataBox>>> multiDatas;
+
+  private Map<String/*dataCenter*/, Long> multiVersion;
+
+  private Set<String> localSegmentZones;
 
   /** Instantiates a new Received data multi. */
   public ReceivedData() {}
@@ -239,6 +249,61 @@ public class ReceivedData implements Serializable {
    */
   public void setLocalZone(String localZone) {
     this.localZone = localZone;
+  }
+
+  /**
+   * Getter method for property <tt>multiDatas</tt>.
+   *
+   * @return property value of multiDatas
+   */
+  public Map<String, Map<String, List<DataBox>>> getMultiDatas() {
+    return multiDatas;
+  }
+
+  /**
+   * Setter method for property <tt>multiDatas</tt>.
+   *
+   * @param multiDatas value to be assigned to property multiDatas
+   */
+  public void setMultiDatas(
+          Map<String, Map<String, List<DataBox>>> multiDatas) {
+    this.multiDatas = multiDatas;
+  }
+
+  /**
+   * Getter method for property <tt>multiVersion</tt>.
+   *
+   * @return property value of multiVersion
+   */
+  public Map<String, Long> getMultiVersion() {
+    return multiVersion;
+  }
+
+  /**
+   * Setter method for property <tt>multiVersion</tt>.
+   *
+   * @param multiVersion value to be assigned to property multiVersion
+   */
+  public void setMultiVersion(Map<String, Long> multiVersion) {
+    this.multiVersion = multiVersion;
+  }
+
+  /**
+   * Getter method for property <tt>localSegmentZones</tt>.
+   *
+   * @return property value of localSegmentZones
+   */
+  public Set<String> getLocalSegmentZones() {
+    return localSegmentZones;
+  }
+
+  /**
+   * Setter method for property <tt>localSegmentZones</tt>.
+   *
+   * @param localSegmentZones value to be assigned to property localSegmentZones
+   */
+  public void setLocalSegmentZones(Set<String> localSegmentZones) {
+    this.localSegmentZones = localSegmentZones;
   }
 
   /**

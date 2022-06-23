@@ -19,12 +19,14 @@ package com.alipay.sofa.registry.server.session.push;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
+import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.StringFormatter;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Maps;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,20 +34,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ChangeProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ChangeProcessor.class);
 
-  @Autowired SessionServerConfig sessionServerConfig;
+  @Autowired
+  private SessionServerConfig sessionServerConfig;
 
-  Worker[] workers;
+  @Autowired
+  private DefaultCommonConfig defaultCommonConfig;
+
+  Map<String, Worker[]> dataCenterWorkers = Maps.newConcurrentMap();
 
   @PostConstruct
   public void init() {
-    this.workers = new Worker[sessionServerConfig.getDataChangeFetchTaskWorkerSize()];
+    Worker[] workers = initWorkers();
+    dataCenterWorkers.putIfAbsent(sessionServerConfig.getSessionServerDataCenter(), workers);
+  }
+
+  private Worker[] initWorkers() {
+    Worker[] workers = new Worker[sessionServerConfig.getDataChangeFetchTaskWorkerSize()];
     for (int i = 0; i < workers.length; i++) {
       workers[i] =
-          new Worker(
-              sessionServerConfig.getDataChangeDebouncingMillis(),
-              sessionServerConfig.getDataChangeMaxDebouncingMillis());
+              new Worker(
+                      sessionServerConfig.getDataChangeDebouncingMillis(),
+                      sessionServerConfig.getDataChangeMaxDebouncingMillis());
       ConcurrentUtils.createDaemonThread("ChangeExecutor-" + i, workers[i]).start();
     }
+    return workers;
   }
 
   boolean fireChange(String dataInfoId, ChangeHandler handler, TriggerPushContext changeCtx) {
@@ -206,6 +218,7 @@ public class ChangeProcessor {
   }
 
   Worker workerOf(ChangeKey key) {
+    Worker[] workers = dataCenterWorkers.computeIfAbsent(key.dataCenter, k -> initWorkers());
     int n = (key.hashCode() & 0x7fffffff) % workers.length;
     return workers[n];
   }

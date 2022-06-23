@@ -193,6 +193,11 @@ public class AppRevisionJdbcRepository implements AppRevisionRepository, Recover
     return counts;
   }
 
+  @Override
+  public Set<String> getAllRevisions() {
+    return informer.getContainer().allRevisions();
+  }
+
   protected void refreshEntryToStorage(AppRevisionDomain entry) {
     try {
       cachedExecutor.execute(

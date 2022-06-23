@@ -22,7 +22,9 @@ import java.util.List;
  */
 public class SlotChangeListenerManager {
 
-    private final List<SlotChangeListener> localSlotChangeListeners = new ArrayList<>();
+    private final List<SlotChangeListener> localSlotChangeBeforeListeners = new ArrayList<>();
+
+    private final List<SlotChangeListener> localSlotChangeAfterListeners = new ArrayList<>();
 
     private final List<SlotChangeListener> remoteSlotChangeListeners = new ArrayList<>();
 
@@ -37,15 +39,19 @@ public class SlotChangeListenerManager {
 
     @PostConstruct
     public void init() {
-        localSlotChangeListeners.add(datumStorageDelegate.getSlotChangeListener(true));
-        localSlotChangeListeners.add(appRevisionPublish);
-        localSlotChangeListeners.add(serviceAppsPublish);
+        localSlotChangeBeforeListeners.add(datumStorageDelegate.getSlotChangeListener(true));
+        localSlotChangeAfterListeners.add(appRevisionPublish);
+        localSlotChangeAfterListeners.add(serviceAppsPublish);
 
         remoteSlotChangeListeners.add(datumStorageDelegate.getSlotChangeListener(false));
     }
 
-    public List<SlotChangeListener> localListeners() {
-        return Lists.newArrayList(localSlotChangeListeners);
+    public List<SlotChangeListener> localBeforeUpdateListeners() {
+        return Lists.newArrayList(localSlotChangeBeforeListeners);
+
+    }
+    public List<SlotChangeListener> localAfterUpdateListeners() {
+        return Lists.newArrayList(localSlotChangeAfterListeners);
     }
 
     public List<SlotChangeListener> remoteListeners() {

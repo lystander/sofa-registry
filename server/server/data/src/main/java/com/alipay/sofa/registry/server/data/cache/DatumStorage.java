@@ -37,6 +37,8 @@ import java.util.Set;
  */
 public interface DatumStorage {
 
+  Set<String> allDataCenters();
+
   /**
    * get datum by specific dataInfoId
    *

@@ -167,7 +167,7 @@ public class SessionServerBootstrap {
 
       // wait until slot table is get
       startupRetryer.call(
-          () -> slotTableCache.getCurrentSlotTable().getEpoch() != SlotTable.INIT.getEpoch());
+          () -> slotTableCache.getLocalSlotTable().getEpoch() != SlotTable.INIT.getEpoch());
 
       recoverConfigRepository.waitSynced();
       appRevisionCacheRegistry.waitSynced();

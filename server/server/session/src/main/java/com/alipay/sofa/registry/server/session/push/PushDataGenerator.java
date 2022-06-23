@@ -31,6 +31,8 @@ import com.google.common.collect.Lists;
 import java.util.*;
 import java.util.function.Predicate;
 import javax.annotation.Resource;
+
+import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class PushDataGenerator {
@@ -39,11 +41,12 @@ public class PushDataGenerator {
 
   @Resource protected CompressPushService compressPushService;
 
-  public PushData createPushData(SubDatum unzipDatum, Map<String, Subscriber> subscriberMap) {
+  public PushData createPushData(MultiSubDatum unzipDatum, Map<String, Subscriber> subscriberMap) {
     unzipDatum.mustUnzipped();
     if (subscriberMap.size() > 1) {
       SubscriberUtils.getAndAssertHasSameScope(subscriberMap.values());
       SubscriberUtils.getAndAssertAcceptedEncodes(subscriberMap.values());
+      SubscriberUtils.getAndAssertAcceptMulti(subscriberMap.values());
     }
     // only supported 4.x
     SubscriberUtils.assertClientVersion(subscriberMap.values(), BaseInfo.ClientVersion.StoreData);
@@ -52,17 +55,37 @@ public class PushDataGenerator {
     String dataId = subscriber.getDataId();
     String clientCell = sessionServerConfig.getClientCell(subscriber.getCell());
 
-    Predicate<String> zonePredicate =
-        ZonePredicate.zonePredicate(dataId, clientCell, subscriber.getScope(), sessionServerConfig);
+    Predicate<String> pushDataPredicate =
+        ZonePredicate.pushDataPredicate(
+            dataId,
+            clientCell,
+            subscriber.getScope(),
+            subscriber.acceptMulti(),
+            sessionServerConfig);
+
+    Predicate<String> localSegmentZonePredicate =
+        ZonePredicate.pushDataPredicate(
+            dataId,
+            clientCell,
+            subscriber.getScope(),
+            subscriber.acceptMulti(),
+            sessionServerConfig);
+
+    // todo xiaojian.xj get all localSegmentZones.
+    Set<String> allLocalSegmentZones = Sets.newHashSet();
 
     PushData<ReceivedData> pushData =
         ReceivedDataConverter.getReceivedDataMulti(
             unzipDatum,
+            subscriber.acceptMulti(),
             subscriber.getScope(),
             Lists.newArrayList(subscriberMap.keySet()),
+            sessionServerConfig.getSessionServerDataCenter(),
             clientCell,
-            zonePredicate);
-    pushData.getPayload().setVersion(unzipDatum.getVersion());
+            allLocalSegmentZones,
+            pushDataPredicate,
+            localSegmentZonePredicate);
+
     final Byte serializerIndex = subscriber.getSourceAddress().getSerializerIndex();
     if (serializerIndex == null || URL.PROTOBUF != serializerIndex) {
       return pushData;
@@ -74,13 +97,14 @@ public class PushDataGenerator {
             subscriber.getSourceAddress().getIpAddress());
     if (compressor == null) {
       ReceivedDataPb receivedDataPb = ReceivedDataConvertor.convert2Pb(pushData.getPayload());
-      return new PushData<>(receivedDataPb, pushData.getDataCount());
+      return new PushData<>(receivedDataPb, pushData.getDataCountMap());
     } else {
       ReceivedDataPb receivedDataPb =
-          ReceivedDataConvertor.convert2CompressedPb(pushData.getPayload(), compressor);
+          ReceivedDataConvertor.convert2CompressedPb(
+              pushData.getPayload(), compressor, subscriber.acceptMulti());
       return new PushData<>(
           receivedDataPb,
-          pushData.getDataCount(),
+          pushData.getDataCountMap(),
           compressor.getEncoding(),
           receivedDataPb.getBody().size());
     }
@@ -92,6 +116,6 @@ public class PushDataGenerator {
     if (url.getSerializerIndex() != null && URL.PROTOBUF == url.getSerializerIndex()) {
       o = ReceivedDataConvertor.convert2Pb(data);
     }
-    return new PushData(o, 1);
+    return new PushData(o, Collections.singletonMap(sessionServerConfig.getSessionServerDataCenter(), 1));
   }
 }

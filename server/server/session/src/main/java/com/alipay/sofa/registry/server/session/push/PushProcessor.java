@@ -21,6 +21,7 @@ import static com.alipay.sofa.registry.server.session.push.PushMetrics.Push.*;
 import com.alipay.remoting.rpc.exception.InvokeTimeoutException;
 import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.Tuple;
+import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.PushData;
 import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.common.model.store.Subscriber;
@@ -43,11 +44,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
+
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class PushProcessor {
@@ -97,7 +101,7 @@ public class PushProcessor {
       PushCause pushCause,
       InetSocketAddress addr,
       Map<String, Subscriber> subscriberMap,
-      SubDatum datum) {
+      MultiSubDatum datum) {
     PushTask pushTask = new PushTaskImpl(pushCause, addr, subscriberMap, datum);
     // set expireTimestamp, wait to merge to debouncing
     pushTask.expireAfter(sessionServerConfig.getPushDataTaskDebouncingMillis());
@@ -108,7 +112,7 @@ public class PushProcessor {
       PushCause pushCause,
       InetSocketAddress addr,
       Map<String, Subscriber> subscriberMap,
-      SubDatum datum) {
+      MultiSubDatum datum) {
     if (!pushSwitchService.canIpPush(addr.getAddress().getHostAddress())) {
       return;
     }
@@ -166,10 +170,15 @@ public class PushProcessor {
       // force to remove the prev task
       final boolean cleaned = pushingRecords.remove(pushingTaskKey, task);
       if (cleaned) {
+        Set<String> dataCenters = task.pushDataCount.keySet();
+        Map<String, Long> pushedVersion = Maps.newHashMapWithExpectedSize(dataCenters.size());
+        for (String dataCenter : dataCenters) {
+          pushedVersion.put(dataCenter, 0L);
+        }
         task.trace.finishPush(
             PushTrace.PushStatus.Busy,
             task.taskID,
-            0,
+            pushedVersion,
             task.pushDataCount,
             task.retryCount,
             task.pushEncode,
@@ -181,11 +190,12 @@ public class PushProcessor {
   }
 
   boolean interestOfDatum(PushTask task) {
+    Map<String, Long> versions = task.datum.getVersion();
     if (task.subscriberMap.size() == 1) {
-      return task.subscriber.checkVersion(task.datum.getDataCenter(), task.datum.getVersion());
+      return task.subscriber.checkVersion(versions);
     }
     for (Subscriber subscriber : task.subscriberMap.values()) {
-      if (subscriber.checkVersion(task.datum.getDataCenter(), task.datum.getVersion())) {
+      if (subscriber.checkVersion(versions)) {
         return true;
       }
     }
@@ -217,7 +227,7 @@ public class PushProcessor {
       case Reg:
         return !task.hasPushed();
       case Empty:
-        return task.subscriber.needPushEmpty(task.datum.getDataCenter());
+        return task.subscriber.needPushEmpty(task.datum.dataCenters());
       default:
         return interestOfDatum(task);
     }
@@ -229,8 +239,7 @@ public class PushProcessor {
     Collection<Subscriber> subs = task.subscriberMap.values();
     for (Subscriber subscriber : subs) {
       boolean canSkip =
-          subscriber.checkSkipPushEmpty(
-              task.datum.getDataCenter(), task.datum.getVersion(), task.getPushDataCount());
+          subscriber.checkSkipPushEmpty(task.datum.getVersion(), task.getPushDataCount());
       if (canSkip
           && subscriber.getRegisterTimestamp()
               < now - sessionServerConfig.getSkipPushEmptySilentMillis()) {
@@ -241,8 +250,7 @@ public class PushProcessor {
       return false;
     }
     for (Subscriber subscriber : subs) {
-      subscriber.checkAndUpdateCtx(
-          task.datum.getDataCenter(), task.datum.getVersion(), task.getPushDataCount());
+      subscriber.checkAndUpdateCtx(task.datum.getVersion(), task.getPushDataCount());
     }
     PUSH_EMPTY_SKIP_COUNTER.inc();
     LOGGER.info(
@@ -286,7 +294,7 @@ public class PushProcessor {
 
   // check push empty, some group maybe could not tolerate push empty
   protected boolean interruptOnPushEmpty(
-      SubDatum datum,
+      MultiSubDatum datum,
       PushData pushData,
       PushCause pushCause,
       Subscriber sub,
@@ -310,7 +318,7 @@ public class PushProcessor {
       }
 
       final PushData pushData = task.createPushData();
-      task.setPushDataCount(pushData.getDataCount());
+      task.setPushDataCount(pushData.getDataCountMap());
       task.setPushEncode(pushData.getEncode());
       task.setEncodeSize(pushData.getEncodeSize());
 
@@ -335,7 +343,7 @@ public class PushProcessor {
               task.taskID,
               task.retryCount,
               pushData.getEncode(),
-              pushData.getDataCount(),
+              pushData.getDataCountMap(),
               pushData.getEncodeSize()));
       clientNodeService.pushWithCallback(
           pushData.getPayload(), task.subscriber.getSourceAddress(), new PushClientCallback(task));
@@ -375,8 +383,7 @@ public class PushProcessor {
     if (circuitBreakerRecordWhenDoPushError(
         task.datum, task.subscriber.getSourceAddress().getIpAddress())) {
       for (Subscriber subscriber : task.subscriberMap.values()) {
-        if (!circuitBreakerService.onPushFail(
-            task.datum.getDataCenter(), task.datum.getVersion(), subscriber)) {
+        if (!circuitBreakerService.onPushFail(task.datum.getVersion(), subscriber)) {
           LOGGER.info("[handleDoPushException]taskId={}, {}", task.taskID, task.pushingTaskKey);
         }
       }
@@ -406,7 +413,7 @@ public class PushProcessor {
     LOGGER.error("[PushFail]taskId={}, {}", task.taskID, task.pushingTaskKey, e);
   }
 
-  boolean circuitBreakerRecordWhenDoPushError(SubDatum datum, String ip) {
+  boolean circuitBreakerRecordWhenDoPushError(MultiSubDatum datum, String ip) {
     return false;
   }
 
@@ -415,12 +422,12 @@ public class PushProcessor {
         PushCause pushCause,
         InetSocketAddress addr,
         Map<String, Subscriber> subscriberMap,
-        SubDatum datum) {
+        MultiSubDatum datum) {
       super(pushCause, addr, subscriberMap, datum);
     }
 
     protected PushData createPushData() {
-      return pushDataGenerator.createPushData(DatumUtils.decompressSubDatum(datum), subscriberMap);
+      return pushDataGenerator.createPushData(DatumUtils.decompressMultiSubDatum(datum), subscriberMap);
     }
 
     @Override
@@ -458,13 +465,8 @@ public class PushProcessor {
     @Override
     public void onCallback(Channel channel, Object message) {
       pushingRecords.remove(pushTask.pushingTaskKey);
-      // get max pushedVersion before checkAndUpdate
-      final long subscriberPushedVersion =
-          SubscriberUtils.getMaxPushedVersion(
-              pushTask.datum.getDataCenter(), pushTask.subscriberMap.values());
       for (Subscriber subscriber : pushTask.subscriberMap.values()) {
         if (!circuitBreakerService.onPushSuccess(
-            pushTask.datum.getDataCenter(),
             pushTask.datum.getVersion(),
             pushTask.getPushDataCount(),
             subscriber)) {
@@ -477,7 +479,7 @@ public class PushProcessor {
       this.pushTask.trace.finishPush(
           PushTrace.PushStatus.OK,
           pushTask.taskID,
-          subscriberPushedVersion,
+          pushTask.getMaxPushedVersion(),
           this.pushTask.getPushDataCount(),
           pushTask.retryCount,
           pushTask.getPushEncode(),
@@ -534,8 +536,7 @@ public class PushProcessor {
       if (needRecord) {
         // record push fail
         for (Subscriber subscriber : pushTask.subscriberMap.values()) {
-          if (!circuitBreakerService.onPushFail(
-              pushTask.datum.getDataCenter(), pushTask.datum.getVersion(), subscriber)) {
+          if (!circuitBreakerService.onPushFail(pushTask.datum.getVersion(), subscriber)) {
             LOGGER.info(
                 "PushN, failed to do onPushFail, {}, {}", pushTask.taskID, pushTask.pushingTaskKey);
           }
@@ -560,7 +561,8 @@ public class PushProcessor {
     final PushTrace trace;
     final TraceID taskID;
     final int retryCount;
-    final int pushDataCount;
+    final Map<String, Integer> pushDataCount;
+    final int pushTotalDataCount;
     final String pushEncode;
     final int encodeSize;
 
@@ -569,14 +571,19 @@ public class PushProcessor {
         TraceID taskID,
         int retryCount,
         String pushEncode,
-        int pushDataCount,
+        Map<String, Integer> pushDataCount,
         int encodeSize) {
       this.trace = pushTrace;
       this.taskID = taskID;
       this.retryCount = retryCount;
-      this.pushDataCount = pushDataCount;
       this.pushEncode = pushEncode;
       this.encodeSize = encodeSize;
+      if (pushDataCount == null) {
+        pushDataCount = Collections.emptyMap();
+      }
+      this.pushDataCount = pushDataCount;
+      this.pushTotalDataCount = pushDataCount.values().stream().mapToInt(Integer::intValue).sum();
+
     }
   }
 }

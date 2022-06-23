@@ -491,7 +491,6 @@ public class SessionRegistry implements Registry {
   }
 
   public String getDataCenterWhenPushEmpty() {
-    // TODO cloud mode use default.datacenter?
     return sessionServerConfig.getSessionServerDataCenter();
   }
 

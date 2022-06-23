@@ -9,8 +9,9 @@ import org.apache.commons.lang.StringUtils;
  * @version : PublisherGroupType.java, v 0.1 2022年05月24日 22:21 xiaojian.xj Exp $
  */
 public enum PublisherGroupType {
-  SERVICE_MAPPING("SERVICE_MAPPING"),
-  SERVICE_REVISION("SERVICE_REVISION"),;
+  REGISTRY_MAPPING("REGISTRY_MAPPING."),
+  REGISTRY_REVISION("REGISTRY_REVISION"),
+  SERVICE("REGISTRY"),;
 
   private final String code;
 
@@ -19,14 +20,29 @@ public enum PublisherGroupType {
   }
 
   public static boolean isServiceMapping(String dataInfoId) {
-    DataInfo dataInfo = DataInfo.valueOf(dataInfoId);
-    return StringUtils.equalsIgnoreCase(dataInfo.getGroup(), SERVICE_MAPPING.code);
+    return StringUtils.startsWith(dataInfoId, REGISTRY_MAPPING.code);
   }
 
   public static boolean isRevision(String dataInfoId) {
     DataInfo dataInfo = DataInfo.valueOf(dataInfoId);
-    return StringUtils.equalsIgnoreCase(dataInfo.getGroup(), SERVICE_REVISION.code);
+    return StringUtils.equals(dataInfo.getGroup(), REGISTRY_REVISION.code);
   }
 
+  public static PublisherGroupType of(String dataInfoId) {
+    if (isServiceMapping(dataInfoId)) {
+      return REGISTRY_MAPPING;
+    } else if (isRevision(dataInfoId)) {
+      return REGISTRY_REVISION;
+    }
+    return SERVICE;
+  }
 
+  /**
+   * Getter method for property <tt>code</tt>.
+   *
+   * @return property value of code
+   */
+  public String getCode() {
+    return code;
+  }
 }

@@ -174,7 +174,7 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
       writeLock.lock();
       try {
         for (Slot slot : update.getSlots()) {
-          listenAdd(dataCenter, slot);
+          listenAdd(dataCenter, update.getEpoch(), slot);
           RemoteSlotStates state =
               slotStates.computeIfAbsent(
                   slot.getId(),
@@ -221,9 +221,9 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
       return new Tuple<>(table, state);
     }
 
-    private void listenAdd(String dataCenter, Slot s) {
+    private void listenAdd(String dataCenter, long slotTableEpoch, Slot s) {
       slotChangeListenerManager.remoteListeners().forEach(
-          listener -> listener.onSlotAdd(dataCenter, s.getId(), Role.Leader));
+          listener -> listener.onSlotAdd(dataCenter, slotTableEpoch, s.getId(), s.getLeaderEpoch(), Role.Leader));
     }
 
     private void listenRemove(String dataCenter, Slot s) {
@@ -465,7 +465,6 @@ public class MultiClusterSlotManagerImpl implements MultiClusterSlotManager {
               syncer,
               remoteDataNodeExchanger,
               continues,
-                  remoteSyncDataAcceptorManager,
               MULTI_CLUSTER_SYNC_DIGEST_LOGGER,
               MULTI_CLUSTER_SYNC_DIGEST_LOGGER);
       state.syncRemoteTask =

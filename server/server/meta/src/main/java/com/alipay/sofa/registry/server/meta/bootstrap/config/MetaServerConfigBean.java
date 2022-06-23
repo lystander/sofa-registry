@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.meta.bootstrap.config;
 
 import com.alipay.sofa.registry.common.model.constants.ValueConstants;
 import com.alipay.sofa.registry.common.model.metaserver.Lease;
+import com.alipay.sofa.registry.server.shared.config.CommonConfig;
 import com.alipay.sofa.registry.util.OsUtils;
 import com.alipay.sofa.registry.util.SystemUtils;
 import java.util.concurrent.TimeUnit;
@@ -88,6 +89,23 @@ public class MetaServerConfigBean implements MetaServerConfig {
   // <=0 means no protection
   private int dataNodeProtectionNum =
       SystemUtils.getSystemInteger("registry.data.protection.num", 0);
+
+  private CommonConfig commonConfig;
+
+  public MetaServerConfigBean(CommonConfig commonConfig) {
+    this.commonConfig = commonConfig;
+  }
+
+  @Override
+  public String getLocalDataCenter() {
+    return commonConfig.getLocalDataCenter();
+  }
+
+  @Override
+  public boolean isLocalDataCenter(String dataCenter) {
+    return commonConfig.getLocalDataCenter().equals(dataCenter);
+  }
+
   /**
    * Gets get session server port.
    *

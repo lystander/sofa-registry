@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.session.push;
 
 import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.store.BaseInfo;
+import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.PushData;
 import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.common.model.store.Subscriber;
@@ -25,15 +26,20 @@ import com.alipay.sofa.registry.core.model.ScopeEnum;
 import com.alipay.sofa.registry.trace.TraceID;
 import com.alipay.sofa.registry.util.StringFormatter;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 public abstract class PushTask {
   protected final TraceID taskID;
   protected volatile long expireTimestamp;
 
-  protected final SubDatum datum;
+  protected final MultiSubDatum datum;
   protected final Map<String, Subscriber> subscriberMap;
   protected final Subscriber subscriber;
 
@@ -41,7 +47,8 @@ public abstract class PushTask {
   protected final PushTrace trace;
 
   protected int retryCount;
-  private int pushDataCount = -1;
+  private int pushTotalDataCount = -1;
+  private Map<String, Integer> pushDataCount;
   private String pushEncode = StringUtils.EMPTY;
   private int encodeSize = 0;
 
@@ -49,7 +56,7 @@ public abstract class PushTask {
       PushCause pushCause,
       InetSocketAddress addr,
       Map<String, Subscriber> subscriberMap,
-      SubDatum datum) {
+      MultiSubDatum datum) {
     this.taskID = TraceID.newTraceID();
     this.datum = datum;
     this.subscriberMap = subscriberMap;
@@ -95,11 +102,25 @@ public abstract class PushTask {
     if (isSingletonReg() && t.isSingletonReg()) {
       return subscriber.getVersion() > t.subscriber.getVersion();
     }
-    return datum.getVersion() > t.datum.getVersion();
+    for (Entry<String, Long> entry : datum.getVersion().entrySet()) {
+      // return true if one of any datum.version > t.datum.version
+      if (entry.getValue() > t.datum.getVersion(entry.getKey())) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  protected long getMaxPushedVersion() {
-    return SubscriberUtils.getMaxPushedVersion(datum.getDataCenter(), subscriberMap.values());
+  protected Map<String, Long> getMaxPushedVersion() {
+    if (datum == null || CollectionUtils.isEmpty(datum.getDatumMap())) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, Long> ret = Maps.newHashMapWithExpectedSize(datum.getDatumMap().size());
+    for (Entry<String, SubDatum> entry : datum.getDatumMap().entrySet()) {
+      ret.put(entry.getKey(), SubscriberUtils.getMaxPushedVersion(entry.getKey(), subscriberMap.values()));
+    }
+    return ret;
   }
 
   @Override
@@ -114,7 +135,7 @@ public abstract class PushTask {
         .append(",expireT=")
         .append(expireTimestamp)
         .append(",DC=")
-        .append(datum.getDataCenter())
+        .append(datum.dataCenters())
         .append(",ver=")
         .append(datum.getVersion())
         .append(",addr=")
@@ -130,12 +151,35 @@ public abstract class PushTask {
     return sb.toString();
   }
 
-  public int getPushDataCount() {
+  /**
+   * Getter method for property <tt>pushTotalDataCount</tt>.
+   *
+   * @return property value of pushTotalDataCount
+   */
+  public int getPushTotalDataCount() {
+    return pushTotalDataCount;
+  }
+
+  /**
+   * Getter method for property <tt>pushDataCount</tt>.
+   *
+   * @return property value of pushDataCount
+   */
+  public Map<String, Integer> getPushDataCount() {
     return pushDataCount;
   }
 
-  public void setPushDataCount(int pushDataCount) {
+  /**
+   * Setter method for property <tt>pushDataCount</tt>.
+   *
+   * @param pushDataCount value to be assigned to property pushDataCount
+   */
+  public void setPushDataCount(Map<String, Integer> pushDataCount) {
+    if (pushDataCount == null) {
+      pushDataCount = Collections.emptyMap();
+    }
     this.pushDataCount = pushDataCount;
+
   }
 
   public void setPushEncode(String pushEncode) {

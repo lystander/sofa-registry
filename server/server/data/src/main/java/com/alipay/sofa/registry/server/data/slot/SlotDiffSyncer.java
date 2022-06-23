@@ -427,12 +427,11 @@ public final class SlotDiffSyncer {
       String slotLeaderIp,
       ClientSideExchanger exchanger,
       long slotTableEpoch,
-      SyncContinues continues,
-      SyncSlotAcceptorManager acceptorManager)
+      SyncContinues continues)
       throws RequestException {
     ParaCheckUtil.checkNotBlank(slotLeaderIp, "slotLeaderIp");
     Map<String, DatumSummary> summary =
-            datumStorageDelegate.getDatumSummary(syncDataCenter, slotId, acceptorManager);
+            datumStorageDelegate.getDatumSummary(syncDataCenter, slotId, syncSlotAcceptorManager);
     return sync(
         localDataCenter,
         syncDataCenter,

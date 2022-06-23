@@ -36,13 +36,19 @@ import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.alipay.sofa.registry.task.FastRejectedExecutionException;
 import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
 import com.alipay.sofa.registry.util.DatumVersionUtil;
+import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Lists;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import javax.annotation.PostConstruct;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
@@ -66,6 +72,8 @@ public class FirePushService {
   RegProcessor regProcessor;
   final ChangeHandler changeHandler = new ChangeHandler();
 
+  private final Set<String> localDataCenter = Collections.singleton(sessionServerConfig.getSessionServerDataCenter());
+
   @PostConstruct
   public void init() {
     watchPushExecutor =
@@ -80,7 +88,6 @@ public class FirePushService {
 
   public boolean fireOnChange(String dataInfoId, TriggerPushContext changeCtx) {
     try {
-      // TODO only supported local dataCenter
       changeProcessor.fireChange(dataInfoId, changeHandler, changeCtx);
       CHANGE_TASK_COUNTER.inc();
       return true;
@@ -106,7 +113,7 @@ public class FirePushService {
     TriggerPushContext pushCtx =
         new TriggerPushContext(dataCenter, emptyDatum.getVersion(), null, now);
     PushCause cause = new PushCause(pushCtx, PushType.Empty, now);
-    processPush(cause, emptyDatum, Collections.singletonList(subscriber));
+    processPush(cause, MultiSubDatum.of(emptyDatum), Collections.singletonList(subscriber));
     PUSH_EMPTY_COUNTER.inc();
     return true;
   }
@@ -157,7 +164,7 @@ public class FirePushService {
           new TriggerPushContext(datum.getDataCenter(), datum.getVersion(), dataNode, now);
       final long datumTimestamp = PushTrace.getTriggerPushTimestamp(datum);
       final PushCause cause = new PushCause(pushCtx, PushType.Temp, datumTimestamp);
-      processPush(cause, datum, subscribers);
+      processPush(cause, MultiSubDatum.of(datum), subscribers);
       PUSH_TEMP_COUNTER.inc();
       return true;
     } catch (Throwable e) {
@@ -168,13 +175,13 @@ public class FirePushService {
 
   boolean doExecuteOnChange(String changeDataInfoId, TriggerPushContext changeCtx) {
     final long expectVersion = changeCtx.getExpectDatumVersion();
-    final SubDatum datum = getDatum(changeCtx.dataCenter, changeDataInfoId, expectVersion);
-    if (datum == null) {
+    final MultiSubDatum datum = getDatum(changeDataInfoId, Collections.singletonMap(changeCtx.dataCenter, expectVersion));
+    if (datum == null || datum.getSubDatum(changeCtx.dataCenter) == null) {
       // datum change, but get null datum, should not happen
       LOGGER.error("[changeNil] {},{},{}", changeCtx.dataCenter, changeDataInfoId, expectVersion);
       return false;
     }
-    if (datum.getVersion() < expectVersion) {
+    if (datum.getVersion(changeCtx.dataCenter) < expectVersion) {
       LOGGER.error(
           "[changeLessVer] {},{},{}<{}",
           changeCtx.dataCenter,
@@ -187,10 +194,10 @@ public class FirePushService {
     return true;
   }
 
-  private void onDatumChange(TriggerPushContext changeCtx, SubDatum datum) {
+  private void onDatumChange(TriggerPushContext changeCtx, MultiSubDatum datum) {
     Map<ScopeEnum, List<Subscriber>> scopes =
         SubscriberUtils.groupByScope(sessionInterests.getDatas(datum.getDataInfoId()));
-    final long datumTimestamp = PushTrace.getTriggerPushTimestamp(datum);
+    final long datumTimestamp = PushTrace.getTriggerPushTimestamp(datum.getSubDatum(changeCtx.dataCenter));
     final PushCause cause = new PushCause(changeCtx, PushType.Sub, datumTimestamp);
     for (Map.Entry<ScopeEnum, List<Subscriber>> scope : scopes.entrySet()) {
       processPush(cause, datum, scope.getValue());
@@ -198,7 +205,7 @@ public class FirePushService {
   }
 
   private boolean processPush(
-      PushCause pushCause, SubDatum datum, Collection<Subscriber> subscriberList) {
+      PushCause pushCause, MultiSubDatum datum, Collection<Subscriber> subscriberList) {
     if (!pushSwitchService.canPush()) {
       return false;
     }
@@ -208,7 +215,7 @@ public class FirePushService {
     // if pushEmpty, do not check the version
     if (pushCause.pushType != PushType.Empty) {
       subscriberList =
-          subscribersPushCheck(datum.getDataCenter(), datum.getVersion(), subscriberList);
+          subscribersPushCheck(datum.getDatumMap(), subscriberList);
       if (CollectionUtils.isEmpty(subscriberList)) {
         return false;
       }
@@ -223,29 +230,43 @@ public class FirePushService {
     return true;
   }
 
-  SubDatum getDatum(String dataCenter, String dataInfoId, long expectVersion) {
-    Key key = new Key(DatumKey.class.getName(), new DatumKey(dataInfoId, dataCenter));
+  MultiSubDatum getDatum(String dataInfoId, Map<String, Long> expectVersions) {
+    ParaCheckUtil.checkNotEmpty(expectVersions, "expectVersions");
+    Key key = new Key(DatumKey.class.getName(), new DatumKey(dataInfoId, expectVersions.keySet()));
     Value value = sessionCacheService.getValueIfPresent(key);
-    if (value != null) {
-      SubDatum datum = (SubDatum) value.getPayload();
-      if (datum != null && datum.getVersion() >= expectVersion) {
-        // the expect version got
-        CACHE_HIT_COUNTER.inc();
-        return datum;
+    if (value == null) {
+      return miss(key);
+    }
+    MultiSubDatum datum = (MultiSubDatum) value.getPayload();
+
+    if (datum == null || !expectVersions.keySet().equals(datum.dataCenters())) {
+      return miss(key);
+    }
+    for (Entry<String, Long> entry : expectVersions.entrySet()) {
+      SubDatum subDatum = datum.getSubDatum(entry.getKey());
+      if (subDatum != null && subDatum.getVersion() < entry.getValue()) {
+        return miss(key);
       }
     }
+    // the expect version got
+    CACHE_HIT_COUNTER.inc();
+    return datum;
+  }
+
+  private MultiSubDatum miss(Key key) {
+    Value value;
     CACHE_MISS_COUNTER.inc();
     // the cache is too old
     sessionCacheService.invalidate(key);
     value = sessionCacheService.getValue(key);
-    return value == null ? null : (SubDatum) value.getPayload();
+    return value == null ? null : (MultiSubDatum) value.getPayload();
   }
 
   private List<Subscriber> subscribersPushCheck(
-      String dataCenter, Long version, Collection<Subscriber> subscribers) {
+          Map<String, SubDatum> datumMap, Collection<Subscriber> subscribers) {
     List<Subscriber> subscribersSend = Lists.newArrayList();
     for (Subscriber subscriber : subscribers) {
-      CircuitBreakerStatistic statistic = subscriber.getStatistic(dataCenter);
+      CircuitBreakerStatistic statistic = subscriber.getStatistic();
       if (circuitBreakerService.pushCircuitBreaker(statistic, subscriber.hasPushed())) {
         LOGGER.info(
             "[CircuitBreaker]subscriber:{} push check circuit break, statistic:{}",
@@ -254,8 +275,22 @@ public class FirePushService {
         continue;
       }
 
-      if (subscriber.checkVersion(dataCenter, version)) {
-        subscribersSend.add(subscriber);
+      Map<String, Long> versions = Maps.newHashMapWithExpectedSize(datumMap.size());
+      for (Entry<String, SubDatum> entry : datumMap.entrySet()) {
+        versions.put(entry.getKey(), entry.getValue().getVersion());
+      }
+
+      if (subscriber.acceptMulti()) {
+        // sub accept multi, check multi datacenter version,
+        // return true if one of any dataCenter need to update
+        if (subscriber.checkVersion(versions)) {
+          subscribersSend.add(subscriber);
+        }
+      } else {
+        // sub only accept local datacenter
+        if (localDataCenter.equals(versions) && subscriber.checkVersion(versions)) {
+          subscribersSend.add(subscriber);
+        }
       }
     }
     return subscribersSend;
@@ -287,11 +322,11 @@ public class FirePushService {
   boolean doExecuteOnReg(String dataInfoId, List<Subscriber> subscribers) {
     // TODO multi datacenter
     final String dataCenter = sessionServerConfig.getSessionServerDataCenter();
-    SubDatum datum = getDatum(dataCenter, dataInfoId, Long.MIN_VALUE);
+    MultiSubDatum datum = getDatum(dataInfoId, Collections.singletonMap(dataCenter, Long.MIN_VALUE));
     if (datum == null) {
       Subscriber first = subscribers.get(0);
       datum =
-          DatumUtils.newEmptySubDatum(first, dataCenter, ValueConstants.DEFAULT_NO_DATUM_VERSION);
+          DatumUtils.newEmptyMultiSubDatum(first, dataCenter, ValueConstants.DEFAULT_NO_DATUM_VERSION);
       LOGGER.warn(
           "[registerEmptyPush]{},{},subNum={},{}",
           dataInfoId,

@@ -68,7 +68,7 @@ public class SessionCacheService implements CacheService {
         if (entityType instanceof DatumKey) {
           DatumKey datumKey = (DatumKey) entityType;
           CACHE_LOGGER.info(
-              "remove,{},{},{}", datumKey.getDataInfoId(), datumKey.getDataCenter(), cause);
+              "remove,{},{},{}", datumKey.getDataInfoId(), datumKey.getDataCenters(), cause);
         }
       }
     }

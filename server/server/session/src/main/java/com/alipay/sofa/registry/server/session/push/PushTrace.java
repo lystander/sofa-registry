@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.session.push;
 
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.constants.ValueConstants;
+import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.common.model.store.SubPublisher;
 import com.alipay.sofa.registry.compress.CompressUtils;
@@ -26,6 +27,7 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.trace.TraceID;
 import com.alipay.sofa.registry.util.DatumVersionUtil;
+import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -33,6 +35,9 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.core.async.Hack;
 
@@ -43,7 +48,7 @@ public final class PushTrace {
   private static final Logger SLOW_LOGGER =
       Hack.hackLoggerDisruptor(LoggerFactory.getLogger("PUSH-TRACE-SLOW"));
   private static final int MAX_NTP_TIME_PRECISION_MILLIS = 200;
-  private final SubDatum datum;
+  private final MultiSubDatum datum;
   final long pushCreateTimestamp = System.currentTimeMillis();
 
   private final String subApp;
@@ -56,7 +61,7 @@ public final class PushTrace {
   private final int subNum;
 
   private PushTrace(
-      SubDatum datum,
+      MultiSubDatum datum,
       InetSocketAddress address,
       String subApp,
       PushCause pushCause,
@@ -71,7 +76,7 @@ public final class PushTrace {
   }
 
   public static PushTrace trace(
-      SubDatum datum,
+      MultiSubDatum datum,
       InetSocketAddress address,
       String subApp,
       PushCause pushCause,
@@ -80,8 +85,8 @@ public final class PushTrace {
     return new PushTrace(datum, address, subApp, pushCause, subNum, subRegTimestamp);
   }
 
-  private Tuple<List<Long>, String> datumPushedDelayList(long finishedTs, long lastPushTs) {
-    List<Long> recentVersions = datum.getRecentVersions();
+  private Tuple<List<Long>, String> datumPushedDelayList(String dataCenter, long finishedTs, long lastPushTs) {
+    List<Long> recentVersions = datum.getRecentVersions(dataCenter);
     List<Long> timestamps =
         Lists.newArrayListWithCapacity(recentVersions == null ? 1 : recentVersions.size() + 1);
     StringBuilder builder = ThreadLocalStringBuilder.get();
@@ -96,7 +101,7 @@ public final class PushTrace {
       }
     }
 
-    long datumChangeTs = DatumVersionUtil.getRealTimestamp(datum.getVersion());
+    long datumChangeTs = DatumVersionUtil.getRealTimestamp(datum.getVersion(dataCenter));
     long delay = finishedTs - Math.max(lastPushTs, datumChangeTs);
     timestamps.add(delay);
     builder.append(delay);
@@ -110,13 +115,18 @@ public final class PushTrace {
   public void finishPush(
       PushStatus status,
       TraceID taskID,
-      long subscriberPushedVersion,
-      int pushNum,
+      Map<String, Long> subscriberPushedVersion,
+      Map<String, Integer> pushNum,
       int retry,
       String pushEncode,
       int encodeSize) {
     try {
-      finish(status, taskID, subscriberPushedVersion, pushNum, retry, pushEncode, encodeSize);
+      ParaCheckUtil.checkEquals(subscriberPushedVersion.keySet(), pushNum.keySet(), "finishPush.datacenters");
+
+      for (Entry<String, Long> entry : subscriberPushedVersion.entrySet()) {
+        String dataCenter = entry.getKey();
+        finish(dataCenter, status, taskID, entry.getValue(), pushNum.get(dataCenter), retry, pushEncode, encodeSize);
+      }
     } catch (Throwable t) {
       LOGGER.error(
           "finish push error, {},{},{},{}",
@@ -129,6 +139,7 @@ public final class PushTrace {
   }
 
   private void finish(
+      String dataCenter,
       PushStatus status,
       TraceID taskID,
       long subscriberPushedVersion,
@@ -185,7 +196,7 @@ public final class PushTrace {
             : DatumVersionUtil.getRealTimestamp(subscriberPushedVersion);
 
     Tuple<List<Long>, String> datumPushedDelay =
-        datumPushedDelayList(pushFinishTimestamp, lastPushTimestamp);
+        datumPushedDelayList(dataCenter, pushFinishTimestamp, lastPushTimestamp);
     List<Long> datumPushedDelayList = datumPushedDelay.o1;
     String pushDatumDelayStr = datumPushedDelay.o2;
 
@@ -206,7 +217,7 @@ public final class PushTrace {
                   + "{},recentDelay={},pushNum={},retry={},encode={},encSize={}",
               status,
               datum.getDataInfoId(),
-              datum.getDataCenter(),
+              dataCenter,
               datum.getVersion(),
               subApp,
               pushCause.pushType,

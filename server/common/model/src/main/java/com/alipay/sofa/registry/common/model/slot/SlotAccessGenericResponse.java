@@ -17,15 +17,18 @@
 package com.alipay.sofa.registry.common.model.slot;
 
 import com.alipay.sofa.registry.common.model.GenericResponse;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-10-30 11:05 yuzhi.lyz Exp $
  */
 public final class SlotAccessGenericResponse<T> extends GenericResponse<T> {
-  private final SlotAccess slotAccess;
+  private SlotAccess slotAccess;
 
-  private SlotAccessGenericResponse(
+  public SlotAccessGenericResponse(
       boolean success, String message, SlotAccess slotAccess, T data) {
     this.slotAccess = slotAccess;
     this.setData(data);

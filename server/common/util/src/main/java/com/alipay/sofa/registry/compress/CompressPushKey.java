@@ -51,9 +51,8 @@ public class CompressPushKey implements CompressKey {
     this.byteSize = calcSize();
   }
 
-  public static CompressPushKey of(ReceivedData receivedData, String encode) {
-    List<Map.Entry<String, List<DataBox>>> zoneData =
-        new ArrayList<>(receivedData.getData().entrySet());
+  public static CompressPushKey of(String segment, String dataId, String instanceId, String group, long version, Map<String, List<DataBox>> data, String encode) {
+    List<Map.Entry<String, List<DataBox>>> zoneData = new ArrayList<>(data.entrySet());
     zoneData.sort(Map.Entry.comparingByKey());
     ZoneCount[] zoneCounts = new ZoneCount[zoneData.size()];
     for (int i = 0; i < zoneData.size(); i++) {
@@ -62,11 +61,11 @@ public class CompressPushKey implements CompressKey {
     }
     return new CompressPushKey(
         encode,
-        receivedData.getDataId(),
-        receivedData.getInstanceId(),
-        receivedData.getGroup(),
-        receivedData.getSegment(),
-        receivedData.getVersion(),
+            dataId,
+        instanceId,
+            group,
+        segment,
+        version,
         zoneCounts);
   }
 

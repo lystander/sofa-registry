@@ -22,9 +22,17 @@ public class MultiClusterExecutorManager {
 
   private final KeyedThreadPoolExecutor remoteSyncLeaderExecutor;
 
+  private final KeyedThreadPoolExecutor syncAppRevisionExecutor;
+
+  private final KeyedThreadPoolExecutor syncServiceMappingExecutor;
+
   private final MetricsableThreadPoolExecutor remoteSlotSyncProcessorExecutor;
 
   private static final String REMOTE_SYNC_LEADER_EXECUTOR = "REMOTE_SYNC_LEADER_EXECUTOR";
+
+  private static final String SYNC_APP_REVISION_EXECUTOR = "SYNC_APP_REVISION_EXECUTOR";
+
+  private static final String SYNC_SERVICE_MAPPING_EXECUTOR = "SYNC_SERVICE_MAPPING_EXECUTOR";
 
   private static final String REMOTE_SLOT_SYNC_PROCESSOR_EXECUTOR = "REMOTE_SLOT_SYNC_PROCESSOR_EXECUTOR";
 
@@ -41,6 +49,25 @@ public class MultiClusterExecutorManager {
                     REMOTE_SYNC_LEADER_EXECUTOR,
                     multiClusterDataServerConfig.getRemoteSyncSlotLeaderExecutorThreadSize(),
                     multiClusterDataServerConfig.getRemoteSyncSlotLeaderExecutorQueueSize()));
+
+
+    syncAppRevisionExecutor =
+            reportExecutors.computeIfAbsent(
+                    SYNC_APP_REVISION_EXECUTOR,
+                    k ->
+                            new KeyedThreadPoolExecutor(
+                                    SYNC_APP_REVISION_EXECUTOR,
+                                    multiClusterDataServerConfig.getSyncAppRevisionExecutorThreadSize(),
+                                    multiClusterDataServerConfig.getSyncAppRevisionExecutorQueueSize()));
+
+    syncServiceMappingExecutor =
+            reportExecutors.computeIfAbsent(
+                    SYNC_SERVICE_MAPPING_EXECUTOR,
+                    k ->
+                            new KeyedThreadPoolExecutor(
+                                    SYNC_SERVICE_MAPPING_EXECUTOR,
+                                    multiClusterDataServerConfig.getSyncServiceMappingExecutorThreadSize(),
+                                    multiClusterDataServerConfig.getSyncServiceMappingExecutorQueueSize()));
 
     remoteSlotSyncProcessorExecutor =
             metricsableExecutors.computeIfAbsent(
@@ -63,6 +90,24 @@ public class MultiClusterExecutorManager {
    */
   public KeyedThreadPoolExecutor getRemoteSyncLeaderExecutor() {
     return remoteSyncLeaderExecutor;
+  }
+
+  /**
+   * Getter method for property <tt>syncAppRevisionExecutor</tt>.
+   *
+   * @return property value of syncAppRevisionExecutor
+   */
+  public KeyedThreadPoolExecutor getSyncAppRevisionExecutor() {
+    return syncAppRevisionExecutor;
+  }
+
+  /**
+   * Getter method for property <tt>syncServiceMappingExecutor</tt>.
+   *
+   * @return property value of syncServiceMappingExecutor
+   */
+  public KeyedThreadPoolExecutor getSyncServiceMappingExecutor() {
+    return syncServiceMappingExecutor;
   }
 
   /**

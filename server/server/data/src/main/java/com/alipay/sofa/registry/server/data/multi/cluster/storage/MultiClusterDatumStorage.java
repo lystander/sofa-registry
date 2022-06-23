@@ -41,6 +41,11 @@ public class MultiClusterDatumStorage implements DatumStorage {
 
   private final MultiClusterSlotListener listener = new MultiClusterSlotListener();
 
+  @Override
+  public Set<String> allDataCenters() {
+    return storageMap.keySet();
+  }
+
   /**
    * get datum by specific dataInfoId
    *
@@ -322,7 +327,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
   private final class MultiClusterSlotListener implements SlotChangeListener {
 
     @Override
-    public void onSlotAdd(String dataCenter, int slotId, Slot.Role role) {
+    public void onSlotAdd(String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
       putPublisherGroups(dataCenter, slotId);
       LOGGER.info(
               "{} add publisherGroup {}, role={},",

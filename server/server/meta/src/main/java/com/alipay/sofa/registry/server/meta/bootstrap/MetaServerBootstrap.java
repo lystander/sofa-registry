@@ -95,8 +95,6 @@ public class MetaServerBootstrap {
 
   @Autowired private RecoverConfigRepository recoverConfigRepository;
 
-  @Autowired private DefaultCommonConfig defaultCommonConfig;
-
   private Server sessionServer;
 
   private Server dataServer;
@@ -165,7 +163,7 @@ public class MetaServerBootstrap {
       retryer.call(
           () -> {
             LeaderInfo leader =
-                localMetaExchanger.getLeader(defaultCommonConfig.getDefaultClusterId());
+                localMetaExchanger.getLeader(metaServerConfig.getLocalDataCenter());
             LOGGER.info(
                 "[MetaBootstrap] retry connect to meta leader: {}, client:{}",
                 leader.getLeader(),

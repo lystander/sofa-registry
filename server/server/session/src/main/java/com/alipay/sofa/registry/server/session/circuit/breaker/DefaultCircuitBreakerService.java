@@ -26,6 +26,8 @@ import com.alipay.sofa.registry.server.session.push.PushLog;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -100,12 +102,11 @@ public class DefaultCircuitBreakerService implements CircuitBreakerService {
   /**
    * statistic when push fail
    *
-   * @param dataCenter
-   * @param pushVersion
+   * @param versions
    * @param subscriber
    * @return
    */
-  public boolean onPushFail(String dataCenter, long pushVersion, Subscriber subscriber) {
+  public boolean onPushFail(Map<String, Long> versions, Subscriber subscriber) {
 
     if (!subscriber.hasPushed()) {
       // push fail on register, not circuit breaker;
@@ -113,7 +114,7 @@ public class DefaultCircuitBreakerService implements CircuitBreakerService {
     }
     String ip = subscriber.getSourceAddress().getIpAddress();
     String address = subscriber.getSourceAddress().buildAddressString();
-    if (!subscriber.onPushFail(dataCenter, pushVersion)) {
+    if (!subscriber.onPushFail(versions)) {
       LOGGER.info("PushN, failed to do onPushFail, {}, {}", subscriber.getDataInfoId(), address);
       return false;
     }
@@ -134,13 +135,12 @@ public class DefaultCircuitBreakerService implements CircuitBreakerService {
   /**
    * statistic when push success
    *
-   * @param dataCenter
-   * @param pushVersion
+   * @param versions
+   * @param pushNums
    * @param subscriber
    * @return
    */
-  public boolean onPushSuccess(
-      String dataCenter, long pushVersion, int pushNum, Subscriber subscriber) {
+  public boolean onPushSuccess(Map<String, Long> versions, Map<String, Integer> pushNums, Subscriber subscriber) {
     String address = subscriber.getSourceAddress().buildAddressString();
 
     CircuitBreakerStatistic statistic = circuitBreakerAddress.getIfPresent(address);
@@ -153,7 +153,7 @@ public class DefaultCircuitBreakerService implements CircuitBreakerService {
       }
     }
 
-    if (!subscriber.checkAndUpdateCtx(dataCenter, pushVersion, pushNum)) {
+    if (!subscriber.checkAndUpdateCtx(versions, pushNums)) {
       LOGGER.info(
           "PushN, failed to checkAndUpdateCtx onPushSuccess, {}, {}",
           subscriber.getDataInfoId(),

@@ -67,6 +67,10 @@ public class BatchPutDataHandler extends AbstractDataHandler<BatchRequest> {
     final ProcessId sessionProcessId = request.getSessionProcessId();
     processSessionProcessId(channel, sessionProcessId);
 
+    return handleRequest(request, sessionProcessId);
+  }
+
+  public SlotAccessGenericResponse<Object> handleRequest(BatchRequest request, ProcessId sessionProcessId) {
     final SlotAccess slotAccess =
         checkAccess(
             dataServerConfig.getLocalDataCenter(),

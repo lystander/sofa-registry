@@ -103,16 +103,6 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
 
       switch (renewNode.getNodeType()) {
         case SESSION:
-          response =
-              new BaseHeartBeatResponse(
-                  true,
-                  metaServerInfo,
-                  slotTable,
-                  sessionMetaInfo,
-                  metaLeaderService.getLeader(),
-                  metaLeaderService.getLeaderEpoch(),
-                  Collections.emptyMap());
-          break;
         case DATA:
           Map<String, RemoteSlotTableStatus> remoteSlotTableStatus = calculateStatus(heartbeat);
           response =
@@ -340,8 +330,8 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
       Long slotTableEpoch = dataRemoteSlotTable.get(dataCenter);
       if (slotTableEpoch == null || slotTableEpoch < slotTable.getEpoch()) {
         MULTI_CLUSTER_LOGGER.info(
-            "[calculateStatus]data:{}, heartbeat request:{}/{}, newSlotTableEpoch:{}/{}, slotTable upgrade: {}",
-            heartbeat.getNode().getNodeUrl(),
+            "[calculateStatus]node:{}, heartbeat request:{}/{}, newSlotTableEpoch:{}/{}, slotTable upgrade: {}",
+            heartbeat.getNode(),
             dataCenter,
             slotTableEpoch,
             dataCenter,
@@ -351,8 +341,8 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
       } else if (slotTableEpoch > slotTable.getEpoch()) {
         // it should not happen, print error log and return false
         MULTI_CLUSTER_LOGGER.error(
-            "[calculateStatus]data:{}, heartbeat request:{}/{}, newSlotTableEpoch:{}/{}, heartbeat error.",
-            heartbeat.getNode().getNodeUrl(),
+            "[calculateStatus]node:{}, heartbeat request:{}/{}, newSlotTableEpoch:{}/{}, heartbeat error.",
+            heartbeat.getNode(),
             dataCenter,
             slotTableEpoch,
             dataCenter,

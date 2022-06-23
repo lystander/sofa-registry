@@ -21,6 +21,10 @@ package com.alipay.sofa.registry.server.meta.bootstrap.config;
  * @version $Id: MetaServerConfig.java, v 0.1 2018-01-16 10:58 shangyu.wh Exp $
  */
 public interface MetaServerConfig {
+  String getLocalDataCenter();
+
+  boolean isLocalDataCenter(String dataCenter);
+
   int getSessionServerPort();
 
   int getDataServerPort();

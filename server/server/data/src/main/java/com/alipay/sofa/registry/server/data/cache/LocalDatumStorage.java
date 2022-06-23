@@ -33,6 +33,7 @@ import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import java.util.*;
 
 import com.alipay.sofa.registry.util.ParaCheckUtil;
+import com.google.common.collect.Sets;
 
 /**
  * @author yuzhi.lyz
@@ -41,10 +42,18 @@ import com.alipay.sofa.registry.util.ParaCheckUtil;
 public final class LocalDatumStorage implements DatumStorage {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalDatumStorage.class, "[LocalStorage]");
 
+  private final String dataCenter;
+
   private final BaseDatumStorage storage;
 
   public LocalDatumStorage(String dataCenter) {
+    this.dataCenter = dataCenter;
     this.storage = new BaseDatumStorage(dataCenter, LOGGER);
+  }
+
+  @Override
+  public Set<String> allDataCenters() {
+    return Collections.singleton(dataCenter);
   }
 
   @Override
@@ -189,7 +198,7 @@ public final class LocalDatumStorage implements DatumStorage {
   private final class SlotListener implements SlotChangeListener {
 
     @Override
-    public void onSlotAdd(String dataCenter, int slotId, Slot.Role role) {
+    public void onSlotAdd(String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
       putPublisherGroups(dataCenter, slotId);
       LOGGER.info(
               "{} add publisherGroup {}, role={},",

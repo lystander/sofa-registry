@@ -32,8 +32,6 @@ import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
-import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.AppRevisionPublish;
-import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.ServiceAppsPublish;
 import com.alipay.sofa.registry.server.data.remoting.DataNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.SessionNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.metaserver.MetaServerServiceImpl;
@@ -306,7 +304,7 @@ public final class SlotManagerImpl implements SlotManager {
   private void updateSlotState(SlotTable updating) {
     for (Slot s : updating.getSlots()) {
       SlotState state = slotTableStates.slotStates.get(s.getId());
-      listenAdd(s);
+      listenAddBeforeUpdate(updating.getEpoch(), s);
       if (state != null) {
         state.update(s);
       } else {
@@ -323,12 +321,17 @@ public final class SlotManagerImpl implements SlotManager {
         final Slot slot = e.getValue().slot;
         it.remove();
         // important, first remove the slot for GetData Access check, then clean the data
-        listenRemove(slot);
+        listenRemoveBeforeUpdate(updating.getEpoch(), slot);
         observeLeaderMigratingFinish(slot.getId());
         LOGGER.info("remove slot, slot={}", slot);
       }
     }
     slotTableStates.table = updating;
+
+    for (Slot s : slotTableStates.table.getSlots()) {
+      listenAddAfterUpdate(updating.getEpoch(), s);
+    }
+
     observeLeaderAssignGauge(slotTableStates.table.getLeaderNum(ServerEnv.IP));
     observeFollowerAssignGauge(slotTableStates.table.getFollowerNum(ServerEnv.IP));
   }
@@ -660,7 +663,7 @@ public final class SlotManagerImpl implements SlotManager {
             }
           };
       SyncLeaderTask task =
-          new SyncLeaderTask(dataServerConfig.getLocalDataCenter(), dataServerConfig.getLocalDataCenter(), slotTableEpoch, slot, syncer, dataNodeExchanger, continues, null, SYNC_DIGEST_LOGGER, SYNC_ERROR_LOGGER);
+          new SyncLeaderTask(dataServerConfig.getLocalDataCenter(), dataServerConfig.getLocalDataCenter(), slotTableEpoch, slot, syncer, dataNodeExchanger, continues, SYNC_DIGEST_LOGGER, SYNC_ERROR_LOGGER);
       slotState.syncLeaderTask = syncLeaderExecutor.execute(slot.getId(), task);
     } else if (!syncLeaderTask.isFinished()) {
       if (System.currentTimeMillis() - syncLeaderTask.getCreateTime() > 5000) {
@@ -896,13 +899,18 @@ public final class SlotManagerImpl implements SlotManager {
     return localIsLeader(s) ? Slot.Role.Leader : Slot.Role.Follower;
   }
 
-  private void listenAdd(Slot s) {
-    slotChangeListenerManager.localListeners().forEach(listener -> listener.onSlotAdd(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
+  private void listenAddBeforeUpdate(long slotTableEpoch, Slot s) {
+    slotChangeListenerManager.localBeforeUpdateListeners().forEach(listener -> listener.onSlotAdd(dataServerConfig.getLocalDataCenter(), slotTableEpoch, s.getId(), s.getLeaderEpoch(), getRole(s)));
   }
 
-  private void listenRemove(Slot s) {
-    slotChangeListenerManager.localListeners().forEach(listener -> listener.onSlotRemove(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
+  private void listenRemoveBeforeUpdate(long slotTableEpoch, Slot s) {
+    slotChangeListenerManager.localBeforeUpdateListeners().forEach(listener -> listener.onSlotRemove(dataServerConfig.getLocalDataCenter(), s.getId(), getRole(s)));
   }
+
+  private void listenAddAfterUpdate(long slotTableEpoch, Slot s) {
+    slotChangeListenerManager.localAfterUpdateListeners().forEach(listener -> listener.onSlotAdd(dataServerConfig.getLocalDataCenter(), slotTableEpoch, s.getId(), s.getLeaderEpoch(), getRole(s)));
+  }
+
 
   private static boolean localIsLeader(Slot slot) {
     return ServerEnv.isLocalServer(slot.getLeader());

@@ -29,6 +29,15 @@ public class MultiClusterDataServerConfigBean implements MultiClusterDataServerC
 
     private volatile int remoteSyncSlotLeaderExecutorQueueSize = 100;
 
+    private volatile int syncAppRevisionExecutorThreadSize = OsUtils.getCpuCount() * 3;
+
+    private volatile int syncAppRevisionExecutorQueueSize = 100;
+
+
+    private volatile int syncServiceMappingExecutorThreadSize = OsUtils.getCpuCount() * 3;
+
+    private volatile int syncServiceMappingExecutorQueueSize = 100;
+
     private volatile int syncSlotLowWaterMark = 1024 * 256;
     private volatile int syncSlotHighWaterMark = 1024 * 320;
 
@@ -164,6 +173,26 @@ public class MultiClusterDataServerConfigBean implements MultiClusterDataServerC
     @Override
     public int getRemoteSlotSyncRequestExecutorQueueSize() {
         return remoteSlotSyncRequestExecutorQueueSize;
+    }
+
+    @Override
+    public int getSyncAppRevisionExecutorThreadSize() {
+        return syncAppRevisionExecutorThreadSize;
+    }
+
+    @Override
+    public int getSyncAppRevisionExecutorQueueSize() {
+        return syncAppRevisionExecutorQueueSize;
+    }
+
+    @Override
+    public int getSyncServiceMappingExecutorThreadSize() {
+        return syncServiceMappingExecutorThreadSize;
+    }
+
+    @Override
+    public int getSyncServiceMappingExecutorQueueSize() {
+        return syncServiceMappingExecutorQueueSize;
     }
 
     /**

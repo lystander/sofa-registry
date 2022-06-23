@@ -18,11 +18,14 @@ package com.alipay.sofa.registry.server.session.converter.pb;
 
 import com.alipay.sofa.registry.common.model.client.pb.*;
 import com.alipay.sofa.registry.compress.*;
+import com.alipay.sofa.registry.core.model.DataBox;
 import com.alipay.sofa.registry.core.model.ReceivedConfigData;
 import com.alipay.sofa.registry.core.model.ReceivedData;
 import com.alipay.sofa.registry.util.SystemUtils;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.UnsafeByteOperations;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * @author bystander
@@ -60,47 +63,95 @@ public final class ReceivedDataConvertor {
     return receivedData;
   }
 
+
   public static ReceivedDataPb convert2CompressedPb(
-      ReceivedData receivedDataJava, Compressor compressor) {
+      ReceivedData receivedDataJava, Compressor compressor, boolean acceptMulti) {
     if (receivedDataJava == null) {
       return null;
     }
+
+    String segment = receivedDataJava.getSegment();
+    String dataId = receivedDataJava.getDataId();
+    String instanceId = receivedDataJava.getInstanceId();
+    String group = receivedDataJava.getGroup();
     try {
       ReceivedDataPb.Builder builder = ReceivedDataPb.newBuilder();
       builder
-          .setDataId(receivedDataJava.getDataId())
-          .setGroup(receivedDataJava.getGroup())
-          .setInstanceId(receivedDataJava.getInstanceId())
+          .setDataId(dataId)
+          .setGroup(group)
+          .setInstanceId(instanceId)
           .setLocalZone(receivedDataJava.getLocalZone())
           .setScope(receivedDataJava.getScope())
-          .setSegment(receivedDataJava.getSegment())
-          .setVersion(receivedDataJava.getVersion())
+          .setSegment(segment)
+          .setEncoding(compressor.getEncoding())
           .addAllSubscriberRegistIds(receivedDataJava.getSubscriberRegistIds());
 
-      CompressedItem compressedItem =
-          pushCompressExecutor.execute(
-              CompressPushKey.of(receivedDataJava, compressor.getEncoding()),
-              () -> {
-                Map<String, DataBoxesPb> dataBoxesPbMap =
-                    DataBoxConvertor.convert2PbMaps(receivedDataJava.getData());
-                ReceivedDataBodyPb bodyPb =
-                    ReceivedDataBodyPb.newBuilder().putAllData(dataBoxesPbMap).build();
-                byte[] bodyData = bodyPb.toByteArray();
-                byte[] compressed = compressor.compress(bodyData);
-                return new CompressedItem(compressed, bodyData.length, compressor.getEncoding());
-              });
-      builder
-          .setEncoding(compressedItem.getEncoding())
-          .setBody(
-              UnsafeByteOperations.unsafeWrap(
-                  compressedItem
-                      .getCompressedData())) // compressed data is immutable, use unsafe wrap to
-          // avoid copy
-          .setOriginBodySize(compressedItem.getOriginSize());
+      if (acceptMulti) {
+        int originSize = 0;
+        for (Entry<String, Map<String, List<DataBox>>> dataCenterEntry :
+            receivedDataJava.getMultiDatas().entrySet()) {
+          String dataCenter = dataCenterEntry.getKey();
+          long version = receivedDataJava.getMultiVersion().get(dataCenter);
+          Map<String, List<DataBox>> data = dataCenterEntry.getValue();
+          CompressedItem compressedItem =
+                  dataCenterCompressed(
+                          segment,
+                          dataId,
+                          instanceId,
+                          group,
+                          version,
+                          data,
+                          compressor);
+          // todo xiaojian.xj set receivedDataPb multiDatas multiVersion
+          originSize += compressedItem.getOriginSize();
+          builder.setOriginBodySize(originSize);
+
+        }
+
+      } else {
+        CompressedItem compressedItem =
+            dataCenterCompressed(
+                segment,
+                dataId,
+                instanceId,
+                group,
+                receivedDataJava.getVersion(),
+                receivedDataJava.getData(),
+                compressor);
+        builder
+            .setVersion(receivedDataJava.getVersion())
+            // compressed data is immutable, use unsafe wrap to avoid copy
+            .setBody(UnsafeByteOperations.unsafeWrap(compressedItem.getCompressedData()))
+            .setOriginBodySize(compressedItem.getOriginSize());
+      }
       return builder.build();
     } catch (Throwable e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  public static CompressedItem dataCenterCompressed(
+      String segment,
+      String dataId,
+      String instanceId,
+      String group,
+      long version,
+      Map<String, List<DataBox>> zoneData,
+      Compressor compressor)
+      throws Exception {
+    CompressedItem compressedItem =
+        pushCompressExecutor.execute(
+            CompressPushKey.of(
+                segment, dataId, instanceId, group, version, zoneData, compressor.getEncoding()),
+            () -> {
+              Map<String, DataBoxesPb> dataBoxesPbMap = DataBoxConvertor.convert2PbMaps(zoneData);
+              ReceivedDataBodyPb bodyPb =
+                  ReceivedDataBodyPb.newBuilder().putAllData(dataBoxesPbMap).build();
+              byte[] bodyData = bodyPb.toByteArray();
+              byte[] compressed = compressor.compress(bodyData);
+              return new CompressedItem(compressed, bodyData.length, compressor.getEncoding());
+            });
+    return compressedItem;
   }
 
   public static ReceivedDataPb convert2Pb(ReceivedData receivedDataJava) {

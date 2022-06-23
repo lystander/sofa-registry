@@ -4,6 +4,7 @@
  */
 package com.alipay.sofa.registry.server.data.multi.cluster.app.discovery;
 
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.MetadataSlotChangeListener.SyncMetadataTask;
 import com.alipay.sofa.registry.task.KeyedTask;
 
 /**
@@ -13,7 +14,11 @@ import com.alipay.sofa.registry.task.KeyedTask;
  */
 public final class MetadataLoadState {
 
+    private final long slotTableEpoch;
+
     private final int slotId;
+
+    private final long slotLeaderEpoch;
 
     private MetadataLoadStatus status = MetadataLoadStatus.INIT;
 
@@ -21,12 +26,14 @@ public final class MetadataLoadState {
 
     private KeyedTask<SyncMetadataTask> syncMetadataTask;
 
-    public MetadataLoadState(int slotId) {
+    public MetadataLoadState(long slotTableEpoch, int slotId, long slotLeaderEpoch) {
         this.slotId = slotId;
+        this.slotTableEpoch = slotTableEpoch;
+        this.slotLeaderEpoch = slotLeaderEpoch;
     }
 
-    public static MetadataLoadState initState(int slotId) {
-        return new MetadataLoadState(slotId);
+    public static MetadataLoadState initState(long slotTableEpoch, int slotId,  long slotLeaderEpoch) {
+        return new MetadataLoadState(slotTableEpoch, slotId, slotLeaderEpoch);
     }
     /**
      * Getter method for property <tt>slotId</tt>.
@@ -51,6 +58,7 @@ public final class MetadataLoadState {
      *
      * @param status value to be assigned to property status
      */
+    // todo xiaojian.xj
     public void setStatus(MetadataLoadStatus status) {
         this.status = status;
     }
@@ -71,6 +79,24 @@ public final class MetadataLoadState {
      */
     public void setLastSuccessSyncTime(long lastSuccessSyncTime) {
         this.lastSuccessSyncTime = lastSuccessSyncTime;
+    }
+
+    /**
+     * Getter method for property <tt>slotTableEpoch</tt>.
+     *
+     * @return property value of slotTableEpoch
+     */
+    public long getSlotTableEpoch() {
+        return slotTableEpoch;
+    }
+
+    /**
+     * Getter method for property <tt>slotLeaderEpoch</tt>.
+     *
+     * @return property value of slotLeaderEpoch
+     */
+    public long getSlotLeaderEpoch() {
+        return slotLeaderEpoch;
     }
 
     /**

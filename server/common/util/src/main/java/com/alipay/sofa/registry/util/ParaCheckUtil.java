@@ -17,6 +17,7 @@
 package com.alipay.sofa.registry.util;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -83,6 +84,20 @@ public final class ParaCheckUtil {
     if (param == null || param.size() == 0) {
       throw new IllegalArgumentException(
           StringFormatter.format("{} is not allowed to be empty", paraName));
+    }
+  }
+
+  /**
+   * check param not empty
+   *
+   * @param param
+   * @param paraName
+   * @throws RuntimeException
+   */
+  public static void checkNotEmpty(Map param, String paraName) {
+    if (param == null || param.size() == 0) {
+      throw new IllegalArgumentException(
+              StringFormatter.format("{} is not allowed to be empty", paraName));
     }
   }
 
