@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.common.model.store.Subscriber;
 import com.alipay.sofa.registry.core.model.ScopeEnum;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
+import com.alipay.sofa.registry.util.Bool;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
 import com.google.common.collect.Lists;
@@ -49,6 +50,25 @@ public final class SubscriberUtils {
           Map<String, Subscriber> subs = ret.computeIfAbsent(address, k -> Maps.newHashMap());
           subs.put(s.getRegisterId(), s);
         });
+    return ret;
+  }
+
+  public static Map<Boolean, List<Subscriber>> groupByMulti(boolean multiSwitch,
+                                                            List<Subscriber> subscribers) {
+
+    if (!multiSwitch) {
+      return Collections.singletonMap(false, subscribers);
+    }
+
+    if (subscribers.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    Map<Boolean, List<Subscriber>> ret = Maps.newHashMapWithExpectedSize(2);
+    for (Subscriber subscriber : subscribers) {
+      List<Subscriber> subs = ret.computeIfAbsent(subscriber.acceptMulti(), k -> Lists.newArrayList());
+      subs.add(subscriber);
+    }
+
     return ret;
   }
 

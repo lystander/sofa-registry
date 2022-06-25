@@ -134,6 +134,8 @@ public class SessionServerConfigBean implements SessionServerConfig {
 
   private int scanSubscriberIntervalMillis = 1000 * 5;
 
+  private int scanServiceAppsMappingIntervalMillis = 1000 * 5;
+
   private double accessLimitRate = 30000.0;
 
   private String sessionServerRegion;
@@ -162,6 +164,10 @@ public class SessionServerConfigBean implements SessionServerConfig {
   private int cacheCountIntervalSecs = 30;
 
   private int cacheDatumMaxWeight = 1024 * 1024 * 256;
+
+  private int cacheServiceAppsMappingMaxWeight = 1024 * 1024 * 128;
+
+  private int cacheRevisionMaxWeight = 1024 * 1024 * 128;
 
   private int cacheDatumExpireSecs = 5;
 
@@ -956,6 +962,44 @@ public class SessionServerConfigBean implements SessionServerConfig {
     this.cacheDatumMaxWeight = cacheDatumMaxWeight;
   }
 
+  /**
+   * Getter method for property <tt>cacheServiceAppsMappingMaxWeight</tt>.
+   *
+   * @return property value of cacheServiceAppsMappingMaxWeight
+   */
+  @Override
+  public int getCacheServiceAppsMappingMaxWeight() {
+    return cacheServiceAppsMappingMaxWeight;
+  }
+
+  /**
+   * Setter method for property <tt>cacheServiceAppsMappingMaxWeight</tt>.
+   *
+   * @param cacheServiceAppsMappingMaxWeight value to be assigned to property cacheServiceAppsMappingMaxWeight
+   */
+  public void setCacheServiceAppsMappingMaxWeight(int cacheServiceAppsMappingMaxWeight) {
+    this.cacheServiceAppsMappingMaxWeight = cacheServiceAppsMappingMaxWeight;
+  }
+
+  /**
+   * Getter method for property <tt>cacheRevisionMaxWeight</tt>.
+   *
+   * @return property value of cacheRevisionMaxWeight
+   */
+  @Override
+  public int getCacheRevisionMaxWeight() {
+    return cacheRevisionMaxWeight;
+  }
+
+  /**
+   * Setter method for property <tt>cacheRevisionMaxWeight</tt>.
+   *
+   * @param cacheRevisionMaxWeight value to be assigned to property cacheRevisionMaxWeight
+   */
+  public void setCacheRevisionMaxWeight(int cacheRevisionMaxWeight) {
+    this.cacheRevisionMaxWeight = cacheRevisionMaxWeight;
+  }
+
   @Override
   public int getCacheDatumExpireSecs() {
     return cacheDatumExpireSecs;
@@ -1361,5 +1405,24 @@ public class SessionServerConfigBean implements SessionServerConfig {
    */
   public void setPushAddressCircuitBreakerThreshold(int pushAddressCircuitBreakerThreshold) {
     this.pushAddressCircuitBreakerThreshold = pushAddressCircuitBreakerThreshold;
+  }
+
+  /**
+   * Getter method for property <tt>scanServiceAppsMappingIntervalMillis</tt>.
+   *
+   * @return property value of scanServiceAppsMappingIntervalMillis
+   */
+  @Override
+  public int getScanServiceAppsMappingIntervalMillis() {
+    return scanServiceAppsMappingIntervalMillis;
+  }
+
+  /**
+   * Setter method for property <tt>scanServiceAppsMappingIntervalMillis</tt>.
+   *
+   * @param scanServiceAppsMappingIntervalMillis value to be assigned to property scanServiceAppsMappingIntervalMillis
+   */
+  public void setScanServiceAppsMappingIntervalMillis(int scanServiceAppsMappingIntervalMillis) {
+    this.scanServiceAppsMappingIntervalMillis = scanServiceAppsMappingIntervalMillis;
   }
 }

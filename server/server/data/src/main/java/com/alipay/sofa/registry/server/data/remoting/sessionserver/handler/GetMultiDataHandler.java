@@ -70,6 +70,7 @@ public class GetMultiDataHandler extends BaseGetDataHandler<GetMultiDataRequest>
       String dataCenter = entry.getKey();
       SlotAccessGenericResponse<SubDatum> res = processSingleDataCenter(dataCenter,
               request.getDataInfoId(), entry.getValue(), request.getSlotLeaderEpochs().get(dataCenter), request.getAcceptEncodes());
+
       if (!res.isSuccess()) {
         success = false;
         builder.append(StringFormatter.format("{}:{}.", dataCenter, res.getMessage()));

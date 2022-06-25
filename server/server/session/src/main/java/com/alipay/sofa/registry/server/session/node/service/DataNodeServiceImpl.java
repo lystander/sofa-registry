@@ -19,6 +19,7 @@ package com.alipay.sofa.registry.server.session.node.service;
 import com.alipay.sofa.registry.common.model.ClientOffPublishers;
 import com.alipay.sofa.registry.common.model.CommonResponse;
 import com.alipay.sofa.registry.common.model.dataserver.*;
+import com.alipay.sofa.registry.common.model.slot.MultiSlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.slot.Slot;
 import com.alipay.sofa.registry.common.model.slot.SlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
@@ -250,8 +251,7 @@ public class DataNodeServiceImpl implements DataNodeService {
 
       Response response = dataNodeExchanger.request(getDataRequestStringRequest);
       Object result = response.getResult();
-      SlotAccessGenericResponse<MultiSubDatum> genericResponse =
-          (SlotAccessGenericResponse<MultiSubDatum>) result;
+      MultiSlotAccessGenericResponse<MultiSubDatum> genericResponse = (MultiSlotAccessGenericResponse<MultiSubDatum>) result;
       if (genericResponse.isSuccess()) {
         final MultiSubDatum datum = genericResponse.getData();
         if (datum == null) {

@@ -24,7 +24,7 @@ import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.core.model.AppRevisionInterface;
 import com.alipay.sofa.registry.core.model.RegisterResponse;
 import com.alipay.sofa.registry.jdbc.mapper.AppRevisionMapper;
-import com.alipay.sofa.registry.server.session.metadata.AppRevisionCacheRegistry;
+import com.alipay.sofa.registry.server.session.metadata.MetadataCacheRegistry;
 import com.alipay.sofa.registry.server.session.metadata.AppRevisionHeartbeatRegistry;
 import com.alipay.sofa.registry.server.session.strategy.AppRevisionHandlerStrategy;
 import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
@@ -56,7 +56,7 @@ public class MetadataTest extends BaseIntegrationTest {
 
   protected AppRevisionHandlerStrategy appRevisionHandlerStrategy;
 
-  protected AppRevisionCacheRegistry appRevisionCacheRegistry;
+  protected MetadataCacheRegistry appRevisionCacheRegistry;
 
   protected AppRevisionHeartbeatRegistry appRevisionHeartbeatRegistry;
 
@@ -73,7 +73,7 @@ public class MetadataTest extends BaseIntegrationTest {
             "appRevisionHandlerStrategy", AppRevisionHandlerStrategy.class);
     appRevisionCacheRegistry =
         sessionApplicationContext.getBean(
-            "appRevisionCacheRegistry", AppRevisionCacheRegistry.class);
+            "appRevisionCacheRegistry", MetadataCacheRegistry.class);
     appRevisionHeartbeatRegistry =
         sessionApplicationContext.getBean(
             "appRevisionHeartbeatRegistry", AppRevisionHeartbeatRegistry.class);

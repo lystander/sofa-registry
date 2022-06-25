@@ -22,7 +22,7 @@ import com.alipay.sofa.registry.store.api.repository.AppRevisionRepository;
 import com.alipay.sofa.registry.store.api.repository.InterfaceAppsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class AppRevisionCacheRegistry {
+public class MetadataCacheRegistry {
 
   @Autowired private AppRevisionRepository appRevisionRepository;
 

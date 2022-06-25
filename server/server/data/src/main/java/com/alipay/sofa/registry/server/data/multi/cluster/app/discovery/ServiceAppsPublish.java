@@ -1,6 +1,7 @@
 /** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
 package com.alipay.sofa.registry.server.data.multi.cluster.app.discovery;
 
+import com.alipay.sofa.registry.common.model.DataInfoIdGenerator;
 import com.alipay.sofa.registry.common.model.PublisherGroupType;
 import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.ServerDataBox;
@@ -149,7 +150,7 @@ public class ServiceAppsPublish extends MetadataSlotChangeListener<ServiceMappin
 
   @Override
   public String buildDataInfoId(String dataInfoId) {
-    return WordCache.getWordCache(PublisherGroupType.REGISTRY_MAPPING.getCode() + dataInfoId);
+    return DataInfoIdGenerator.serviceAppsId(dataInfoId);
   }
 
   private List<ServerDataBox> buildServerDataBox(Set<String> apps) {

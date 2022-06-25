@@ -16,46 +16,26 @@
  */
 package com.alipay.sofa.registry.server.session.cache;
 
-import com.alipay.sofa.registry.cache.CacheCleaner;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.cache.*;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author shangyu.wh
  * @version $Id: CacheService.java, v 0.1 2017-12-06 18:22 shangyu.wh Exp $
  */
-public class SessionCacheService implements CacheService {
+public abstract class SessionCacheService implements CacheService {
   private static final Logger CACHE_LOGGER = LoggerFactory.getLogger("CACHE-GEN");
 
-  private LoadingCache<Key, Value> readWriteCacheMap;
-  @Autowired SessionServerConfig sessionServerConfig;
+  protected LoadingCache<Key, Value> readWriteCacheMap;
+
   /** injectQ */
   private Map<String, CacheGenerator> cacheGenerators;
-
-  @PostConstruct
-  public void init() {
-    this.readWriteCacheMap =
-        CacheBuilder.newBuilder()
-            .maximumWeight(sessionServerConfig.getCacheDatumMaxWeight())
-            .weigher((Weigher<Key, Value>) (key, value) -> key.size() + value.size())
-            .expireAfterWrite(sessionServerConfig.getCacheDatumExpireSecs(), TimeUnit.SECONDS)
-            .removalListener(new RemoveListener())
-            .build(
-                new CacheLoader<Key, Value>() {
-                  @Override
-                  public Value load(Key key) {
-                    return generatePayload(key);
-                  }
-                });
-    CacheCleaner.autoClean(readWriteCacheMap, 10);
-  }
 
   static final class RemoveListener implements RemovalListener<Key, Value> {
 
@@ -74,7 +54,7 @@ public class SessionCacheService implements CacheService {
     }
   }
 
-  private Value generatePayload(Key key) {
+  protected Value generatePayload(Key key) {
     ParaCheckUtil.checkNotNull(key, "generatePayload.key");
     ParaCheckUtil.checkNotNull(key.getEntityType(), "generatePayload.key.entityType");
 

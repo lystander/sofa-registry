@@ -1,6 +1,7 @@
 /** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
 package com.alipay.sofa.registry.server.data.multi.cluster.app.discovery;
 
+import com.alipay.sofa.registry.common.model.DataInfoIdGenerator;
 import com.alipay.sofa.registry.common.model.PublisherGroupType;
 import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.ServerDataBox;
@@ -125,12 +126,7 @@ public class AppRevisionPublish extends MetadataSlotChangeListener<MetadataVersi
 
   @Override
   protected String buildDataInfoId(String revision) {
-    DataInfo dataInfo =
-        new DataInfo(
-            ValueConstants.DEFAULT_INSTANCE_ID,
-            revision,
-            PublisherGroupType.REGISTRY_REVISION.getCode());
-    return WordCache.getWordCache(dataInfo.getDataInfoId());
+    return DataInfoIdGenerator.revisionId(revision);
   }
 
   @Override

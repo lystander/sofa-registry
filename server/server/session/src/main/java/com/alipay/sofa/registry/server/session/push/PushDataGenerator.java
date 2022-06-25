@@ -55,21 +55,17 @@ public class PushDataGenerator {
     String dataId = subscriber.getDataId();
     String clientCell = sessionServerConfig.getClientCell(subscriber.getCell());
 
+    // todo xiaojian.xj multi switch.
+    boolean multiSwitch = true;
+    boolean multi = multiSwitch && subscriber.acceptMulti();
+
     Predicate<String> pushDataPredicate =
         ZonePredicate.pushDataPredicate(
-            dataId,
-            clientCell,
-            subscriber.getScope(),
-            subscriber.acceptMulti(),
-            sessionServerConfig);
+            dataId, clientCell, subscriber.getScope(), multi, sessionServerConfig);
 
     Predicate<String> localSegmentZonePredicate =
-        ZonePredicate.pushDataPredicate(
-            dataId,
-            clientCell,
-            subscriber.getScope(),
-            subscriber.acceptMulti(),
-            sessionServerConfig);
+        ZonePredicate.localSegmentZonesPredicate(
+            dataId, clientCell, subscriber.getScope(), multi, sessionServerConfig);
 
     // todo xiaojian.xj get all localSegmentZones.
     Set<String> allLocalSegmentZones = Sets.newHashSet();
@@ -77,7 +73,7 @@ public class PushDataGenerator {
     PushData<ReceivedData> pushData =
         ReceivedDataConverter.getReceivedDataMulti(
             unzipDatum,
-            subscriber.acceptMulti(),
+            multi,
             subscriber.getScope(),
             Lists.newArrayList(subscriberMap.keySet()),
             sessionServerConfig.getSessionServerDataCenter(),
@@ -100,8 +96,7 @@ public class PushDataGenerator {
       return new PushData<>(receivedDataPb, pushData.getDataCountMap());
     } else {
       ReceivedDataPb receivedDataPb =
-          ReceivedDataConvertor.convert2CompressedPb(
-              pushData.getPayload(), compressor, subscriber.acceptMulti());
+          ReceivedDataConvertor.convert2CompressedPb(pushData.getPayload(), compressor, multi);
       return new PushData<>(
           receivedDataPb,
           pushData.getDataCountMap(),
@@ -116,6 +111,7 @@ public class PushDataGenerator {
     if (url.getSerializerIndex() != null && URL.PROTOBUF == url.getSerializerIndex()) {
       o = ReceivedDataConvertor.convert2Pb(data);
     }
-    return new PushData(o, Collections.singletonMap(sessionServerConfig.getSessionServerDataCenter(), 1));
+    return new PushData(
+        o, Collections.singletonMap(sessionServerConfig.getSessionServerDataCenter(), 1));
   }
 }

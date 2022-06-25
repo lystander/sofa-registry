@@ -194,4 +194,10 @@ public interface SessionServerConfig extends ServerShareConfig {
   int getPushAddressCircuitBreakerThreshold();
 
   int getPushConsecutiveSuccess();
+
+  int getCacheServiceAppsMappingMaxWeight();
+
+  int getCacheRevisionMaxWeight();
+
+  int getScanServiceAppsMappingIntervalMillis();
 }

@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
 
@@ -76,8 +77,14 @@ public final class DatumUtils {
     return versions;
   }
 
-  public static MultiSubDatum newEmptyMultiSubDatum(Subscriber subscriber, String datacenter, long version) {
-    return MultiSubDatum.of(newEmptySubDatum(subscriber, datacenter, version));
+  public static MultiSubDatum newEmptyMultiSubDatum(Subscriber subscriber, Set<String> datacenters, long version) {
+
+    Map<String, SubDatum> subDatumMap = Maps.newHashMapWithExpectedSize(datacenters.size());
+    for (String datacenter : datacenters) {
+      subDatumMap.put(datacenter, newEmptySubDatum(subscriber, datacenter, version));
+    }
+
+    return new MultiSubDatum(subscriber.getDataInfoId(), subDatumMap);
   }
 
   public static SubDatum newEmptySubDatum(Subscriber subscriber, String datacenter, long version) {

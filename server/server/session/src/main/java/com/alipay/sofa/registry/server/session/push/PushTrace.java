@@ -171,10 +171,11 @@ public final class PushTrace {
       datumVersionPushSpanMillis = pushFinishTimestamp - subRegTimestamp;
       datumVersionTriggerSpanMillis = Math.max(lastTriggerSession - subRegTimestamp, 0);
     } else {
-      datumVersionPushSpanMillis = Math.max(pushFinishTimestamp - pushCause.datumTimestamp, 0);
-      datumVersionTriggerSpanMillis = Math.max(lastTriggerSession - pushCause.datumTimestamp, 0);
+      long datumTimestamp = pushCause.datumTimestamp.get(dataCenter);
+      datumVersionPushSpanMillis = Math.max(pushFinishTimestamp - datumTimestamp, 0);
+      datumVersionTriggerSpanMillis = Math.max(lastTriggerSession - datumTimestamp, 0);
       if (pushCause.pushType == PushType.Sub) {
-        if (subRegTimestamp >= pushCause.datumTimestamp) {
+        if (subRegTimestamp >= datumTimestamp) {
           // case: datum.change trigger the sub.sub, but the sub.reg not finish
           datumVersionPushSpanMillis = pushFinishTimestamp - subRegTimestamp;
           datumVersionTriggerSpanMillis = Math.max(lastTriggerSession - subRegTimestamp, 0);

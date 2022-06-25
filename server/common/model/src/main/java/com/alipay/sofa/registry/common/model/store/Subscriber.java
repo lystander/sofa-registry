@@ -240,7 +240,6 @@ public class Subscriber extends BaseInfo {
   }
 
   public synchronized boolean hasPushed() {
-    // TODO xiaojian.xj now not care multi-datacenter
     if (CollectionUtils.isEmpty(lastPushContexts)) {
       return false;
     }

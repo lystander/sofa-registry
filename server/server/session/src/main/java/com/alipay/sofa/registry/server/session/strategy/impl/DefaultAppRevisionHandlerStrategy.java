@@ -27,7 +27,7 @@ import com.alipay.sofa.registry.core.model.RegisterResponse;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.converter.pb.AppRevisionConvertor;
-import com.alipay.sofa.registry.server.session.metadata.AppRevisionCacheRegistry;
+import com.alipay.sofa.registry.server.session.metadata.MetadataCacheRegistry;
 import com.alipay.sofa.registry.server.session.metadata.AppRevisionHeartbeatRegistry;
 import com.alipay.sofa.registry.server.session.strategy.AppRevisionHandlerStrategy;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
@@ -43,7 +43,7 @@ public class DefaultAppRevisionHandlerStrategy implements AppRevisionHandlerStra
   private static final Logger REVISION_LOGGER =
       LoggerFactory.getLogger("REVISION-RECEIVE", "[register]");
 
-  @Autowired private AppRevisionCacheRegistry appRevisionCacheService;
+  @Autowired private MetadataCacheRegistry metadataCacheService;
 
   @Autowired private AppRevisionHeartbeatRegistry appRevisionHeartbeatRegistry;
 
@@ -55,7 +55,7 @@ public class DefaultAppRevisionHandlerStrategy implements AppRevisionHandlerStra
     try {
       validate(appRevision);
       beforeRegister(appRevision);
-      appRevisionCacheService.register(appRevision);
+      metadataCacheService.register(appRevision);
       response.setSuccess(true);
       response.setMessage("app revision register success!");
     } catch (Throwable e) {
@@ -82,7 +82,7 @@ public class DefaultAppRevisionHandlerStrategy implements AppRevisionHandlerStra
     int statusCode = ValueConstants.METADATA_STATUS_PROCESS_SUCCESS;
     try {
       for (String service : services) {
-        InterfaceMapping appNames = appRevisionCacheService.getAppNames(service);
+        InterfaceMapping appNames = metadataCacheService.getAppNames(service);
         AppList.Builder build = AppList.newBuilder().addAllApps(appNames.getApps());
         build.setVersion(appNames.getNanosVersion());
         builder.putServiceAppMapping(service, build.build());
@@ -110,7 +110,7 @@ public class DefaultAppRevisionHandlerStrategy implements AppRevisionHandlerStra
         queryRevision = revision;
         AppRevision appRevision = null;
         try {
-          appRevision = appRevisionCacheService.getRevision(revision);
+          appRevision = metadataCacheService.getRevision(revision);
         } catch (Throwable e) {
           LOG.error("query revision {} error", queryRevision, e);
         }
