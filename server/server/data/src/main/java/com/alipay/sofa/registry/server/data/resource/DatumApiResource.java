@@ -30,7 +30,6 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.slot.SlotAccessor;
 import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
@@ -38,7 +37,6 @@ import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.google.common.collect.Lists;
 import java.util.*;
-import javax.annotation.Resource;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -61,18 +59,13 @@ public class DatumApiResource {
 
   @Autowired DataServerConfig dataServerConfig;
 
-  @Autowired
-  DatumStorageDelegate datumStorageDelegate;
-
-  @Resource
-  DatumStorage datumStorageDelegate;
+  @Autowired DatumStorageDelegate datumStorageDelegate;
 
   @Autowired AbstractServerHandler batchPutDataHandler;
 
   @Autowired SlotManager slotManager;
 
-  @Autowired
-  private SlotAccessor slotAccessor;
+  @Autowired private SlotAccessor slotAccessor;
 
   /**
    * curl -i -d '{"dataInfoId":"testDataId#@#DEFAULT_INSTANCE_ID#@#DEFAULT_GROUP"}' -H
@@ -154,7 +147,8 @@ public class DatumApiResource {
       validateAndCorrect(datumParam);
 
       // build pub
-      Datum datum = datumStorageDelegate.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+      Datum datum =
+          datumStorageDelegate.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
       if (datum == null) {
         return getNotFoundResponse(datumParam);
       }
@@ -192,7 +186,8 @@ public class DatumApiResource {
       validateAndCorrect(datumParam);
 
       // build pub
-      Datum datum = datumStorageDelegate.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
+      Datum datum =
+          datumStorageDelegate.get(datumParam.getDataCenter(), datumParam.getDataInfoId());
       if (datum == null) {
         return getNotFoundResponse(datumParam);
       }
@@ -232,7 +227,8 @@ public class DatumApiResource {
   private Map<String, Long> _getDatumVersions(DatumParam datumParam) {
     Map<String, Long> datumVersions = new HashMap<>();
     if (dataServerConfig.isLocalDataCenter(datumParam.getDataCenter())) {
-      Map<String, Datum> localDatums = datumStorageDelegate.getAll(dataServerConfig.getLocalDataCenter());
+      Map<String, Datum> localDatums =
+          datumStorageDelegate.getAll(dataServerConfig.getLocalDataCenter());
       return DatumUtils.getVersions(localDatums);
     } else {
       // TODO need support remote datecenter
@@ -259,7 +255,8 @@ public class DatumApiResource {
   public Object getDatumSizes() {
     Map<String, Integer> datumSizes = new HashMap<>();
 
-    Map<String, Datum> localDatums = datumStorageDelegate.getAll(dataServerConfig.getLocalDataCenter());
+    Map<String, Datum> localDatums =
+        datumStorageDelegate.getAll(dataServerConfig.getLocalDataCenter());
     int localDatumSize = localDatums.size();
     datumSizes.put(dataServerConfig.getLocalDataCenter(), localDatumSize);
     // TODO remote cluster
@@ -279,7 +276,8 @@ public class DatumApiResource {
     String dataServer = null;
     Long version = null;
     if (dataServerConfig.isLocalDataCenter(datumParam.getDataCenter())) {
-      Map<String, Datum> localDatums = datumStorageDelegate.getAll(dataServerConfig.getLocalDataCenter());
+      Map<String, Datum> localDatums =
+          datumStorageDelegate.getAll(dataServerConfig.getLocalDataCenter());
       Datum datum = localDatums.get(datumParam.getDataInfoId());
       if (datum != null) {
         version = datum.getVersion();

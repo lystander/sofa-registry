@@ -84,8 +84,10 @@ public class SessionInterests extends AbstractDataManager<Subscriber> implements
 
     Store<Subscriber> store = getStore();
     int dataInfoIdSize = store.getDataInfoIds().size();
-    final Map<String, Map<String, DatumVersion>> versions = Maps.newHashMapWithExpectedSize(dataCenters.size());
-    final Map<String, List<Subscriber>> toPushEmptySubscribers = Maps.newHashMapWithExpectedSize(dataCenters.size());
+    final Map<String, Map<String, DatumVersion>> versions =
+        Maps.newHashMapWithExpectedSize(dataCenters.size());
+    final Map<String, List<Subscriber>> toPushEmptySubscribers =
+        Maps.newHashMapWithExpectedSize(dataCenters.size());
     final List<Subscriber> toRegisterMultiSubscribers = Lists.newArrayListWithCapacity(128);
 
     store.forEach(
@@ -103,9 +105,12 @@ public class SessionInterests extends AbstractDataManager<Subscriber> implements
             }
 
             for (String dataCenter : dataCenters) {
-              Map<String, DatumVersion> vers = versions.computeIfAbsent(dataCenter,
-                      k -> Maps.newHashMapWithExpectedSize(dataInfoIdSize));
-              List<Subscriber> pushEmpty = toPushEmptySubscribers.computeIfAbsent(dataCenter, k -> Lists.newArrayListWithCapacity(256));
+              Map<String, DatumVersion> vers =
+                  versions.computeIfAbsent(
+                      dataCenter, k -> Maps.newHashMapWithExpectedSize(dataInfoIdSize));
+              List<Subscriber> pushEmpty =
+                  toPushEmptySubscribers.computeIfAbsent(
+                      dataCenter, k -> Lists.newArrayListWithCapacity(256));
 
               final boolean isLocalDataCenter = localDataCenter.equals(dataCenter);
               // not global sub and not local dataCenter, not interest the other dataCenter's pub

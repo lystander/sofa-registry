@@ -26,13 +26,12 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.shared.slot.SlotTableRecorder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -52,8 +51,7 @@ public final class SlotTableCacheImpl implements SlotTableCache {
   @Autowired(required = false)
   private List<SlotTableRecorder> recorders;
 
-  @Autowired
-  private SessionServerConfig sessionServerConfig;
+  @Autowired private SessionServerConfig sessionServerConfig;
 
   @Override
   public int slotOf(String dataInfoId) {
@@ -91,7 +89,11 @@ public final class SlotTableCacheImpl implements SlotTableCache {
     try {
       curEpoch = slotTableMap.get(sessionServerConfig.getSessionServerDataCenter()).getEpoch();
       if (curEpoch >= slotTable.getEpoch()) {
-        LOGGER.info("skip update, dataCenter={}, current={}, update={}", sessionServerConfig.getSessionServerDataCenter(), curEpoch, slotTable.getEpoch());
+        LOGGER.info(
+            "skip update, dataCenter={}, current={}, update={}",
+            sessionServerConfig.getSessionServerDataCenter(),
+            curEpoch,
+            slotTable.getEpoch());
         return false;
       }
       recordSlotTable(slotTable);
@@ -114,7 +116,8 @@ public final class SlotTableCacheImpl implements SlotTableCache {
         final long curEpoch = slotTableMap.get(entry.getKey()).getEpoch();
 
         if (!value.isSlotTableUpgrade() || value.getSlotTable() == null) {
-          LOGGER.info("skip update, dataCenter={}, current={}, upgrade=false", entry.getKey(), curEpoch);
+          LOGGER.info(
+              "skip update, dataCenter={}, current={}, upgrade=false", entry.getKey(), curEpoch);
           continue;
         }
 
@@ -152,7 +155,11 @@ public final class SlotTableCacheImpl implements SlotTableCache {
       }
     }
     LOGGER.info(
-        "updating slot table, dataCenter={}, expect={}, current={}, {}", dataCenter, updating.getEpoch(), curEpoch, updating);
+        "updating slot table, dataCenter={}, expect={}, current={}, {}",
+        dataCenter,
+        updating.getEpoch(),
+        curEpoch,
+        updating);
   }
 
   @Override

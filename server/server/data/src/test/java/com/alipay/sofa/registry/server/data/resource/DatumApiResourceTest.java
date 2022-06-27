@@ -154,7 +154,8 @@ public class DatumApiResourceTest {
             new Answer<Object>() {
               public Object answer(InvocationOnMock var1) throws Throwable {
                 for (int i = 0; i < SlotConfig.SLOT_NUM; i++) {
-                  resource.localDatumStorage.cleanBySessionId(i, ServerEnv.PROCESS_ID, CleanContinues.ALWAYS);
+                  resource.localDatumStorage.cleanBySessionId(
+                      i, ServerEnv.PROCESS_ID, CleanContinues.ALWAYS);
                 }
                 return null;
               }

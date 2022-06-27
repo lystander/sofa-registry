@@ -36,15 +36,13 @@ import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
 import com.alipay.sofa.registry.server.data.slot.SlotAccessor;
-import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yuzhi.lyz
@@ -63,8 +61,7 @@ public abstract class AbstractDataHandler<T> extends AbstractServerHandler<T> {
 
   @Autowired protected SlotAccessor slotAccessor;
 
-  @Resource
-  protected DatumStorage datumStorageDelegate;
+  @Resource protected DatumStorage datumStorageDelegate;
 
   @Autowired protected SessionLeaseManager sessionLeaseManager;
 
@@ -87,17 +84,23 @@ public abstract class AbstractDataHandler<T> extends AbstractServerHandler<T> {
     ParaCheckUtil.checkNotNull(sessionProcessId, "request.sessionProcessId");
   }
 
-  protected SlotAccess checkAccess(String dataCenter, String dataInfoId, long slotTableEpoch, long slotLeaderEpoch) {
+  protected SlotAccess checkAccess(
+      String dataCenter, String dataInfoId, long slotTableEpoch, long slotLeaderEpoch) {
     final int slotId = slotAccessor.slotOf(dataInfoId);
     return checkAccess(dataCenter, slotId, slotTableEpoch, slotLeaderEpoch);
   }
 
-  protected SlotAccess checkAccess(String dataCenter, int slotId, long slotTableEpoch, long slotLeaderEpoch) {
+  protected SlotAccess checkAccess(
+      String dataCenter, int slotId, long slotTableEpoch, long slotLeaderEpoch) {
     final SlotAccess slotAccess =
         slotAccessor.checkSlotAccess(dataCenter, slotId, slotTableEpoch, slotLeaderEpoch);
     if (slotAccess.isMoved()) {
       LOGGER_SLOT_ACCESS.warn(
-          "[moved]{}, dataCenter={}, leaderEpoch={}, tableEpoch={}", slotAccess, dataCenter, slotLeaderEpoch, slotTableEpoch);
+          "[moved]{}, dataCenter={}, leaderEpoch={}, tableEpoch={}",
+          slotAccess,
+          dataCenter,
+          slotLeaderEpoch,
+          slotTableEpoch);
     }
 
     if (slotAccess.isMigrating()) {

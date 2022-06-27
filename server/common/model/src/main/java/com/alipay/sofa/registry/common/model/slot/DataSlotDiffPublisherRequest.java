@@ -35,7 +35,10 @@ public class DataSlotDiffPublisherRequest implements Serializable {
   private final int slotId;
 
   public DataSlotDiffPublisherRequest(
-          String localDataCenter, long slotTableEpoch, int slotId, Collection<DatumSummary> datumSummaries) {
+      String localDataCenter,
+      long slotTableEpoch,
+      int slotId,
+      Collection<DatumSummary> datumSummaries) {
     this.localDataCenter = localDataCenter;
     this.slotTableEpoch = slotTableEpoch;
     this.slotId = slotId;

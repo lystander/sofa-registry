@@ -22,7 +22,6 @@ import com.alipay.sofa.registry.common.model.store.Subscriber;
 import com.alipay.sofa.registry.core.model.ScopeEnum;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
-import com.alipay.sofa.registry.util.Bool;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
 import com.google.common.collect.Lists;
@@ -53,8 +52,8 @@ public final class SubscriberUtils {
     return ret;
   }
 
-  public static Map<Boolean, List<Subscriber>> groupByMulti(boolean multiSwitch,
-                                                            List<Subscriber> subscribers) {
+  public static Map<Boolean, List<Subscriber>> groupByMulti(
+      boolean multiSwitch, List<Subscriber> subscribers) {
 
     if (!multiSwitch) {
       return Collections.singletonMap(false, subscribers);
@@ -65,7 +64,8 @@ public final class SubscriberUtils {
     }
     Map<Boolean, List<Subscriber>> ret = Maps.newHashMapWithExpectedSize(2);
     for (Subscriber subscriber : subscribers) {
-      List<Subscriber> subs = ret.computeIfAbsent(subscriber.acceptMulti(), k -> Lists.newArrayList());
+      List<Subscriber> subs =
+          ret.computeIfAbsent(subscriber.acceptMulti(), k -> Lists.newArrayList());
       subs.add(subscriber);
     }
 
@@ -131,10 +131,10 @@ public final class SubscriberUtils {
       Subscriber subscriber = iterator.next();
       if (acceptMulti != subscriber.acceptMulti()) {
         throw new RuntimeException(
-                StringFormatter.format(
-                        "conflict acceptMulti, one is {}, anther is {}",
-                        first.shortDesc(),
-                        subscriber.shortDesc()));
+            StringFormatter.format(
+                "conflict acceptMulti, one is {}, anther is {}",
+                first.shortDesc(),
+                subscriber.shortDesc()));
       }
     }
     return acceptMulti;

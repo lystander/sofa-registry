@@ -22,16 +22,14 @@ import com.alipay.sofa.registry.common.model.metaserver.MultiClusterSyncInfo;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.store.api.meta.MultiClusterSyncRepository;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author xiaojian.xj
@@ -103,7 +101,7 @@ public class MultiClusterSyncResource {
     return response;
   }
 
-  // todo xiaojian.xj remove 
+  // todo xiaojian.xj remove
   @POST
   @Path("/remove")
   public CommonResponse removeConfig(

@@ -54,7 +54,6 @@ public abstract class BaseInformer<T extends DbEntry, C extends DbEntryContainer
 
   protected final DBEntryNotify dbEntryNotify = new DBEntryNotify();
 
-
   public BaseInformer(String name, Logger logger) {
     this.name = name;
     this.logger = logger;
@@ -124,8 +123,8 @@ public abstract class BaseInformer<T extends DbEntry, C extends DbEntryContainer
         break;
       }
       for (T entry : entries) {
-        //important call onEntry firstly, then notify;
-        //if call onEntry after notify, it may cause dirty data at a moment;
+        // important call onEntry firstly, then notify;
+        // if call onEntry after notify, it may cause dirty data at a moment;
         callable.onEntry(entry);
         dbEntryNotify.notify(entry);
         curStart = Math.max(curStart, entry.getId());

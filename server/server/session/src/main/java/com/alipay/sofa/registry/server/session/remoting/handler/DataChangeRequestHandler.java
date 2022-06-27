@@ -32,8 +32,6 @@ import com.alipay.sofa.registry.server.session.store.Interests;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractClientHandler;
 import com.alipay.sofa.registry.server.shared.remoting.RemotingHelper;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
-
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;

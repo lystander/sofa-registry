@@ -18,7 +18,6 @@ package com.alipay.sofa.registry.server.meta.multi.cluster;
 
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
 import com.alipay.sofa.registry.server.meta.MetaLeaderService.MetaLeaderElectorListener;
-
 import java.util.Map;
 
 /**
@@ -27,6 +26,5 @@ import java.util.Map;
  */
 public interface MultiClusterSlotTableSyncer extends MetaLeaderElectorListener {
 
-    public Map<String, SlotTable> getMultiClusterSlotTable();
-
+  public Map<String, SlotTable> getMultiClusterSlotTable();
 }

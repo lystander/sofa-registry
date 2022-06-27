@@ -14,28 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alipay.sofa.registry.common.model;
+package com.alipay.sofa.registry.server.data.multi.cluster.app.discovery;
 
-import com.alipay.sofa.registry.common.model.constants.ValueConstants;
-import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.common.model.store.WordCache;
 
 /**
  * @author xiaojian.xj
- * @version : DataInfoIdGenerator.java, v 0.1 2022年06月24日 20:44 xiaojian.xj Exp $
+ * @version : MetadataVersion.java, v 0.1 2022年06月27日 14:19 xiaojian.xj Exp $
  */
-public class DataInfoIdGenerator {
+public class MetadataVersion {
 
-  public static String revisionId(String revision) {
-    DataInfo dataInfo =
-        new DataInfo(
-            ValueConstants.DEFAULT_INSTANCE_ID,
-            revision,
-            PublisherGroupType.REGISTRY_REVISION.getCode());
-    return WordCache.getWordCache(dataInfo.getDataInfoId());
+  private static final long INIT = -1L;
+  final String dataInfoId;
+
+  final long version;
+
+  public MetadataVersion(String dataInfoId) {
+    this.dataInfoId = dataInfoId;
+    this.version = INIT;
   }
 
-  public static String serviceAppsId(String dataInfoId) {
-    return WordCache.getWordCache(PublisherGroupType.REGISTRY_MAPPING.getCode() + dataInfoId);
+  public MetadataVersion(String dataInfoId, long version) {
+    this.dataInfoId = WordCache.getWordCache(dataInfoId);
+    this.version = version;
   }
 }

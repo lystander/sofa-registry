@@ -17,14 +17,12 @@
 package com.alipay.sofa.registry.server.session.cache;
 
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
-import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.node.service.DataNodeService;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author shangyu.wh

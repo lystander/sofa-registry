@@ -65,10 +65,6 @@ public class UnPublisher extends Publisher {
 
   public static UnPublisher of(String dataInfoId, String registerId, RegisterVersion version) {
     return new UnPublisher(
-            dataInfoId,
-            null,
-            registerId,
-            version.getRegisterTimestamp(),
-            version.getVersion());
+        dataInfoId, null, registerId, version.getRegisterTimestamp(), version.getVersion());
   }
 }

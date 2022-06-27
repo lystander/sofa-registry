@@ -33,7 +33,6 @@ import com.alipay.sofa.registry.server.meta.remoting.meta.MetaServerRenewService
 import com.alipay.sofa.registry.server.shared.client.manager.ClientManagerService;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
-import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.store.api.elector.AbstractLeaderElector;
 import com.alipay.sofa.registry.store.api.elector.LeaderElector;
 import com.alipay.sofa.registry.store.api.meta.RecoverConfigRepository;
@@ -162,8 +161,7 @@ public class MetaServerBootstrap {
       renewNode();
       retryer.call(
           () -> {
-            LeaderInfo leader =
-                localMetaExchanger.getLeader(metaServerConfig.getLocalDataCenter());
+            LeaderInfo leader = localMetaExchanger.getLeader(metaServerConfig.getLocalDataCenter());
             LOGGER.info(
                 "[MetaBootstrap] retry connect to meta leader: {}, client:{}",
                 leader.getLeader(),

@@ -18,12 +18,10 @@ package com.alipay.sofa.registry.server.session.metadata;
 
 import com.alipay.sofa.registry.common.model.appmeta.InterfaceMapping;
 import com.alipay.sofa.registry.common.model.store.AppRevision;
-import com.alipay.sofa.registry.server.session.cache.CacheService;
 import com.alipay.sofa.registry.store.api.repository.AppRevisionRepository;
 import com.alipay.sofa.registry.store.api.repository.InterfaceAppsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class MetadataCacheRegistry {
 
@@ -31,11 +29,9 @@ public class MetadataCacheRegistry {
 
   @Autowired private InterfaceAppsRepository interfaceAppsRepository;
 
-  @Resource
-  private AppRevisionCacheService appRevisionCacheService;
+  @Resource private AppRevisionCacheService appRevisionCacheService;
 
-  @Resource
-  private ServiceAppMappingCacheService serviceAppMappingCacheService;
+  @Resource private ServiceAppMappingCacheService serviceAppMappingCacheService;
 
   public void register(AppRevision appRevision) throws Exception {
     appRevisionRepository.register(appRevision);

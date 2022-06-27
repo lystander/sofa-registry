@@ -19,7 +19,6 @@ package com.alipay.sofa.registry.server.session.push;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
-import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.StringFormatter;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
@@ -189,7 +188,7 @@ public class ChangeProcessor {
   }
 
   static final class ChangeKey {
-    final String      dataInfoId;
+    final String dataInfoId;
     final Set<String> dataCenters;
 
     ChangeKey(Set<String> dataCenters, String dataInfoId) {

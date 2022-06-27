@@ -58,6 +58,7 @@ public class RemoteClusterSlotSyncHandler
 
   /**
    * todo xiaojian.xj filter return leaders, ignore followers
+   *
    * @param channel
    * @param request
    * @return
@@ -88,13 +89,14 @@ public class RemoteClusterSlotSyncHandler
     SlotTable slotTable = currentDcMetaServer.getSlotTable();
     if (!SlotTableUtils.isValidSlotTable(slotTable)) {
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
-              .fillFailed("slot-table not valid, check meta-server log for detail");
+          .fillFailed("slot-table not valid, check meta-server log for detail");
     }
 
     // check slot table epoch
     if (request.getSlotTableEpoch() > slotTable.getEpoch()) {
       // it should not happen, print error log and return false, restart meta leader;
-      LOGGER.error("[conflict]request: {} slotEpoch > local.slotEpoch: {}", request, slotTable.getEpoch());
+      LOGGER.error(
+          "[conflict]request: {} slotEpoch > local.slotEpoch: {}", request, slotTable.getEpoch());
       return new GenericResponse<RemoteClusterSlotSyncResponse>().fillFailed("slotEpoch conflict");
     } else if (request.getSlotTableEpoch() == slotTable.getEpoch()) {
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
@@ -102,10 +104,17 @@ public class RemoteClusterSlotSyncHandler
               RemoteClusterSlotSyncResponse.notUpgrade(
                   leaderInfo.getLeader(), leaderInfo.getEpoch()));
     } else {
-      LOGGER.info("sync request epoch:{} < newSlotTableEpoch:{}, leader:{}, leaderEpoch:{}, slotTable upgrade: {}", request, slotTable.getEpoch(), leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable);
+      LOGGER.info(
+          "sync request epoch:{} < newSlotTableEpoch:{}, leader:{}, leaderEpoch:{}, slotTable upgrade: {}",
+          request,
+          slotTable.getEpoch(),
+          leaderInfo.getLeader(),
+          leaderInfo.getEpoch(),
+          slotTable);
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillSucceed(
-              RemoteClusterSlotSyncResponse.upgrade(leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable));
+              RemoteClusterSlotSyncResponse.upgrade(
+                  leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable));
     }
   }
 

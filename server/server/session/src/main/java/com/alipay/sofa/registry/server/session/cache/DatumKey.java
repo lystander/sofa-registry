@@ -19,11 +19,6 @@ package com.alipay.sofa.registry.server.session.cache;
 import com.alipay.sofa.registry.common.model.store.WordCache;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
-import com.google.common.collect.Sets;
-import org.apache.commons.collections.CollectionUtils;
-
-import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,7 +37,8 @@ public class DatumKey implements EntityType {
   public DatumKey(String dataInfoId, Set<String> dataCenters) {
     ParaCheckUtil.checkNotEmpty(dataCenters, "dataCenters");
     this.dataInfoId = WordCache.getWordCache(dataInfoId);
-    this.dataCenters = dataCenters.stream().map(WordCache::getWordCache).collect(Collectors.toSet());
+    this.dataCenters =
+        dataCenters.stream().map(WordCache::getWordCache).collect(Collectors.toSet());
     this.uniqueKey = WordCache.getWordCache(createUniqueKey());
   }
 

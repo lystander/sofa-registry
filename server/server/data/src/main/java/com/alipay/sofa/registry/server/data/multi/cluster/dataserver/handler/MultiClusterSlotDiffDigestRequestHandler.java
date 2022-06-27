@@ -1,59 +1,70 @@
-/**
- * Alipay.com Inc.
- * Copyright (c) 2004-2022 All Rights Reserved.
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.alipay.sofa.registry.server.data.multi.cluster.dataserver.handler;
 
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.log.Logger;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.multi.cluster.executor.MultiClusterExecutorManager;
 import com.alipay.sofa.registry.server.data.multi.cluster.loggers.Loggers;
 import com.alipay.sofa.registry.server.data.remoting.dataserver.handler.BaseSlotDiffDigestRequestHandler;
+import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.Resource;
-import java.util.concurrent.Executor;
-
 /**
- *
  * @author xiaojian.xj
- * @version : MultiClusterSlotDiffDigestRequestHandler.java, v 0.1 2022年05月16日 20:57 xiaojian.xj Exp $
+ * @version : MultiClusterSlotDiffDigestRequestHandler.java, v 0.1 2022年05月16日 20:57 xiaojian.xj Exp
+ *     $
  */
 public class MultiClusterSlotDiffDigestRequestHandler extends BaseSlotDiffDigestRequestHandler {
 
-    private static final Logger LOGGER = Loggers.MULTI_CLUSTER_SRV_LOGGER;
+  private static final Logger LOGGER = Loggers.MULTI_CLUSTER_SRV_LOGGER;
 
-    @Autowired
-    private MultiClusterExecutorManager multiClusterExecutorManager;
+  @Autowired private MultiClusterExecutorManager multiClusterExecutorManager;
 
-    public MultiClusterSlotDiffDigestRequestHandler() {
-        super(LOGGER);
+  public MultiClusterSlotDiffDigestRequestHandler() {
+    super(LOGGER);
+  }
+
+  /**
+   * specify executor for processor handler
+   *
+   * @return
+   */
+  @Override
+  public Executor getExecutor() {
+    return multiClusterExecutorManager.getRemoteSlotSyncProcessorExecutor();
+  }
+
+  @Override
+  protected boolean preCheck(DataSlotDiffDigestRequest request) {
+    if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), request.getSlotId())) {
+      LOGGER.warn(
+          "sync slot request from {}, not leader of {}",
+          request.getLocalDataCenter(),
+          request.getSlotId());
+      return false;
     }
 
-    /**
-     * specify executor for processor handler
-     *
-     * @return
-     */
-    @Override
-    public Executor getExecutor() {
-        return multiClusterExecutorManager.getRemoteSlotSyncProcessorExecutor();
-    }
+    // todo xiaojian.xj check slot status
+    return true;
+  }
 
-    @Override
-    protected boolean preCheck(DataSlotDiffDigestRequest request) {
-        if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), request.getSlotId())) {
-            LOGGER.warn("sync slot request from {}, not leader of {}", request.getLocalDataCenter(), request.getSlotId());
-            return false;
-        }
-
-        // todo xiaojian.xj check slot status
-        return true;
-    }
-
-    @Override
-    protected boolean postCheck(DataSlotDiffDigestRequest request) {
-        return false;
-    }
+  @Override
+  protected boolean postCheck(DataSlotDiffDigestRequest request) {
+    return false;
+  }
 }

@@ -22,7 +22,6 @@ import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
-import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
@@ -57,7 +56,8 @@ public interface DatumStorage {
 
   Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slot);
 
-  Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slot, SyncSlotAcceptorManager acceptorManager);
+  Map<String, Map<String, Publisher>> getPublishers(
+      String dataCenter, int slot, SyncSlotAcceptorManager acceptorManager);
 
   /**
    * get all datum
@@ -74,7 +74,8 @@ public interface DatumStorage {
 
   DatumVersion putPublisher(String dataCenter, Publisher publisher);
 
-  DatumVersion putPublisher(String dataCenter, String dataInfoId, List<Publisher> updatedPublishers);
+  DatumVersion putPublisher(
+      String dataCenter, String dataInfoId, List<Publisher> updatedPublishers);
 
   DatumVersion createEmptyDatumIfAbsent(String dataCenter, String dataInfoId);
 
@@ -90,11 +91,14 @@ public interface DatumStorage {
       String dataInfoId,
       ProcessId sessionProcessId,
       Map<String, RegisterVersion> removedPublishers);
-  Map<String, Map<String, DatumSummary>> getDatumSummary(String dataCenter, int slotId, Set<String> sessions);
+
+  Map<String, Map<String, DatumSummary>> getDatumSummary(
+      String dataCenter, int slotId, Set<String> sessions);
 
   Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId);
 
-  Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager);
+  Map<String, DatumSummary> getDatumSummary(
+      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager);
 
   SlotChangeListener getSlotChangeListener(boolean localDataCenter);
 

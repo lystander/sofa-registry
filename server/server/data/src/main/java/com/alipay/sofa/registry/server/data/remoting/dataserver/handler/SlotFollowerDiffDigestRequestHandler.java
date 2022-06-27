@@ -16,14 +16,12 @@
  */
 package com.alipay.sofa.registry.server.data.remoting.dataserver.handler;
 
-import com.alipay.sofa.registry.common.model.GenericResponse;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yuzhi.lyz
@@ -47,7 +45,10 @@ public class SlotFollowerDiffDigestRequestHandler extends BaseSlotDiffDigestRequ
   @Override
   protected boolean preCheck(DataSlotDiffDigestRequest request) {
     if (!slotAccessor.isLeader(dataServerConfig.getLocalDataCenter(), request.getSlotId())) {
-      LOGGER.warn("sync slot request from {}, not leader of {}", request.getLocalDataCenter(), request.getSlotId());
+      LOGGER.warn(
+          "sync slot request from {}, not leader of {}",
+          request.getLocalDataCenter(),
+          request.getSlotId());
       return false;
     }
     return true;

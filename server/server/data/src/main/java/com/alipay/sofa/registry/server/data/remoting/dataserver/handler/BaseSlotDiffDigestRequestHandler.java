@@ -1,6 +1,18 @@
-/**
- * Alipay.com Inc.
- * Copyright (c) 2004-2022 All Rights Reserved.
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.alipay.sofa.registry.server.data.remoting.dataserver.handler;
 
@@ -22,104 +34,108 @@ import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
+import java.util.Map;
+import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.Resource;
-import java.util.Map;
-
 /**
- *
  * @author xiaojian.xj
  * @version : BaseSlotDiffDigestRequestHandler.java, v 0.1 2022年05月14日 20:50 xiaojian.xj Exp $
  */
-public abstract class BaseSlotDiffDigestRequestHandler extends AbstractServerHandler<DataSlotDiffDigestRequest> {
+public abstract class BaseSlotDiffDigestRequestHandler
+    extends AbstractServerHandler<DataSlotDiffDigestRequest> {
 
-    private final Logger logger;
+  private final Logger logger;
 
-    @Resource
-    private DatumStorageDelegate datumStorageDelegate;
+  @Resource private DatumStorageDelegate datumStorageDelegate;
 
-    @Autowired private SlotManager slotManager;
+  @Autowired private SlotManager slotManager;
 
-    @Autowired protected SlotAccessor slotAccessor;
+  @Autowired protected SlotAccessor slotAccessor;
 
-    @Autowired protected DataServerConfig dataServerConfig;
+  @Autowired protected DataServerConfig dataServerConfig;
 
-    public BaseSlotDiffDigestRequestHandler(Logger logger) {
-        this.logger = logger;
+  public BaseSlotDiffDigestRequestHandler(Logger logger) {
+    this.logger = logger;
+  }
+
+  protected abstract boolean preCheck(DataSlotDiffDigestRequest request);
+
+  protected abstract boolean postCheck(DataSlotDiffDigestRequest request);
+
+  @Override
+  public Object doHandle(Channel channel, DataSlotDiffDigestRequest request) {
+    try {
+      final int slotId = request.getSlotId();
+      if (!preCheck(request)) {
+        return new GenericResponse().fillFailed("pre check fail of: " + slotId);
+      }
+      slotManager.triggerUpdateSlotTable(request.getSlotTableEpoch());
+
+      Map<String, Map<String, Publisher>> existingPublishers;
+      if (request.getAcceptType() == SlotDiffAcceptType.ALL) {
+        existingPublishers =
+            datumStorageDelegate.getPublishers(
+                dataServerConfig.getLocalDataCenter(), request.getSlotId());
+      } else if (request.getAcceptType() == SlotDiffAcceptType.ACCEPTORS) {
+        existingPublishers =
+            datumStorageDelegate.getPublishers(
+                dataServerConfig.getLocalDataCenter(),
+                request.getSlotId(),
+                request.getAcceptorManager());
+      } else {
+        throw new UnSupportOperationException(
+            "DiffSyncDigest unsupport request.slotDiffAcceptType: " + request.getAcceptType());
+      }
+
+      DataSlotDiffDigestResult result =
+          calcDiffResult(slotId, request.getDatumDigest(), existingPublishers);
+      result.setSlotTableEpoch(slotManager.getSlotTableEpoch());
+
+      if (!postCheck(request)) {
+        return new GenericResponse().fillFailed("post check fail of: " + slotId);
+      }
+      return new GenericResponse().fillSucceed(result);
+    } catch (Throwable e) {
+      String msg =
+          StringFormatter.format(
+              "DiffSyncDigest request from {} error for slot {},{}",
+              request.getLocalDataCenter(),
+              request.getLocalDataCenter(),
+              request.getSlotId());
+      logger.error(msg, e);
+      return new GenericResponse().fillFailed(msg);
     }
+  }
 
-    protected abstract boolean preCheck(DataSlotDiffDigestRequest request);
+  private DataSlotDiffDigestResult calcDiffResult(
+      int targetSlot,
+      Map<String, DatumDigest> targetDigestMap,
+      Map<String, Map<String, Publisher>> existingPublishers) {
+    DataSlotDiffDigestResult result =
+        DataSlotDiffUtils.diffDigestResult(targetDigestMap, existingPublishers);
+    DataSlotDiffUtils.logDiffResult(result, targetSlot, logger);
+    return result;
+  }
 
-    protected abstract boolean postCheck(DataSlotDiffDigestRequest request);
+  @Override
+  protected Node.NodeType getConnectNodeType() {
+    return Node.NodeType.DATA;
+  }
 
-    @Override
-    public Object doHandle(Channel channel, DataSlotDiffDigestRequest request) {
-        try {
-            final int slotId = request.getSlotId();
-            if (!preCheck(request)) {
-                return new GenericResponse().fillFailed("pre check fail of: " + slotId);
-            }
-            slotManager.triggerUpdateSlotTable(request.getSlotTableEpoch());
+  @Override
+  public Class interest() {
+    return DataSlotDiffDigestRequest.class;
+  }
 
-            Map<String, Map<String, Publisher>> existingPublishers;
-            if (request.getAcceptType() == SlotDiffAcceptType.ALL) {
-                existingPublishers = datumStorageDelegate.getPublishers(dataServerConfig.getLocalDataCenter(),
-                        request.getSlotId());
-            } else if (request.getAcceptType() == SlotDiffAcceptType.ACCEPTORS) {
-                existingPublishers = datumStorageDelegate.getPublishers(dataServerConfig.getLocalDataCenter(),
-                        request.getSlotId(), request.getAcceptorManager());
-            } else {
-                throw new UnSupportOperationException("DiffSyncDigest unsupport request.slotDiffAcceptType: " + request.getAcceptType());
-            }
+  @Override
+  public void checkParam(DataSlotDiffDigestRequest request) {
+    ParaCheckUtil.checkNonNegative(request.getSlotId(), "request.slotId");
+    ParaCheckUtil.checkNotNull(request.getDatumDigest(), "request.datumDigest");
+  }
 
-            DataSlotDiffDigestResult result =
-                    calcDiffResult(
-                            slotId,
-                            request.getDatumDigest(),
-                            existingPublishers);
-            result.setSlotTableEpoch(slotManager.getSlotTableEpoch());
-
-            if (!postCheck(request)) {
-                return new GenericResponse().fillFailed("post check fail of: " + slotId);
-            }
-            return new GenericResponse().fillSucceed(result);
-        } catch (Throwable e) {
-            String msg =
-                    StringFormatter.format("DiffSyncDigest request from {} error for slot {},{}", request.getLocalDataCenter(), request.getLocalDataCenter(), request.getSlotId());
-            logger.error(msg, e);
-            return new GenericResponse().fillFailed(msg);
-        }
-    }
-
-    private DataSlotDiffDigestResult calcDiffResult(
-            int targetSlot,
-            Map<String, DatumDigest> targetDigestMap,
-            Map<String, Map<String, Publisher>> existingPublishers) {
-        DataSlotDiffDigestResult result =
-                DataSlotDiffUtils.diffDigestResult(targetDigestMap, existingPublishers);
-        DataSlotDiffUtils.logDiffResult(result, targetSlot, logger);
-        return result;
-    }
-
-    @Override
-    protected Node.NodeType getConnectNodeType() {
-        return Node.NodeType.DATA;
-    }
-
-    @Override
-    public Class interest() {
-        return DataSlotDiffDigestRequest.class;
-    }
-
-    @Override
-    public void checkParam(DataSlotDiffDigestRequest request) {
-        ParaCheckUtil.checkNonNegative(request.getSlotId(), "request.slotId");
-        ParaCheckUtil.checkNotNull(request.getDatumDigest(), "request.datumDigest");
-    }
-
-    @Override
-    public Object buildFailedResponse(String msg) {
-        return new GenericResponse().fillFailed(msg);
-    }
+  @Override
+  public Object buildFailedResponse(String msg) {
+    return new GenericResponse().fillFailed(msg);
+  }
 }

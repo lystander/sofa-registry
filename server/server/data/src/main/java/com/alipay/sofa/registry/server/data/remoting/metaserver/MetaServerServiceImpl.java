@@ -94,7 +94,6 @@ public class MetaServerServiceImpl extends AbstractMetaServerService<BaseHeartBe
     }
 
     multiClusterSlotManager.updateSlotTable(result.getRemoteSlotTableStatus());
-
   }
 
   @Override

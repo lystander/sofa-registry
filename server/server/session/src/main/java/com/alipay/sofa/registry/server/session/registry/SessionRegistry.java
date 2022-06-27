@@ -17,7 +17,6 @@
 package com.alipay.sofa.registry.server.session.registry;
 
 import com.alipay.sofa.registry.common.model.ConnectId;
-import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.store.*;
 import com.alipay.sofa.registry.common.model.wrapper.Wrapper;
@@ -27,7 +26,6 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.remoting.Server;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
-import com.alipay.sofa.registry.remoting.exchange.ExchangeCallback;
 import com.alipay.sofa.registry.remoting.exchange.RequestChannelClosedException;
 import com.alipay.sofa.registry.server.session.acceptor.ClientOffWriteDataRequest;
 import com.alipay.sofa.registry.server.session.acceptor.PublisherWriteDataRequest;
@@ -35,14 +33,10 @@ import com.alipay.sofa.registry.server.session.acceptor.WriteDataAcceptor;
 import com.alipay.sofa.registry.server.session.acceptor.WriteDataRequest;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.loggers.Loggers;
-import com.alipay.sofa.registry.server.session.node.service.DataNodeService;
 import com.alipay.sofa.registry.server.session.providedata.ConfigProvideDataWatcher;
 import com.alipay.sofa.registry.server.session.push.FirePushService;
 import com.alipay.sofa.registry.server.session.push.PushSwitchService;
 import com.alipay.sofa.registry.server.session.push.TriggerPushContext;
-import com.alipay.sofa.registry.server.session.registry.RegistryScanCallable.ScanCallable;
-import com.alipay.sofa.registry.server.session.registry.RegistryScanCallable.ScanCallableInfo;
-import com.alipay.sofa.registry.server.session.slot.SlotTableCache;
 import com.alipay.sofa.registry.server.session.store.DataStore;
 import com.alipay.sofa.registry.server.session.store.Interests;
 import com.alipay.sofa.registry.server.session.store.Watchers;
@@ -52,7 +46,6 @@ import com.alipay.sofa.registry.server.session.wrapper.WrapperInterceptorManager
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.LoopRunnable;
-import com.alipay.sofa.registry.util.StringFormatter;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -62,7 +55,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
@@ -101,8 +93,7 @@ public class SessionRegistry implements Registry {
 
   @Autowired protected ConfigProvideDataWatcher configProvideDataWatcher;
 
-  @Autowired
-  private RegistryScanCallable registryScanCallable;
+  @Autowired private RegistryScanCallable registryScanCallable;
 
   private final VersionWatchDog versionWatchDog = new VersionWatchDog();
 
@@ -404,24 +395,32 @@ public class SessionRegistry implements Registry {
             vers.size(),
             pushEmpty.size(),
             System.currentTimeMillis() - start);
-        registryScanCallable.scanVersions(round, dataCenter, vers, callableInfo -> {
-          if (sessionInterests.checkInterestVersion(callableInfo.getDataCenter(), callableInfo.getDataInfoId(), callableInfo.getVersion().getValue()).interested) {
-            TriggerPushContext ctx =
+        registryScanCallable.scanVersions(
+            round,
+            dataCenter,
+            vers,
+            callableInfo -> {
+              if (sessionInterests.checkInterestVersion(
+                      callableInfo.getDataCenter(),
+                      callableInfo.getDataInfoId(),
+                      callableInfo.getVersion().getValue())
+                  .interested) {
+                TriggerPushContext ctx =
                     new TriggerPushContext(
-                            callableInfo.getDataCenter(),
-                            callableInfo.getVersion().getValue(),
-                            callableInfo.getLeader(),
-                            callableInfo.getCurrentTs());
-            firePushService.fireOnChange(callableInfo.getDataInfoId(), ctx);
-            SCAN_VER_LOGGER.info(
+                        callableInfo.getDataCenter(),
+                        callableInfo.getVersion().getValue(),
+                        callableInfo.getLeader(),
+                        callableInfo.getCurrentTs());
+                firePushService.fireOnChange(callableInfo.getDataInfoId(), ctx);
+                SCAN_VER_LOGGER.info(
                     "[fetchSlotVerNotify]round={},{},{},{},{}",
                     callableInfo.getRound(),
                     callableInfo.getVersion(),
                     callableInfo.getDataInfoId(),
                     callableInfo.getDataCenter(),
                     callableInfo.getVersion().getValue());
-          }
-        });
+              }
+            });
         handlePushEmptySubscribers(dataCenter, pushEmpty);
       }
     } catch (Throwable e) {
@@ -434,18 +433,18 @@ public class SessionRegistry implements Registry {
       try {
         firePushService.fireOnRegister(subscriber);
       } catch (Throwable e) {
-        SCAN_VER_LOGGER.error("failed to scan subscribers, round:{}, {}", round, subscriber.shortDesc(), e);
+        SCAN_VER_LOGGER.error(
+            "failed to scan subscribers, round:{}, {}", round, subscriber.shortDesc(), e);
       }
     }
   }
-
-
 
   public String getDataCenterWhenPushEmpty() {
     return sessionServerConfig.getSessionServerDataCenter();
   }
 
-  private void handlePushEmptySubscribers(String dataCenter, List<Subscriber> pushEmptySubscribers) {
+  private void handlePushEmptySubscribers(
+      String dataCenter, List<Subscriber> pushEmptySubscribers) {
     for (Subscriber subscriber : pushEmptySubscribers) {
       try {
         if (subscriber.needPushEmpty(dataCenter)) {
@@ -456,7 +455,6 @@ public class SessionRegistry implements Registry {
       }
     }
   }
-
 
   public void cleanClientConnect() {
     Server sessionServer = boltExchange.getServer(sessionServerConfig.getServerPort());
@@ -498,5 +496,4 @@ public class SessionRegistry implements Registry {
       this.toRegisterMulti = toRegisterMulti;
     }
   }
-
 }

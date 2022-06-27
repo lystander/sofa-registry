@@ -91,7 +91,6 @@ public class DataServerBootstrap {
   @Resource(name = "remoteDataServerHandlers")
   private Collection<AbstractServerHandler> remoteDataServerHandlers;
 
-
   @Autowired private SystemPropertyProcessorManager systemPropertyProcessorManager;
 
   @Autowired private SlotManager slotManager;
@@ -231,17 +230,24 @@ public class DataServerBootstrap {
     try {
       if (serverForMultiClusterDataSyncStarted.compareAndSet(false, true)) {
         remoteDataSyncServer =
-                boltExchange.open(
-                        new URL(
-                                NetUtil.getLocalAddress().getHostAddress(), multiClusterDataServerConfig.getSyncRemoteSlotLeaderPort()),
-                        multiClusterDataServerConfig.getSyncSlotLowWaterMark(),
-                        multiClusterDataServerConfig.getSyncSlotHighWaterMark(),
-                        remoteDataServerHandlers.toArray(new ChannelHandler[remoteDataServerHandlers.size()]));
-        LOGGER.info("Multi cluster data server for sync started! port:{}", multiClusterDataServerConfig.getSyncRemoteSlotLeaderPort());
+            boltExchange.open(
+                new URL(
+                    NetUtil.getLocalAddress().getHostAddress(),
+                    multiClusterDataServerConfig.getSyncRemoteSlotLeaderPort()),
+                multiClusterDataServerConfig.getSyncSlotLowWaterMark(),
+                multiClusterDataServerConfig.getSyncSlotHighWaterMark(),
+                remoteDataServerHandlers.toArray(
+                    new ChannelHandler[remoteDataServerHandlers.size()]));
+        LOGGER.info(
+            "Multi cluster data server for sync started! port:{}",
+            multiClusterDataServerConfig.getSyncRemoteSlotLeaderPort());
       }
     } catch (Exception e) {
       serverForMultiClusterDataSyncStarted.set(false);
-      LOGGER.error("Multi cluster data sync server start error! port:{}", multiClusterDataServerConfig.getSyncRemoteSlotLeaderPort(), e);
+      LOGGER.error(
+          "Multi cluster data sync server start error! port:{}",
+          multiClusterDataServerConfig.getSyncRemoteSlotLeaderPort(),
+          e);
       throw new RuntimeException("Multi cluster data sync server start error!", e);
     }
   }

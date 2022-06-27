@@ -139,8 +139,7 @@ public class SlotTableCacheImplTest extends AbstractSessionServerTestBase {
   @Test
   public void testCurrentSlotTable() throws InterruptedException {
     slotTableCache.updateSlotTable(randomSlotTable());
-    Assert.assertNotSame(
-        slotTableCache.getLocalSlotTable(), slotTableCache.getLocalSlotTable());
+    Assert.assertNotSame(slotTableCache.getLocalSlotTable(), slotTableCache.getLocalSlotTable());
     Assert.assertEquals(slotTableCache.getLocalSlotTable(), slotTableCache.getLocalSlotTable());
     SlotTable prev = slotTableCache.getLocalSlotTable();
     CountDownLatch latch = new CountDownLatch(1);

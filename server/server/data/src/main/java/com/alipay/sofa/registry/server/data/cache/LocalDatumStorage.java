@@ -23,24 +23,21 @@ import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.slot.Slot;
-import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
-
-import java.util.*;
-
 import com.alipay.sofa.registry.util.ParaCheckUtil;
-import com.google.common.collect.Sets;
+import java.util.*;
 
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-12-02 19:40 yuzhi.lyz Exp $
  */
 public final class LocalDatumStorage implements DatumStorage {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LocalDatumStorage.class, "[LocalStorage]");
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(LocalDatumStorage.class, "[LocalStorage]");
 
   private final String dataCenter;
 
@@ -67,7 +64,8 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumVersion> getVersions(String dataCenter, int slotId, Collection<String> targetDataInfoIds) {
+  public Map<String, DatumVersion> getVersions(
+      String dataCenter, int slotId, Collection<String> targetDataInfoIds) {
     return storage.getVersions(slotId, targetDataInfoIds);
   }
 
@@ -102,7 +100,8 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, Map<String, Publisher>> getPublishers(
+      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
     return storage.getPublishers(slotId, acceptorManager);
   }
@@ -114,7 +113,7 @@ public final class LocalDatumStorage implements DatumStorage {
 
   @Override
   public Map<String, DatumVersion> cleanBySessionId(
-          String dataCenter, int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
+      String dataCenter, int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
     return storage.clean(slotId, sessionProcessId, cleanContinues);
   }
 
@@ -125,18 +124,21 @@ public final class LocalDatumStorage implements DatumStorage {
 
   // only for http testapi
   @Override
-  public DatumVersion removePublishers(String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
+  public DatumVersion removePublishers(
+      String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
     return storage.removePublishers(dataInfoId, sessionProcessId);
   }
 
   @Override
-  public DatumVersion putPublisher(String dataCenter, String dataInfoId, List<Publisher> publishers) {
+  public DatumVersion putPublisher(
+      String dataCenter, String dataInfoId, List<Publisher> publishers) {
     return storage.putPublisher(dataInfoId, publishers);
   }
 
   @Override
   public DatumVersion putPublisher(String dataCenter, Publisher publisher) {
-    return putPublisher(dataCenter, publisher.getDataInfoId(), Collections.singletonList(publisher));
+    return putPublisher(
+        dataCenter, publisher.getDataInfoId(), Collections.singletonList(publisher));
   }
 
   @Override
@@ -149,7 +151,8 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, DatumSummary>> getDatumSummary(String dataCenter, int slotId, Set<String> sessions) {
+  public Map<String, Map<String, DatumSummary>> getDatumSummary(
+      String dataCenter, int slotId, Set<String> sessions) {
     return storage.getDatumSummary(slotId, sessions);
   }
 
@@ -159,7 +162,8 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, DatumSummary> getDatumSummary(
+      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     return storage.getAcceptDatumSummary(slotId, acceptorManager);
@@ -198,24 +202,17 @@ public final class LocalDatumStorage implements DatumStorage {
   private final class SlotListener implements SlotChangeListener {
 
     @Override
-    public void onSlotAdd(String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
+    public void onSlotAdd(
+        String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
       putPublisherGroups(dataCenter, slotId);
-      LOGGER.info(
-              "{} add publisherGroup {}, role={},",
-              dataCenter,
-              slotId,
-              role);
+      LOGGER.info("{} add publisherGroup {}, role={},", dataCenter, slotId, role);
     }
 
     @Override
     public void onSlotRemove(String dataCenter, int slotId, Slot.Role role) {
       boolean removed = removePublisherGroups(dataCenter, slotId);
       LOGGER.info(
-          "{}, remove publisherGroup {}, removed={}, role={}",
-          dataCenter,
-          slotId,
-          removed,
-          role);
+          "{}, remove publisherGroup {}, removed={}, role={}", dataCenter, slotId, removed, role);
     }
   }
 }

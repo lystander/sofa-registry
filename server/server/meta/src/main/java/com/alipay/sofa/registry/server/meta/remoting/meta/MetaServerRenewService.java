@@ -26,7 +26,6 @@ import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.NodeConfig;
 import com.alipay.sofa.registry.server.shared.env.ServerEnv;
-import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
 import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +85,12 @@ public class MetaServerRenewService {
     final String leaderIp = metaLeaderService.getLeader();
     HeartbeatRequest heartbeatRequest =
         new HeartbeatRequest<>(
-            createNode(), -1L, nodeConfig.getLocalDataCenter(), System.currentTimeMillis(), null, null);
+            createNode(),
+            -1L,
+            nodeConfig.getLocalDataCenter(),
+            System.currentTimeMillis(),
+            null,
+            null);
 
     boolean success = true;
     final long startTimestamp = System.currentTimeMillis();
@@ -94,8 +98,7 @@ public class MetaServerRenewService {
       GenericResponse resp =
           (GenericResponse)
               localMetaExchanger
-                  .sendRequest(
-                      metaServerConfig.getLocalDataCenter(), heartbeatRequest)
+                  .sendRequest(metaServerConfig.getLocalDataCenter(), heartbeatRequest)
                   .getResult();
 
       if (resp == null || !resp.isSuccess()) {

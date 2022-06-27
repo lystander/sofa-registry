@@ -34,7 +34,8 @@ public abstract class AbstractSlotRequest implements Serializable {
     this.sessionProcessId = sessionProcessId;
   }
 
-  protected AbstractSlotRequest(int slotId, ProcessId sessionProcessId, long slotTableEpoch, long slotLeaderEpoc) {
+  protected AbstractSlotRequest(
+      int slotId, ProcessId sessionProcessId, long slotTableEpoch, long slotLeaderEpoc) {
     this.slotId = slotId;
     this.sessionProcessId = sessionProcessId;
     this.slotTableEpoch = slotTableEpoch;

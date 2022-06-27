@@ -533,7 +533,8 @@ public class DataServerConfig implements ServerShareConfig {
   /**
    * Setter method for property <tt>slotSyncAppRevisionIntervalSecs</tt>.
    *
-   * @param slotSyncAppRevisionIntervalSecs value to be assigned to property slotSyncAppRevisionIntervalSecs
+   * @param slotSyncAppRevisionIntervalSecs value to be assigned to property
+   *     slotSyncAppRevisionIntervalSecs
    */
   public void setSlotSyncAppRevisionIntervalSecs(int slotSyncAppRevisionIntervalSecs) {
     this.slotSyncAppRevisionIntervalSecs = slotSyncAppRevisionIntervalSecs;
@@ -551,7 +552,8 @@ public class DataServerConfig implements ServerShareConfig {
   /**
    * Setter method for property <tt>slotSyncServiceMappingIntervalSecs</tt>.
    *
-   * @param slotSyncServiceMappingIntervalSecs value to be assigned to property slotSyncServiceMappingIntervalSecs
+   * @param slotSyncServiceMappingIntervalSecs value to be assigned to property
+   *     slotSyncServiceMappingIntervalSecs
    */
   public void setSlotSyncServiceMappingIntervalSecs(int slotSyncServiceMappingIntervalSecs) {
     this.slotSyncServiceMappingIntervalSecs = slotSyncServiceMappingIntervalSecs;

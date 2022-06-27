@@ -50,7 +50,6 @@ public class HeartbeatRequest<T extends Node> implements Serializable {
   // <cluster, slotTableEpoch>
   private final Map<String, Long> remoteClusterSlotTableEpoch;
 
-
   /**
    * constructor
    *

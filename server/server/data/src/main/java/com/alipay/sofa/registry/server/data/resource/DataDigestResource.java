@@ -59,8 +59,7 @@ public class DataDigestResource {
 
   @Autowired DataServerConfig dataServerConfig;
 
-  @Autowired
-  DatumStorageDelegate datumStorageDelegate;
+  @Autowired DatumStorageDelegate datumStorageDelegate;
 
   @GET
   @Path("datum/query")

@@ -22,7 +22,6 @@ import com.alipay.sofa.registry.core.model.DataBox;
 import com.alipay.sofa.registry.core.model.ReceivedConfigData;
 import com.alipay.sofa.registry.core.model.ReceivedData;
 import com.alipay.sofa.registry.util.SystemUtils;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.UnsafeByteOperations;
 import java.util.*;
 import java.util.Map.Entry;
@@ -63,7 +62,6 @@ public final class ReceivedDataConvertor {
     return receivedData;
   }
 
-
   public static ReceivedDataPb convert2CompressedPb(
       ReceivedData receivedDataJava, Compressor compressor, boolean acceptMulti) {
     if (receivedDataJava == null) {
@@ -94,18 +92,10 @@ public final class ReceivedDataConvertor {
           long version = receivedDataJava.getMultiVersion().get(dataCenter);
           Map<String, List<DataBox>> data = dataCenterEntry.getValue();
           CompressedItem compressedItem =
-                  dataCenterCompressed(
-                          segment,
-                          dataId,
-                          instanceId,
-                          group,
-                          version,
-                          data,
-                          compressor);
+              dataCenterCompressed(segment, dataId, instanceId, group, version, data, compressor);
           // todo xiaojian.xj set receivedDataPb multiDatas multiVersion
           originSize += compressedItem.getOriginSize();
           builder.setOriginBodySize(originSize);
-
         }
 
       } else {

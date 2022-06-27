@@ -18,8 +18,6 @@ package com.alipay.sofa.registry.server.data.slot;
 
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.slot.BaseSlotStatus;
-import com.alipay.sofa.registry.common.model.slot.Slot;
-import com.alipay.sofa.registry.common.model.slot.SlotAccess;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
 import java.util.List;
 

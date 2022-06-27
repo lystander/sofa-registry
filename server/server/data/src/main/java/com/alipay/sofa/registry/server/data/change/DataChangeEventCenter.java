@@ -265,7 +265,8 @@ public class DataChangeEventCenter {
   private void notifyTempPub(Channel channel, Datum datum) {
     // has temp pub, need to update the datum.version, we use the cache.datum.version as
     // push.version
-    final DatumVersion v = datumStorageDelegate.updateVersion(datum.getDataCenter(), datum.getDataInfoId());
+    final DatumVersion v =
+        datumStorageDelegate.updateVersion(datum.getDataCenter(), datum.getDataInfoId());
     if (v == null) {
       LOGGER.warn("not owns the DataInfoId when temp pub to {},{}", channel, datum.getDataInfoId());
       return;

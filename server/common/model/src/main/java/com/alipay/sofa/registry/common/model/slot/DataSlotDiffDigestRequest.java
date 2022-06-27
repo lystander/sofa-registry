@@ -18,7 +18,6 @@ package com.alipay.sofa.registry.common.model.slot;
 
 import com.alipay.sofa.registry.common.model.dataserver.DatumDigest;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
@@ -58,7 +57,10 @@ public class DataSlotDiffDigestRequest implements Serializable {
   }
 
   public static DataSlotDiffDigestRequest buildLocalRequest(
-      String localDataCenter, long slotTableEpoch, int slotId, Map<String, DatumDigest> datumDigest) {
+      String localDataCenter,
+      long slotTableEpoch,
+      int slotId,
+      Map<String, DatumDigest> datumDigest) {
     return new DataSlotDiffDigestRequest(
         true, localDataCenter, slotTableEpoch, slotId, datumDigest, SlotDiffAcceptType.ALL, null);
   }
@@ -70,13 +72,13 @@ public class DataSlotDiffDigestRequest implements Serializable {
       Map<String, DatumDigest> datumDigest,
       SyncSlotAcceptorManager acceptorManager) {
     return new DataSlotDiffDigestRequest(
-            false,
-            localDataCenter,
+        false,
+        localDataCenter,
         slotTableEpoch,
         slotId,
         datumDigest,
         SlotDiffAcceptType.ACCEPTORS,
-            acceptorManager);
+        acceptorManager);
   }
 
   /**

@@ -22,17 +22,14 @@ import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
-import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.multi.cluster.storage.MultiClusterDatumStorage;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import java.util.*;
-
 import com.google.common.collect.Sets;
+import java.util.*;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -131,7 +128,8 @@ public class DatumStorageDelegate implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slot, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, Map<String, Publisher>> getPublishers(
+      String dataCenter, int slot, SyncSlotAcceptorManager acceptorManager) {
     return storageOf(dataCenter).getPublishers(dataCenter, slot, acceptorManager);
   }
 
@@ -167,7 +165,8 @@ public class DatumStorageDelegate implements DatumStorage {
   }
 
   @Override
-  public DatumVersion putPublisher(String dataCenter, String dataInfoId, List<Publisher> updatedPublishers) {
+  public DatumVersion putPublisher(
+      String dataCenter, String dataInfoId, List<Publisher> updatedPublishers) {
     return storageOf(dataCenter).putPublisher(dataCenter, dataInfoId, updatedPublishers);
   }
 
@@ -177,9 +176,10 @@ public class DatumStorageDelegate implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumVersion> cleanBySessionId(String dataCenter, int slotId, ProcessId sessionProcessId,
-                                                    CleanContinues cleanContinues) {
-    return storageOf(dataCenter).cleanBySessionId(dataCenter, slotId, sessionProcessId, cleanContinues);
+  public Map<String, DatumVersion> cleanBySessionId(
+      String dataCenter, int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
+    return storageOf(dataCenter)
+        .cleanBySessionId(dataCenter, slotId, sessionProcessId, cleanContinues);
   }
 
   @Override
@@ -188,18 +188,24 @@ public class DatumStorageDelegate implements DatumStorage {
   }
 
   @Override
-  public DatumVersion removePublishers(String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
+  public DatumVersion removePublishers(
+      String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
     return storageOf(dataCenter).removePublishers(dataCenter, dataInfoId, sessionProcessId);
   }
 
   @Override
-  public DatumVersion removePublishers(String dataCenter, String dataInfoId, ProcessId sessionProcessId,
-                                       Map<String, RegisterVersion> removedPublishers) {
-    return storageOf(dataCenter).removePublishers(dataCenter, dataInfoId, sessionProcessId, removedPublishers);
+  public DatumVersion removePublishers(
+      String dataCenter,
+      String dataInfoId,
+      ProcessId sessionProcessId,
+      Map<String, RegisterVersion> removedPublishers) {
+    return storageOf(dataCenter)
+        .removePublishers(dataCenter, dataInfoId, sessionProcessId, removedPublishers);
   }
 
   @Override
-  public Map<String, Map<String, DatumSummary>> getDatumSummary(String dataCenter, int slotId, Set<String> sessions) {
+  public Map<String, Map<String, DatumSummary>> getDatumSummary(
+      String dataCenter, int slotId, Set<String> sessions) {
     return storageOf(dataCenter).getDatumSummary(dataCenter, slotId, sessions);
   }
 
@@ -209,7 +215,8 @@ public class DatumStorageDelegate implements DatumStorage {
   }
 
   @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, DatumSummary> getDatumSummary(
+      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
     return storageOf(dataCenter).getDatumSummary(dataCenter, slotId, acceptorManager);
   }
 
@@ -240,8 +247,9 @@ public class DatumStorageDelegate implements DatumStorage {
     return storageOf(dataCenter).updateVersion(dataCenter, slotId);
   }
 
-
   private DatumStorage storageOf(String dataCenter) {
-    return StringUtils.equalsIgnoreCase(localDataCenter, dataCenter) ? localDatumStorage : multiClusterDatumStorage;
+    return StringUtils.equalsIgnoreCase(localDataCenter, dataCenter)
+        ? localDatumStorage
+        : multiClusterDatumStorage;
   }
 }

@@ -16,11 +16,9 @@
  */
 package com.alipay.sofa.registry.common.model.store;
 
-import org.apache.commons.lang.StringUtils;
-import org.springframework.util.CollectionUtils;
-
 import java.util.Collections;
 import java.util.Map;
+import org.apache.commons.lang.StringUtils;
 
 public class PushData<T> {
   private final T payload;

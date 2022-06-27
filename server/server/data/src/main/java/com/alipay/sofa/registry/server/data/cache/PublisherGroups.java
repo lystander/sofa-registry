@@ -165,13 +165,15 @@ public final class PublisherGroups {
 
   Map<String, DatumSummary> getAcceptSummary(SyncSlotAcceptorManager acceptorManager) {
     Map<String, DatumSummary> summaries = Maps.newHashMap();
-    publisherGroupMap.entrySet().stream().filter(entry -> acceptorManager == null || acceptorManager.accept(entry.getKey())).forEach(
-        entry -> {
-          DatumSummary summary = entry.getValue().getAllSummary();
-          if (!summary.isEmpty()) {
-            summaries.put(entry.getKey(), summary);
-          }
-        });
+    publisherGroupMap.entrySet().stream()
+        .filter(entry -> acceptorManager == null || acceptorManager.accept(entry.getKey()))
+        .forEach(
+            entry -> {
+              DatumSummary summary = entry.getValue().getAllSummary();
+              if (!summary.isEmpty()) {
+                summaries.put(entry.getKey(), summary);
+              }
+            });
     return summaries;
   }
 

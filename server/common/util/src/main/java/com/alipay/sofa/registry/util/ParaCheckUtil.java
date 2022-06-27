@@ -20,10 +20,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import com.alipay.sofa.common.log.AssertUtil;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.util.Assert;
 
 /**
  * @author qian.lqlq
@@ -97,7 +94,7 @@ public final class ParaCheckUtil {
   public static void checkNotEmpty(Map param, String paraName) {
     if (param == null || param.size() == 0) {
       throw new IllegalArgumentException(
-              StringFormatter.format("{} is not allowed to be empty", paraName));
+          StringFormatter.format("{} is not allowed to be empty", paraName));
     }
   }
 

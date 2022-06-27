@@ -24,7 +24,6 @@ import com.alipay.sofa.registry.common.model.slot.Slot;
 import com.alipay.sofa.registry.common.model.slot.SlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.Publisher;
-import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.common.model.store.URL;
 import com.alipay.sofa.registry.common.model.store.UnPublisher;
 import com.alipay.sofa.registry.compress.CompressConstants;
@@ -251,7 +250,8 @@ public class DataNodeServiceImpl implements DataNodeService {
 
       Response response = dataNodeExchanger.request(getDataRequestStringRequest);
       Object result = response.getResult();
-      MultiSlotAccessGenericResponse<MultiSubDatum> genericResponse = (MultiSlotAccessGenericResponse<MultiSubDatum>) result;
+      MultiSlotAccessGenericResponse<MultiSubDatum> genericResponse =
+          (MultiSlotAccessGenericResponse<MultiSubDatum>) result;
       if (genericResponse.isSuccess()) {
         final MultiSubDatum datum = genericResponse.getData();
         if (datum == null) {
@@ -271,7 +271,11 @@ public class DataNodeServiceImpl implements DataNodeService {
     } catch (RequestException e) {
       throw new RuntimeException(
           StringFormatter.format(
-              "GetMultiData fail {}, {}, {}, slotId={}", dataNodeIp, dataInfoId, dataCenters, slotId),
+              "GetMultiData fail {}, {}, {}, slotId={}",
+              dataNodeIp,
+              dataInfoId,
+              dataCenters,
+              slotId),
           e);
     }
   }

@@ -55,7 +55,14 @@ public class BaseHeartBeatResponse implements Serializable {
       SlotTable slotTable,
       String metaLeader,
       long metaLeaderEpoch) {
-    this(heartbeatOnLeader, metaNodes, slotTable, VersionedList.EMPTY, metaLeader, metaLeaderEpoch, Collections.emptyMap());
+    this(
+        heartbeatOnLeader,
+        metaNodes,
+        slotTable,
+        VersionedList.EMPTY,
+        metaLeader,
+        metaLeaderEpoch,
+        Collections.emptyMap());
   }
 
   public BaseHeartBeatResponse(

@@ -19,7 +19,6 @@ package com.alipay.sofa.registry.server.session.predicate;
 import com.alipay.sofa.registry.core.model.ScopeEnum;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
-
 import java.util.function.Predicate;
 
 /**
@@ -36,7 +35,8 @@ public final class ZonePredicate {
       boolean acceptMulti,
       SessionServerConfig sessionServerConfig) {
     Predicate<String> zonePredicate =
-        (zone) -> acceptMulti || zoneFilter(dataId, clientCell, scopeEnum, sessionServerConfig, zone);
+        (zone) ->
+            acceptMulti || zoneFilter(dataId, clientCell, scopeEnum, sessionServerConfig, zone);
     return zonePredicate;
   }
 

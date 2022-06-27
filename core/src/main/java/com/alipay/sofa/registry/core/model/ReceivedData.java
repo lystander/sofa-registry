@@ -49,12 +49,10 @@ public class ReceivedData implements Serializable {
 
   private String localZone;
 
-  /**
-   * support multi dataCenter
-   */
-  private Map<String/*dataCenter*/, Map<String/*zone*/, List<DataBox>>> multiDatas;
+  /** support multi dataCenter */
+  private Map<String /*dataCenter*/, Map<String /*zone*/, List<DataBox>>> multiDatas;
 
-  private Map<String/*dataCenter*/, Long> multiVersion;
+  private Map<String /*dataCenter*/, Long> multiVersion;
 
   private Set<String> localSegmentZones;
 
@@ -265,8 +263,7 @@ public class ReceivedData implements Serializable {
    *
    * @param multiDatas value to be assigned to property multiDatas
    */
-  public void setMultiDatas(
-          Map<String, Map<String, List<DataBox>>> multiDatas) {
+  public void setMultiDatas(Map<String, Map<String, List<DataBox>>> multiDatas) {
     this.multiDatas = multiDatas;
   }
 

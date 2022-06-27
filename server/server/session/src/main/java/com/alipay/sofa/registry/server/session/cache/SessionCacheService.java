@@ -18,11 +18,9 @@ package com.alipay.sofa.registry.server.session.cache;
 
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
-import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.cache.*;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**

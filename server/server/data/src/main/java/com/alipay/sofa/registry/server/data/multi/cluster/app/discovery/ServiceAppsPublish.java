@@ -1,20 +1,30 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.data.multi.cluster.app.discovery;
 
+import static com.alipay.sofa.registry.common.model.slot.filter.AcceptorConstants.SERVICE_MAPPING_ACCEPTOR;
+
 import com.alipay.sofa.registry.common.model.DataInfoIdGenerator;
-import com.alipay.sofa.registry.common.model.PublisherGroupType;
 import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.ServerDataBox;
 import com.alipay.sofa.registry.common.model.appmeta.InterfaceMapping;
-import com.alipay.sofa.registry.common.model.dataserver.BatchRequest;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
-import com.alipay.sofa.registry.common.model.slot.SlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.slot.filter.BaseSyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
-import com.alipay.sofa.registry.common.model.store.DataInfo;
-import com.alipay.sofa.registry.common.model.store.Publisher;
-import com.alipay.sofa.registry.common.model.store.URL;
-import com.alipay.sofa.registry.common.model.store.WordCache;
 import com.alipay.sofa.registry.jdbc.domain.InterfaceAppsIndexDomain;
 import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.ServiceAppsPublish.ServiceMappingVersion;
 import com.alipay.sofa.registry.store.api.meta.EntryNotify;
@@ -23,17 +33,14 @@ import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
-
-import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import static com.alipay.sofa.registry.common.model.slot.filter.AcceptorConstants.SERVICE_MAPPING_ACCEPTOR;
+import javax.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author xiaojian.xj
@@ -82,7 +89,8 @@ public class ServiceAppsPublish extends MetadataSlotChangeListener<ServiceMappin
   }
 
   @Override
-  protected void dealWithPub(Set<ServiceMappingVersion> toBeAdd, long slotTableEpoch, int slotId, long slotLeaderEpoch) {
+  protected void dealWithPub(
+      Set<ServiceMappingVersion> toBeAdd, long slotTableEpoch, int slotId, long slotLeaderEpoch) {
     if (CollectionUtils.isEmpty(toBeAdd)) {
       return;
     }
@@ -94,7 +102,13 @@ public class ServiceAppsPublish extends MetadataSlotChangeListener<ServiceMappin
       }
       pub2Datum(slotTableEpoch, slotId, slotLeaderEpoch, pubs);
     } catch (Throwable throwable) {
-      LOGGER.error("[dealWithPub]pub pubs error, pubs:{}, slotTableEpoch:{}, slotId:{}, slotLeaderEpoch:{}", toBeAdd, slotTableEpoch, slotId, slotLeaderEpoch, throwable);
+      LOGGER.error(
+          "[dealWithPub]pub pubs error, pubs:{}, slotTableEpoch:{}, slotId:{}, slotLeaderEpoch:{}",
+          toBeAdd,
+          slotTableEpoch,
+          slotId,
+          slotLeaderEpoch,
+          throwable);
     }
   }
 
@@ -109,10 +123,12 @@ public class ServiceAppsPublish extends MetadataSlotChangeListener<ServiceMappin
       return true;
     }
     if (summary.size() > 1) {
-      LOGGER.error("[needRePub]unexpect summary size error: {},{}", summary, summary.getPublisherVersions());
+      LOGGER.error(
+          "[needRePub]unexpect summary size error: {},{}", summary, summary.getPublisherVersions());
       return false;
     }
-    Entry<String, RegisterVersion> first = summary.getPublisherVersions().entrySet().stream().findFirst().get();
+    Entry<String, RegisterVersion> first =
+        summary.getPublisherVersions().entrySet().stream().findFirst().get();
 
     long pubVersion = first.getValue().getVersion();
     if (metadata.version == pubVersion) {
@@ -120,10 +136,10 @@ public class ServiceAppsPublish extends MetadataSlotChangeListener<ServiceMappin
     } else if (metadata.version > pubVersion) {
       return true;
     } else {
-      LOGGER.error("[needRePub]unexpect pub.version:{} > metadata.version:{}", pubVersion, metadata.version);
+      LOGGER.error(
+          "[needRePub]unexpect pub.version:{} > metadata.version:{}", pubVersion, metadata.version);
       return false;
     }
-
   }
 
   @Override
@@ -137,15 +153,26 @@ public class ServiceAppsPublish extends MetadataSlotChangeListener<ServiceMappin
       }
     }
 
-    Map<String, ServiceMappingVersion> ret = Maps.newHashMapWithExpectedSize(slotDataInfoIds.size());
+    Map<String, ServiceMappingVersion> ret =
+        Maps.newHashMapWithExpectedSize(slotDataInfoIds.size());
     for (String slotDataInfoId : slotDataInfoIds) {
       InterfaceMapping mapping = interfaceAppsRepository.getAppNames(slotDataInfoId);
       String pubDataInfoId = buildDataInfoId(slotDataInfoId);
 
-      ret.put(pubDataInfoId,
-              new ServiceMappingVersion(pubDataInfoId, mapping.getNanosVersion(), mapping.getApps()));
+      ret.put(
+          pubDataInfoId,
+          new ServiceMappingVersion(pubDataInfoId, mapping.getNanosVersion(), mapping.getApps()));
     }
     return ret;
+  }
+
+  static final class ServiceMappingVersion extends MetadataVersion {
+    final Set<String> apps;
+
+    public ServiceMappingVersion(String dataInfoId, long version, Set<String> apps) {
+      super(dataInfoId, version);
+      this.apps = apps;
+    }
   }
 
   @Override
@@ -156,14 +183,5 @@ public class ServiceAppsPublish extends MetadataSlotChangeListener<ServiceMappin
   private List<ServerDataBox> buildServerDataBox(Set<String> apps) {
     ServerDataBox serverDataBox = new ServerDataBox(ServerDataBox.getBytes(apps));
     return Collections.singletonList(serverDataBox);
-  }
-
-  static final class ServiceMappingVersion extends MetadataVersion {
-    final Set<String> apps;
-
-    public ServiceMappingVersion(String dataInfoId, long version, Set<String> apps) {
-      super(dataInfoId, version);
-      this.apps = apps;
-    }
   }
 }

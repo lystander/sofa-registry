@@ -39,13 +39,10 @@ import com.alipay.sofa.registry.server.meta.monitor.heartbeat.HeartbeatListener;
 import com.alipay.sofa.registry.server.meta.monitor.session.SessionMessageListener;
 import com.alipay.sofa.registry.server.meta.multi.cluster.MultiClusterSlotTableSyncer;
 import com.alipay.sofa.registry.server.shared.slot.SlotTableUtils;
-
-import java.util.Collections;
+import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -58,7 +55,7 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
   private static final Logger HEARTBEAT_LOG = LoggerFactory.getLogger("HEARTBEAT");
 
   private static final Logger MULTI_CLUSTER_LOGGER =
-          LoggerFactory.getLogger("MULTI-CLUSTER-SRV", "[Heartbeat]");
+      LoggerFactory.getLogger("MULTI-CLUSTER-SRV", "[Heartbeat]");
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatRequestHandler.class);
 

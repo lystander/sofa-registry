@@ -1,4 +1,19 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.data.multi.cluster.app.discovery;
 
 import com.alipay.sofa.registry.common.model.RegisterVersion;
@@ -15,16 +30,13 @@ import com.alipay.sofa.registry.common.model.slot.func.SlotFunctionRegistry;
 import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.UnPublisher;
-import com.alipay.sofa.registry.common.model.store.WordCache;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
-import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.MetadataSlotChangeListener.MetadataVersion;
 import com.alipay.sofa.registry.server.data.multi.cluster.executor.MultiClusterExecutorManager;
 import com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.BatchPutDataHandler;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
-import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.task.KeyedTask;
 import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
 import com.alipay.sofa.registry.util.ConcurrentUtils;
@@ -34,15 +46,14 @@ import com.alipay.sofa.registry.util.WakeUpLoopRunnable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author xiaojian.xj
@@ -63,8 +74,7 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
 
   @Autowired protected MultiClusterExecutorManager multiClusterExecutorManager;
 
-  @Resource
-  protected BatchPutDataHandler batchPutDataHandler;
+  @Resource protected BatchPutDataHandler batchPutDataHandler;
 
   protected final SlotFunction slotFunction = SlotFunctionRegistry.getFunc();
 
@@ -78,13 +88,16 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
   }
 
   @Override
-  public void onSlotAdd(String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
+  public void onSlotAdd(
+      String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
     if (role != Role.Leader) {
       LOGGER.info("[onSlotAdd]skip dataCenter={}, slotId={}, role={}", dataCenter, slotId, role);
     }
 
     // reset state
-    MetadataLoadState status = slotLeaderStatus.put(slotId, MetadataLoadState.initState(slotTableEpoch, slotId, slotLeaderEpoch));
+    MetadataLoadState status =
+        slotLeaderStatus.put(
+            slotId, MetadataLoadState.initState(slotTableEpoch, slotId, slotLeaderEpoch));
     if (status == null) {
       watchDog.wakeup();
     }
@@ -120,8 +133,10 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
   }
 
   protected void syncMetadata(int slotId, MetadataLoadState state) {
-    ParaCheckUtil.checkNotNull(state, StringFormatter.format("slotId={} metadataLoadState", slotId));
-    KeyedTask<MetadataSlotChangeListener.SyncMetadataTask> syncMetadataTask = state.getSyncMetadataTask();
+    ParaCheckUtil.checkNotNull(
+        state, StringFormatter.format("slotId={} metadataLoadState", slotId));
+    KeyedTask<MetadataSlotChangeListener.SyncMetadataTask> syncMetadataTask =
+        state.getSyncMetadataTask();
 
     if (needReload(syncMetadataTask)) {
       // do reload
@@ -141,17 +156,16 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
     }
   }
 
-  private boolean needReload(KeyedTask<MetadataSlotChangeListener.SyncMetadataTask> syncMetadataTask) {
+  private boolean needReload(
+      KeyedTask<MetadataSlotChangeListener.SyncMetadataTask> syncMetadataTask) {
     if (syncMetadataTask == null || syncMetadataTask.isOverAfter(waitingMillis())) {
       return true;
     }
     return false;
   }
 
-
   protected abstract KeyedThreadPoolExecutor getExecutor();
   /**
-   *
    * @param summary
    * @param value
    * @return
@@ -161,24 +175,6 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
   protected abstract String buildDataInfoId(String dataInfoId);
 
   protected abstract Map<String, T> queryMetadata(int slotId);
-
-  protected static class MetadataVersion {
-
-    private static final long INIT = -1L;
-    final String dataInfoId;
-
-    final long version;
-
-    public MetadataVersion(String dataInfoId) {
-      this.dataInfoId = dataInfoId;
-      this.version = INIT;
-    }
-
-    public MetadataVersion(String dataInfoId, long version) {
-      this.dataInfoId = WordCache.getWordCache(dataInfoId);
-      this.version = version;
-    }
-  }
 
   public final class SyncMetadataTask implements Runnable {
 
@@ -205,15 +201,15 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
 
     @Override
     public String toString() {
-      return "SyncMetadataTask{" +
-              "slotId=" + slotId +
-              '}';
+      return "SyncMetadataTask{" + "slotId=" + slotId + '}';
     }
   }
 
   private void reload(long slotTableEpoch, int slotId, long slotLeaderEpoch) {
     // query from datum storage
-    Map<String, DatumSummary> datumSummary = datumStorageDelegate.getDatumSummary(dataServerConfig.getLocalDataCenter(), slotId, getSlotAcceptorManager());
+    Map<String, DatumSummary> datumSummary =
+        datumStorageDelegate.getDatumSummary(
+            dataServerConfig.getLocalDataCenter(), slotId, getSlotAcceptorManager());
 
     // query from repository
     Map<String, T> metadataSummary = queryMetadata(slotId);
@@ -236,9 +232,15 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
     dealWithPub(toBeAdd, slotTableEpoch, slotId, slotLeaderEpoch);
   }
 
-  protected abstract void dealWithPub(Set<T> toBeAdd, long slotTableEpoch, int slotId, long slotLeaderEpoch);
+  protected abstract void dealWithPub(
+      Set<T> toBeAdd, long slotTableEpoch, int slotId, long slotLeaderEpoch);
 
-  protected void dealWithUnPub(Map<String, DatumSummary> datumSummary, Set<String> toBeRemove, long slotTableEpoch, int slotId, long slotLeaderEpoch) {
+  protected void dealWithUnPub(
+      Map<String, DatumSummary> datumSummary,
+      Set<String> toBeRemove,
+      long slotTableEpoch,
+      int slotId,
+      long slotLeaderEpoch) {
     if (CollectionUtils.isEmpty(toBeRemove)) {
       return;
     }
@@ -248,24 +250,38 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
       for (String dataInfoId : toBeRemove) {
         DatumSummary summary = datumSummary.get(dataInfoId);
         if (CollectionUtils.isEmpty(summary.getPublisherVersions())) {
-          //pubs had bean remove, dataInfoIds will not delete.
+          // pubs had bean remove, dataInfoIds will not delete.
           continue;
         }
         if (summary.size() > 1) {
-          LOGGER.error("[dealWithUnPub]unexpect summary size error: {},{}", summary, summary.getPublisherVersions());
+          LOGGER.error(
+              "[dealWithUnPub]unexpect summary size error: {},{}",
+              summary,
+              summary.getPublisherVersions());
           continue;
         }
-        Entry<String, RegisterVersion> exist = summary.getPublisherVersions().entrySet().stream().findFirst().get();
-        unPubs.add(UnPublisher.of(dataInfoId, exist.getKey(), incRegisterVersion(exist.getValue())));
+        Entry<String, RegisterVersion> exist =
+            summary.getPublisherVersions().entrySet().stream().findFirst().get();
+        unPubs.add(
+            UnPublisher.of(dataInfoId, exist.getKey(), incRegisterVersion(exist.getValue())));
       }
       BatchRequest request = new BatchRequest(slotId, slotTableEpoch, slotLeaderEpoch, unPubs);
       SlotAccessGenericResponse<Object> response = batchPutDataHandler.handleRequest(request, null);
       if (!response.isSuccess()) {
-        LOGGER.error("[dealWithUnPub]put unPub:{} error, access:{}, msg:{}", unPubs, response.getSlotAccess(), response.getMessage());
+        LOGGER.error(
+            "[dealWithUnPub]put unPub:{} error, access:{}, msg:{}",
+            unPubs,
+            response.getSlotAccess(),
+            response.getMessage());
       }
     } catch (Throwable throwable) {
-      LOGGER.error("[dealWithUnPub]put unPub error, toBeRemove:{}, slotTableEpoch:{}, slotId:{}, slotLeaderEpoch:{}",
-              toBeRemove, slotTableEpoch, slotId, slotLeaderEpoch, throwable);
+      LOGGER.error(
+          "[dealWithUnPub]put unPub error, toBeRemove:{}, slotTableEpoch:{}, slotId:{}, slotLeaderEpoch:{}",
+          toBeRemove,
+          slotTableEpoch,
+          slotId,
+          slotLeaderEpoch,
+          throwable);
     }
   }
 
@@ -274,7 +290,8 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
     return new RegisterVersion(exist.getVersion() + 1, exist.getRegisterTimestamp());
   }
 
-  protected Publisher buildPub(String dataInfoId, long version, List<ServerDataBox> serverDataBoxes) {
+  protected Publisher buildPub(
+      String dataInfoId, long version, List<ServerDataBox> serverDataBoxes) {
     Publisher publisher = new Publisher();
     DataInfo dataInfo = DataInfo.valueOf(dataInfoId);
     publisher.setDataInfoId(dataInfoId);
@@ -293,12 +310,16 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
     return String.valueOf(md5HashFunction.hash(dataInfoId));
   }
 
-  protected void pub2Datum(long slotTableEpoch, int slotId, long slotLeaderEpoch, List<Object> pubs) {
+  protected void pub2Datum(
+      long slotTableEpoch, int slotId, long slotLeaderEpoch, List<Object> pubs) {
     BatchRequest request = new BatchRequest(slotId, slotTableEpoch, slotLeaderEpoch, pubs);
     SlotAccessGenericResponse<Object> response = batchPutDataHandler.handleRequest(request, null);
     if (!response.isSuccess()) {
-      LOGGER.error("[pub2Datum]put pub:{} error, access:{}, msg:{}", pubs, response.getSlotAccess(), response.getMessage());
+      LOGGER.error(
+          "[pub2Datum]put pub:{} error, access:{}, msg:{}",
+          pubs,
+          response.getSlotAccess(),
+          response.getMessage());
     }
   }
-
 }

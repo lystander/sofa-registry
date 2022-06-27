@@ -66,7 +66,7 @@ public class DataSlotDiffDigestRequestHandler
               request.getSlotId(),
               request.getDatumDigest(),
               sessionDataStore.getDataInfoIdPublishers(request.getSlotId()));
-      result.setSlotTableEpoch(slotTableCache.getEpoch());
+      result.setSlotTableEpoch(slotTableCache.getEpoch(request.getLocalDataCenter()));
       result.setSessionProcessId(ServerEnv.PROCESS_ID);
       return new GenericResponse().fillSucceed(result);
     } catch (Throwable e) {

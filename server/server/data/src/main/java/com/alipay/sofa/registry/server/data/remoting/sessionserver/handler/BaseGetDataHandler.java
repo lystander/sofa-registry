@@ -1,8 +1,26 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.data.remoting.sessionserver.handler;
 
+import static com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.HandlerMetrics.GetData.GET_DATUM_N_COUNTER;
+import static com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.HandlerMetrics.GetData.GET_DATUM_Y_COUNTER;
+import static com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.HandlerMetrics.GetData.GET_PUBLISHER_COUNTER;
+
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
-import com.alipay.sofa.registry.common.model.dataserver.GetDataRequest;
 import com.alipay.sofa.registry.common.model.slot.SlotAccess;
 import com.alipay.sofa.registry.common.model.slot.SlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.store.SubDatum;
@@ -12,15 +30,10 @@ import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.providedata.CompressDatumService;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
-
-import static com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.HandlerMetrics.GetData.GET_DATUM_N_COUNTER;
-import static com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.HandlerMetrics.GetData.GET_DATUM_Y_COUNTER;
-import static com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.HandlerMetrics.GetData.GET_PUBLISHER_COUNTER;
+import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author xiaojian.xj
@@ -41,7 +54,11 @@ public abstract class BaseGetDataHandler<T> extends AbstractDataHandler<T> {
   }
 
   protected SlotAccessGenericResponse<SubDatum> processSingleDataCenter(
-      String dataCenter, String dataInfoId, long slotTableEpoch, long slotLeaderEpoch, String[] acceptEncodes) {
+      String dataCenter,
+      String dataInfoId,
+      long slotTableEpoch,
+      long slotLeaderEpoch,
+      String[] acceptEncodes) {
     final SlotAccess slotAccessBefore =
         checkAccess(dataCenter, dataInfoId, slotTableEpoch, slotLeaderEpoch);
     if (!slotAccessBefore.isAccept()) {
@@ -64,10 +81,7 @@ public abstract class BaseGetDataHandler<T> extends AbstractDataHandler<T> {
       // the slot's leader has change
       GET_DATUM_N_COUNTER.inc();
       return buildResponse(
-          false,
-          slotAccessAfter,
-          null,
-          "slotLeaderEpoch has change, prev=" + slotAccessBefore);
+          false, slotAccessAfter, null, "slotLeaderEpoch has change, prev=" + slotAccessBefore);
     }
 
     GET_DATUM_Y_COUNTER.inc();
@@ -110,7 +124,7 @@ public abstract class BaseGetDataHandler<T> extends AbstractDataHandler<T> {
   }
 
   private SlotAccessGenericResponse<SubDatum> buildResponse(
-          boolean success, SlotAccess slotAccess, SubDatum subDatum, String msg) {
+      boolean success, SlotAccess slotAccess, SubDatum subDatum, String msg) {
     return new SlotAccessGenericResponse<>(success, msg, slotAccess, subDatum);
   }
 }

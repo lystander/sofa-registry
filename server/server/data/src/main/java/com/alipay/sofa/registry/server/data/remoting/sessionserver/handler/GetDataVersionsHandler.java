@@ -41,8 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @version $Id: GetDataVersionsProcessor.java, v 0.1 2017-12-06 19:56 qian.lqlq Exp $
  */
 public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRequest> {
-  private static final Logger               LOGGER = DataLog.GET_LOGGER;
-  @Autowired private   DatumStorageDelegate datumStorageDelegate;
+  private static final Logger LOGGER = DataLog.GET_LOGGER;
+  @Autowired private DatumStorageDelegate datumStorageDelegate;
 
   @Autowired private ThreadPoolExecutor getDataProcessorExecutor;
 
@@ -125,7 +125,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
           // cache the dataInfoId
           final String cacheDataInfoId = WordCache.getWordCache(dataInfoId);
           final DatumVersion v =
-                  datumStorageDelegate.createEmptyDatumIfAbsent(dataCenter, cacheDataInfoId);
+              datumStorageDelegate.createEmptyDatumIfAbsent(dataCenter, cacheDataInfoId);
           if (v != null) {
             ret.put(dataInfoId, v);
           }

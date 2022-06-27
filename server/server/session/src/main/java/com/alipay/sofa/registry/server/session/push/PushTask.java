@@ -25,13 +25,12 @@ import com.alipay.sofa.registry.common.model.store.Subscriber;
 import com.alipay.sofa.registry.core.model.ScopeEnum;
 import com.alipay.sofa.registry.trace.TraceID;
 import com.alipay.sofa.registry.util.StringFormatter;
+import com.google.common.collect.Maps;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -118,7 +117,9 @@ public abstract class PushTask {
 
     Map<String, Long> ret = Maps.newHashMapWithExpectedSize(datum.getDatumMap().size());
     for (Entry<String, SubDatum> entry : datum.getDatumMap().entrySet()) {
-      ret.put(entry.getKey(), SubscriberUtils.getMaxPushedVersion(entry.getKey(), subscriberMap.values()));
+      ret.put(
+          entry.getKey(),
+          SubscriberUtils.getMaxPushedVersion(entry.getKey(), subscriberMap.values()));
     }
     return ret;
   }
@@ -179,7 +180,6 @@ public abstract class PushTask {
       pushDataCount = Collections.emptyMap();
     }
     this.pushDataCount = pushDataCount;
-
   }
 
   public void setPushEncode(String pushEncode) {

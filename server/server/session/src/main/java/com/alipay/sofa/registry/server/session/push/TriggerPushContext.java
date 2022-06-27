@@ -18,15 +18,12 @@ package com.alipay.sofa.registry.server.session.push;
 
 import com.alipay.sofa.registry.common.model.TraceTimes;
 import com.alipay.sofa.registry.util.StringFormatter;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
-import org.springframework.util.CollectionUtils;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.springframework.util.CollectionUtils;
 
 public final class TriggerPushContext {
   public final String dataNode;
@@ -44,11 +41,16 @@ public final class TriggerPushContext {
   }
 
   public TriggerPushContext(
-          String dataCenter, long expectDatumVersion, String dataNode, long triggerSessionTimestamp, TraceTimes traceTimes) {
-    this(Collections.singletonMap(dataCenter, expectDatumVersion),
-            dataNode,
-            triggerSessionTimestamp,
-            traceTimes);
+      String dataCenter,
+      long expectDatumVersion,
+      String dataNode,
+      long triggerSessionTimestamp,
+      TraceTimes traceTimes) {
+    this(
+        Collections.singletonMap(dataCenter, expectDatumVersion),
+        dataNode,
+        triggerSessionTimestamp,
+        traceTimes);
   }
 
   public TriggerPushContext(

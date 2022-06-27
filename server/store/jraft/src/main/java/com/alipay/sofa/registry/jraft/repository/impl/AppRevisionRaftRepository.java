@@ -90,7 +90,5 @@ public class AppRevisionRaftRepository implements AppRevisionRepository {
   }
 
   @Override
-  public void registerNotify(EntryNotify notify) {
-
-  }
+  public void registerNotify(EntryNotify notify) {}
 }

@@ -41,7 +41,12 @@ public class GetDataHandler extends BaseGetDataHandler<GetDataRequest> {
   public SlotAccessGenericResponse<SubDatum> doHandle(Channel channel, GetDataRequest request) {
     processSessionProcessId(channel, request.getSessionProcessId());
 
-    return processSingleDataCenter(request.getDataCenter(), request.getDataInfoId(), request.getSlotTableEpoch(), request.getSlotLeaderEpoch(), request.getAcceptEncodes());
+    return processSingleDataCenter(
+        request.getDataCenter(),
+        request.getDataInfoId(),
+        request.getSlotTableEpoch(),
+        request.getSlotLeaderEpoch(),
+        request.getAcceptEncodes());
   }
 
   @Override

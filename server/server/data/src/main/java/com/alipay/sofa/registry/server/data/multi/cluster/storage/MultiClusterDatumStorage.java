@@ -1,4 +1,19 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.data.multi.cluster.storage;
 
 import com.alipay.sofa.registry.common.model.ConnectId;
@@ -8,7 +23,6 @@ import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.slot.Slot;
-import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.exception.UnSupportOperationException;
@@ -20,7 +34,6 @@ import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Maps;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -104,7 +117,8 @@ public class MultiClusterDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, Map<String, Publisher>> getPublishers(
+      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     BaseDatumStorage storage = storageMap.get(dataCenter);
@@ -177,9 +191,9 @@ public class MultiClusterDatumStorage implements DatumStorage {
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
       LOGGER.warn(
-              "[nullStorage]createEmptyDatumIfAbsent dataCenter={}, dataInfoId={}",
-              dataCenter,
-              dataInfoId);
+          "[nullStorage]createEmptyDatumIfAbsent dataCenter={}, dataInfoId={}",
+          dataCenter,
+          dataInfoId);
       return null;
     }
     return storage.createEmptyDatumIfAbsent(dataInfoId);
@@ -188,8 +202,11 @@ public class MultiClusterDatumStorage implements DatumStorage {
   @Override
   public Map<String, DatumVersion> cleanBySessionId(
       String dataCenter, int slotId, ProcessId sessionProcessId, CleanContinues cleanContinues) {
-    LOGGER.error("[MultiClusterDatumStorage]UnExcept cleanBySessionId, dataCenter={}, slotId={}, sessionProcessId={}",
-            dataCenter, slotId, sessionProcessId);
+    LOGGER.error(
+        "[MultiClusterDatumStorage]UnExcept cleanBySessionId, dataCenter={}, slotId={}, sessionProcessId={}",
+        dataCenter,
+        slotId,
+        sessionProcessId);
     throw new UnSupportOperationException("MultiClusterDatumStorage.cleanBySessionId");
   }
 
@@ -198,9 +215,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
       LOGGER.warn(
-              "[nullStorage]removePublisherGroups dataCenter={}, slotId={}",
-              dataCenter,
-              slotId);
+          "[nullStorage]removePublisherGroups dataCenter={}, slotId={}", dataCenter, slotId);
       return false;
     }
     return storage.removePublisherGroups(slotId);
@@ -209,8 +224,11 @@ public class MultiClusterDatumStorage implements DatumStorage {
   @Override
   public DatumVersion removePublishers(
       String dataCenter, String dataInfoId, ProcessId sessionProcessId) {
-    LOGGER.error("[MultiClusterDatumStorage]UnExcept removePublishers, dataCenter={}, dataInfoId={}, sessionProcessId={}",
-            dataCenter, dataInfoId, sessionProcessId);
+    LOGGER.error(
+        "[MultiClusterDatumStorage]UnExcept removePublishers, dataCenter={}, dataInfoId={}, sessionProcessId={}",
+        dataCenter,
+        dataInfoId,
+        sessionProcessId);
     throw new UnSupportOperationException("MultiClusterDatumStorage.removePublishersBySessionId");
   }
 
@@ -220,8 +238,12 @@ public class MultiClusterDatumStorage implements DatumStorage {
       String dataInfoId,
       ProcessId sessionProcessId,
       Map<String, RegisterVersion> removedPublishers) {
-    LOGGER.error("[MultiClusterDatumStorage]UnExcept removePublishers, dataCenter={}, dataInfoId={}, sessionProcessId={}, removedPublishers={}",
-            dataCenter, dataInfoId, sessionProcessId, removedPublishers);
+    LOGGER.error(
+        "[MultiClusterDatumStorage]UnExcept removePublishers, dataCenter={}, dataInfoId={}, sessionProcessId={}, removedPublishers={}",
+        dataCenter,
+        dataInfoId,
+        sessionProcessId,
+        removedPublishers);
     throw new UnSupportOperationException("MultiClusterDatumStorage.removePublishersBySessionId");
   }
 
@@ -230,10 +252,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
       String dataCenter, String dataInfoId, List<Publisher> updatedPublishers) {
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
-      LOGGER.warn(
-              "[nullStorage]putPublisher dataCenter={}, dataInfoId={}",
-              dataCenter,
-              dataInfoId);
+      LOGGER.warn("[nullStorage]putPublisher dataCenter={}, dataInfoId={}", dataCenter, dataInfoId);
       return null;
     }
     return storage.putPublisher(dataInfoId, updatedPublishers);
@@ -242,8 +261,11 @@ public class MultiClusterDatumStorage implements DatumStorage {
   @Override
   public Map<String, Map<String, DatumSummary>> getDatumSummary(
       String dataCenter, int slotId, Set<String> sessions) {
-    LOGGER.error("[MultiClusterDatumStorage]UnExcept getDatumSummary, dataCenter={}, dataInfoId={}, sessions={}",
-            dataCenter, slotId, sessions);
+    LOGGER.error(
+        "[MultiClusterDatumStorage]UnExcept getDatumSummary, dataCenter={}, dataInfoId={}, sessions={}",
+        dataCenter,
+        slotId,
+        sessions);
     throw new UnSupportOperationException("MultiClusterDatumStorage.getDatumSummaryBySessions");
   }
 
@@ -251,25 +273,20 @@ public class MultiClusterDatumStorage implements DatumStorage {
   public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId) {
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
-      LOGGER.warn(
-              "[nullStorage]getDatumSummary dataCenter={}, slotId={}",
-              dataCenter,
-              slotId);
+      LOGGER.warn("[nullStorage]getDatumSummary dataCenter={}, slotId={}", dataCenter, slotId);
       return Collections.emptyMap();
     }
     return storage.getDatumSummary(slotId);
   }
 
   @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
+  public Map<String, DatumSummary> getDatumSummary(
+      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
     ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
-      LOGGER.warn(
-              "[nullStorage]getDatumSummary dataCenter={}, slotId={}",
-              dataCenter,
-              slotId);
+      LOGGER.warn("[nullStorage]getDatumSummary dataCenter={}, slotId={}", dataCenter, slotId);
       return Collections.emptyMap();
     }
     return storage.getAcceptDatumSummary(slotId, acceptorManager);
@@ -282,13 +299,15 @@ public class MultiClusterDatumStorage implements DatumStorage {
 
   @Override
   public Set<ProcessId> getSessionProcessIds(String dataCenter) {
-    LOGGER.error("[MultiClusterDatumStorage]UnExcept getSessionProcessIds, dataCenter={}", dataCenter);
+    LOGGER.error(
+        "[MultiClusterDatumStorage]UnExcept getSessionProcessIds, dataCenter={}", dataCenter);
     throw new UnSupportOperationException("MultiClusterDatumStorage.getSessionProcessIds");
   }
 
   @Override
   public Map<String, Integer> compact(String dataCenter, long tombstoneTimestamp) {
-    LOGGER.error("[MultiClusterDatumStorage]UnExcept getSessionProcessIds, dataCenter={}", dataCenter);
+    LOGGER.error(
+        "[MultiClusterDatumStorage]UnExcept getSessionProcessIds, dataCenter={}", dataCenter);
     throw new UnSupportOperationException("MultiClusterDatumStorage.getSessionProcessIds");
   }
 
@@ -302,10 +321,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
   public Map<String, DatumVersion> updateVersion(String dataCenter, int slotId) {
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
-      LOGGER.warn(
-              "[nullStorage]updateVersion dataCenter={}, slotId={}",
-              dataCenter,
-              slotId);
+      LOGGER.warn("[nullStorage]updateVersion dataCenter={}, slotId={}", dataCenter, slotId);
       return Collections.emptyMap();
     }
     return storage.updateVersion(slotId);
@@ -316,9 +332,7 @@ public class MultiClusterDatumStorage implements DatumStorage {
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
       LOGGER.warn(
-              "[nullStorage]updateVersion dataCenter={}, dataInfoId={}",
-              dataCenter,
-              dataInfoId);
+          "[nullStorage]updateVersion dataCenter={}, dataInfoId={}", dataCenter, dataInfoId);
       return null;
     }
     return storage.updateVersion(dataInfoId);
@@ -327,24 +341,17 @@ public class MultiClusterDatumStorage implements DatumStorage {
   private final class MultiClusterSlotListener implements SlotChangeListener {
 
     @Override
-    public void onSlotAdd(String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
+    public void onSlotAdd(
+        String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
       putPublisherGroups(dataCenter, slotId);
-      LOGGER.info(
-              "{} add publisherGroup {}, role={},",
-              dataCenter,
-              slotId,
-              role);
+      LOGGER.info("{} add publisherGroup {}, role={},", dataCenter, slotId, role);
     }
 
     @Override
     public void onSlotRemove(String dataCenter, int slotId, Slot.Role role) {
       boolean removed = removePublisherGroups(dataCenter, slotId);
       LOGGER.info(
-              "{}, remove publisherGroup {}, removed={}, role={}",
-              dataCenter,
-              slotId,
-              removed,
-              role);
+          "{}, remove publisherGroup {}, removed={}, role={}", dataCenter, slotId, removed, role);
     }
   }
 }

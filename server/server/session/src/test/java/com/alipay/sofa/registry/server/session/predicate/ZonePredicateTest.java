@@ -37,7 +37,8 @@ public class ZonePredicateTest {
     Assert.assertFalse(predicate.test("zoneA"));
     Assert.assertFalse(predicate.test("zoneB"));
 
-    predicate = ZonePredicate.pushDataPredicate("testDataId", "zoneA", ScopeEnum.global, configBean);
+    predicate =
+        ZonePredicate.pushDataPredicate("testDataId", "zoneA", ScopeEnum.global, configBean);
     Assert.assertFalse(predicate.test("zoneA"));
     Assert.assertFalse(predicate.test("zoneB"));
   }

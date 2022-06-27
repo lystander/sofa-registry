@@ -42,7 +42,7 @@ import org.mockito.Mockito;
 public class DataChangeEventCenterTest {
   private static final String DC = "testDc";
   private DataChangeEventCenter center;
-  private DataServerConfig     dataServerConfig;
+  private DataServerConfig dataServerConfig;
   private DatumStorageDelegate datumStorageDelegate;
 
   private void setCenter() {

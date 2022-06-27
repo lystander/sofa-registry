@@ -19,11 +19,9 @@ package com.alipay.sofa.registry.server.session.push;
 import static com.alipay.sofa.registry.server.session.push.PushMetrics.Push.*;
 
 import com.alipay.remoting.rpc.exception.InvokeTimeoutException;
-import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.PushData;
-import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.common.model.store.Subscriber;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.CallbackHandler;
@@ -39,6 +37,7 @@ import com.alipay.sofa.registry.task.MetricsableThreadPoolExecutor;
 import com.alipay.sofa.registry.task.RejectedDiscardHandler;
 import com.alipay.sofa.registry.trace.TraceID;
 import com.alipay.sofa.registry.util.*;
+import com.google.common.collect.Maps;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,8 +49,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
-
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class PushProcessor {
@@ -427,7 +424,8 @@ public class PushProcessor {
     }
 
     protected PushData createPushData() {
-      return pushDataGenerator.createPushData(DatumUtils.decompressMultiSubDatum(datum), subscriberMap);
+      return pushDataGenerator.createPushData(
+          DatumUtils.decompressMultiSubDatum(datum), subscriberMap);
     }
 
     @Override
@@ -467,9 +465,7 @@ public class PushProcessor {
       pushingRecords.remove(pushTask.pushingTaskKey);
       for (Subscriber subscriber : pushTask.subscriberMap.values()) {
         if (!circuitBreakerService.onPushSuccess(
-            pushTask.datum.getVersion(),
-            pushTask.getPushDataCount(),
-            subscriber)) {
+            pushTask.datum.getVersion(), pushTask.getPushDataCount(), subscriber)) {
           LOGGER.info(
               "PushY, but failed to updateVersion, {}, {}",
               pushTask.taskID,
@@ -583,7 +579,6 @@ public class PushProcessor {
       }
       this.pushDataCount = pushDataCount;
       this.pushTotalDataCount = pushDataCount.values().stream().mapToInt(Integer::intValue).sum();
-
     }
   }
 }

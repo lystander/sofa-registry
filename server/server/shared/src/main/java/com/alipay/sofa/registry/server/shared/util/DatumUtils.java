@@ -30,13 +30,10 @@ import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.SystemUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import org.apache.commons.collections.CollectionUtils;
 
 /**
@@ -77,7 +74,8 @@ public final class DatumUtils {
     return versions;
   }
 
-  public static MultiSubDatum newEmptyMultiSubDatum(Subscriber subscriber, Set<String> datacenters, long version) {
+  public static MultiSubDatum newEmptyMultiSubDatum(
+      Subscriber subscriber, Set<String> datacenters, long version) {
 
     Map<String, SubDatum> subDatumMap = Maps.newHashMapWithExpectedSize(datacenters.size());
     for (String datacenter : datacenters) {

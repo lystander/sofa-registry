@@ -72,7 +72,7 @@ public class DataSlotDiffPublisherRequestHandler
               slotId,
               request.getDatumSummaries(),
               sessionDataStore.getDataInfoIdPublishers(slotId));
-      result.setSlotTableEpoch(slotTableCache.getEpoch());
+      result.setSlotTableEpoch(slotTableCache.getEpoch(request.getLocalDataCenter()));
       result.setSessionProcessId(ServerEnv.PROCESS_ID);
       return new GenericResponse().fillSucceed(result);
     } catch (Throwable e) {
@@ -91,7 +91,7 @@ public class DataSlotDiffPublisherRequestHandler
     DataSlotDiffPublisherResult result =
         DataSlotDiffUtils.diffPublishersResult(
             datumSummaries, existingPublishers, sessionServerConfig.getSlotSyncPublisherMaxNum());
-    DataSlotDiffUtils.logDiffResult(result, targetSlot);
+    DataSlotDiffUtils.logDiffResult(result, targetSlot, LOGGER);
     return result;
   }
 

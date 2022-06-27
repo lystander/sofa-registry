@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -45,7 +44,7 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
       LoggerFactory.getLogger("MULTI-CLUSTER-CLIENT", "[Exchanger]");
 
   private static final Logger MULTI_CLUSTER_CONFIG_LOGGER =
-          LoggerFactory.getLogger("MULTI-CLUSTER-CONFIG");
+      LoggerFactory.getLogger("MULTI-CLUSTER-CONFIG");
 
   @Autowired private MultiClusterMetaServerConfig multiClusterMetaServerConfig;
 
@@ -55,7 +54,10 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
   private volatile Map<String, MultiClusterSyncInfo> syncConfigMap = Maps.newConcurrentMap();
 
   public RemoteClusterMetaExchanger() {
-    super(Exchange.REMOTE_CLUSTER_META, ExchangerModeEnum.REMOTE_DATA_CENTER, MULTI_CLUSTER_CLIENT_LOGGER);
+    super(
+        Exchange.REMOTE_CLUSTER_META,
+        ExchangerModeEnum.REMOTE_DATA_CENTER,
+        MULTI_CLUSTER_CLIENT_LOGGER);
   }
 
   @Override
@@ -90,7 +92,8 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
    */
   public void refreshClusterInfos() {
     Set<MultiClusterSyncInfo> updates = multiClusterSyncRepository.queryAll();
-    Set<String> remoteDataCenters = updates.stream().map(MultiClusterSyncInfo::getRemoteDataCenter).collect(Collectors.toSet());
+    Set<String> remoteDataCenters =
+        updates.stream().map(MultiClusterSyncInfo::getRemoteDataCenter).collect(Collectors.toSet());
     Set<String> removes = Sets.difference(syncConfigMap.keySet(), remoteDataCenters);
 
     synchronized (this) {

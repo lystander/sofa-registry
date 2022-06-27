@@ -37,7 +37,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.core.async.Hack;
 
@@ -85,7 +84,8 @@ public final class PushTrace {
     return new PushTrace(datum, address, subApp, pushCause, subNum, subRegTimestamp);
   }
 
-  private Tuple<List<Long>, String> datumPushedDelayList(String dataCenter, long finishedTs, long lastPushTs) {
+  private Tuple<List<Long>, String> datumPushedDelayList(
+      String dataCenter, long finishedTs, long lastPushTs) {
     List<Long> recentVersions = datum.getRecentVersions(dataCenter);
     List<Long> timestamps =
         Lists.newArrayListWithCapacity(recentVersions == null ? 1 : recentVersions.size() + 1);
@@ -121,11 +121,20 @@ public final class PushTrace {
       String pushEncode,
       int encodeSize) {
     try {
-      ParaCheckUtil.checkEquals(subscriberPushedVersion.keySet(), pushNum.keySet(), "finishPush.datacenters");
+      ParaCheckUtil.checkEquals(
+          subscriberPushedVersion.keySet(), pushNum.keySet(), "finishPush.datacenters");
 
       for (Entry<String, Long> entry : subscriberPushedVersion.entrySet()) {
         String dataCenter = entry.getKey();
-        finish(dataCenter, status, taskID, entry.getValue(), pushNum.get(dataCenter), retry, pushEncode, encodeSize);
+        finish(
+            dataCenter,
+            status,
+            taskID,
+            entry.getValue(),
+            pushNum.get(dataCenter),
+            retry,
+            pushEncode,
+            encodeSize);
       }
     } catch (Throwable t) {
       LOGGER.error(

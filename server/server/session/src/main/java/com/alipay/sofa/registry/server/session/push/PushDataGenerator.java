@@ -28,11 +28,10 @@ import com.alipay.sofa.registry.server.session.converter.pb.ReceivedDataConverto
 import com.alipay.sofa.registry.server.session.predicate.ZonePredicate;
 import com.alipay.sofa.registry.server.session.providedata.CompressPushService;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.*;
 import java.util.function.Predicate;
 import javax.annotation.Resource;
-
-import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class PushDataGenerator {

@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
@@ -119,6 +118,7 @@ public class Subscriber extends BaseInfo {
 
   /**
    * return true if one of any dataCenter need to update
+   *
    * @param versions
    * @return
    */
@@ -132,7 +132,8 @@ public class Subscriber extends BaseInfo {
     return false;
   }
 
-  public synchronized boolean checkAndUpdateCtx(Map<String, Long> versions, Map<String, Integer> nums) {
+  public synchronized boolean checkAndUpdateCtx(
+      Map<String, Long> versions, Map<String, Integer> nums) {
     ParaCheckUtil.checkEquals(versions.keySet(), nums.keySet(), "checkAndUpdateCtx.datacenters");
     for (Entry<String, Long> entry : versions.entrySet()) {
       checkAndUpdateCtx(entry.getKey(), entry.getValue(), nums.get(entry.getKey()));
@@ -175,11 +176,13 @@ public class Subscriber extends BaseInfo {
 
   /**
    * return true if all datacenter check skip
+   *
    * @param versions
    * @param nums
    * @return
    */
-  public synchronized boolean checkSkipPushEmpty(Map<String, Long> versions, Map<String, Integer> nums) {
+  public synchronized boolean checkSkipPushEmpty(
+      Map<String, Long> versions, Map<String, Integer> nums) {
     ParaCheckUtil.checkEquals(versions.keySet(), nums.keySet(), "checkSkipPushEmpty.datacenters");
 
     for (Entry<String, Long> entry : versions.entrySet()) {
@@ -189,7 +192,6 @@ public class Subscriber extends BaseInfo {
     }
     return true;
   }
-
 
   public synchronized boolean checkSkipPushEmpty(String dataCenter, long pushVersion, int num) {
     final PushContext ctx = getPushContext(dataCenter);
@@ -210,6 +212,7 @@ public class Subscriber extends BaseInfo {
 
   /**
    * return true if one of any dataCenter need push empty
+   *
    * @param dataCenters
    * @return
    */
@@ -221,6 +224,7 @@ public class Subscriber extends BaseInfo {
     }
     return false;
   }
+
   public synchronized boolean needPushEmpty(String dataCenter) {
     final PushContext ctx = getPushContext(dataCenter);
     if (ctx.emptyVersion == 0) {

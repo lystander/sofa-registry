@@ -18,12 +18,9 @@ package com.alipay.sofa.registry.server.data.remoting.dataserver.handler;
 
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
-import com.alipay.sofa.registry.server.data.cache.DatumStorage;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author yuzhi.lyz
@@ -36,9 +33,6 @@ public class SlotFollowerDiffPublisherRequestHandler extends BaseSlotDiffPublish
 
   @Autowired private ThreadPoolExecutor slotSyncRequestProcessorExecutor;
 
-  @Resource
-  private DatumStorage localDatumStorage;
-
   public SlotFollowerDiffPublisherRequestHandler() {
     super(LOGGER);
   }
@@ -46,10 +40,5 @@ public class SlotFollowerDiffPublisherRequestHandler extends BaseSlotDiffPublish
   @Override
   public Executor getExecutor() {
     return slotSyncRequestProcessorExecutor;
-  }
-
-  @Override
-  protected DatumStorage getDatumStorage() {
-    return localDatumStorage;
   }
 }

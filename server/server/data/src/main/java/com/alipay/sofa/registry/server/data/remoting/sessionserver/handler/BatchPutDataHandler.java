@@ -70,7 +70,8 @@ public class BatchPutDataHandler extends AbstractDataHandler<BatchRequest> {
     return handleRequest(request, sessionProcessId);
   }
 
-  public SlotAccessGenericResponse<Object> handleRequest(BatchRequest request, ProcessId sessionProcessId) {
+  public SlotAccessGenericResponse<Object> handleRequest(
+      BatchRequest request, ProcessId sessionProcessId) {
     final SlotAccess slotAccess =
         checkAccess(
             dataServerConfig.getLocalDataCenter(),
@@ -164,7 +165,7 @@ public class BatchPutDataHandler extends AbstractDataHandler<BatchRequest> {
     Map<String, DatumVersion> ret = Maps.newHashMapWithExpectedSize(publisherMap.size());
     for (Map.Entry<String, Map<String, RegisterVersion>> e : publisherMap.entrySet()) {
       DatumVersion version =
-              datumStorageDelegate.removePublishers(
+          datumStorageDelegate.removePublishers(
               dataServerConfig.getLocalDataCenter(), e.getKey(), sessionProcessId, e.getValue());
       if (version != null) {
         ret.put(e.getKey(), version);

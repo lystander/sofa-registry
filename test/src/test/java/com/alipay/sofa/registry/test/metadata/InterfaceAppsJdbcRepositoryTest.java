@@ -43,8 +43,7 @@ public class InterfaceAppsJdbcRepositoryTest extends BaseIntegrationTest {
             "interfaceAppsJdbcRepository", InterfaceAppsRepository.class);
 
     appRevisionCacheRegistry =
-        sessionApplicationContext.getBean(
-            "appRevisionCacheRegistry", MetadataCacheRegistry.class);
+        sessionApplicationContext.getBean("appRevisionCacheRegistry", MetadataCacheRegistry.class);
   }
 
   @Test

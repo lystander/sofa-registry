@@ -29,7 +29,6 @@ import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherResult;
-import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.WordCache;
@@ -61,7 +60,7 @@ public final class SlotDiffSyncer {
   private final Logger DIFF_LOGGER;
   private final DataServerConfig dataServerConfig;
 
-  private final DatumStorageDelegate  datumStorageDelegate;
+  private final DatumStorageDelegate datumStorageDelegate;
   private final DataChangeEventCenter dataChangeEventCenter;
   private final SessionLeaseManager sessionLeaseManager;
 
@@ -140,7 +139,8 @@ public final class SlotDiffSyncer {
                 dataInfoId));
       }
       Map<String, RegisterVersion> versionMap = summary.getPublisherVersions(registerIds);
-      if (datumStorageDelegate.removePublishers(syncDataCenter, dataInfoId, sessionProcessId, versionMap)
+      if (datumStorageDelegate.removePublishers(
+              syncDataCenter, dataInfoId, sessionProcessId, versionMap)
           != null) {
         changeDataIds.add(dataInfoId);
       }
@@ -243,11 +243,7 @@ public final class SlotDiffSyncer {
             ? DataSlotDiffDigestRequest.buildLocalRequest(
                 localDataCenter, slotTableEpoch, slotId, digestMap)
             : DataSlotDiffDigestRequest.buildRemoteRequest(
-                localDataCenter,
-                slotTableEpoch,
-                slotId,
-                digestMap,
-                syncSlotAcceptorManager);
+                localDataCenter, slotTableEpoch, slotId, digestMap, syncSlotAcceptorManager);
     Response exchangeResp = exchanger.requestRaw(targetAddress, request);
     GenericResponse<DataSlotDiffDigestResult> resp =
         (GenericResponse<DataSlotDiffDigestResult>) exchangeResp.getResult();
@@ -400,7 +396,7 @@ public final class SlotDiffSyncer {
     // can not change to CollectionUtils.isEmpty
     if (summary == null) {
       Map<String, Map<String, DatumSummary>> datumSummary =
-              datumStorageDelegate.getDatumSummary(
+          datumStorageDelegate.getDatumSummary(
               dataServerConfig.getLocalDataCenter(), slotId, Collections.singleton(sessionIp));
       summary = datumSummary.get(sessionIp);
     }
@@ -431,7 +427,7 @@ public final class SlotDiffSyncer {
       throws RequestException {
     ParaCheckUtil.checkNotBlank(slotLeaderIp, "slotLeaderIp");
     Map<String, DatumSummary> summary =
-            datumStorageDelegate.getDatumSummary(syncDataCenter, slotId, syncSlotAcceptorManager);
+        datumStorageDelegate.getDatumSummary(syncDataCenter, slotId, syncSlotAcceptorManager);
     return sync(
         localDataCenter,
         syncDataCenter,

@@ -975,7 +975,8 @@ public class SessionServerConfigBean implements SessionServerConfig {
   /**
    * Setter method for property <tt>cacheServiceAppsMappingMaxWeight</tt>.
    *
-   * @param cacheServiceAppsMappingMaxWeight value to be assigned to property cacheServiceAppsMappingMaxWeight
+   * @param cacheServiceAppsMappingMaxWeight value to be assigned to property
+   *     cacheServiceAppsMappingMaxWeight
    */
   public void setCacheServiceAppsMappingMaxWeight(int cacheServiceAppsMappingMaxWeight) {
     this.cacheServiceAppsMappingMaxWeight = cacheServiceAppsMappingMaxWeight;
@@ -1420,7 +1421,8 @@ public class SessionServerConfigBean implements SessionServerConfig {
   /**
    * Setter method for property <tt>scanServiceAppsMappingIntervalMillis</tt>.
    *
-   * @param scanServiceAppsMappingIntervalMillis value to be assigned to property scanServiceAppsMappingIntervalMillis
+   * @param scanServiceAppsMappingIntervalMillis value to be assigned to property
+   *     scanServiceAppsMappingIntervalMillis
    */
   public void setScanServiceAppsMappingIntervalMillis(int scanServiceAppsMappingIntervalMillis) {
     this.scanServiceAppsMappingIntervalMillis = scanServiceAppsMappingIntervalMillis;

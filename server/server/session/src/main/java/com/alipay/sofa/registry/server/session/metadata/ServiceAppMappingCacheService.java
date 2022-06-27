@@ -1,5 +1,23 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.server.session.metadata;
+
+import static com.alipay.sofa.registry.server.session.metadata.MetadataCacheMetrics.Fetch.APPS_CACHE_HIT_COUNTER;
+import static com.alipay.sofa.registry.server.session.metadata.MetadataCacheMetrics.Fetch.APPS_CACHE_MISS_COUNTER;
 
 import com.alipay.sofa.registry.cache.CacheCleaner;
 import com.alipay.sofa.registry.common.model.DataInfoIdGenerator;
@@ -28,10 +46,6 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.cache.Weigher;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
-
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -39,9 +53,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import static com.alipay.sofa.registry.server.session.metadata.MetadataCacheMetrics.Fetch.APPS_CACHE_HIT_COUNTER;
-import static com.alipay.sofa.registry.server.session.metadata.MetadataCacheMetrics.Fetch.APPS_CACHE_MISS_COUNTER;
+import javax.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author xiaojian.xj
@@ -49,14 +63,15 @@ import static com.alipay.sofa.registry.server.session.metadata.MetadataCacheMetr
  */
 public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMapping> {
 
-  protected static final Logger SCAN_VER_LOGGER = LoggerFactory.getLogger("SCAN-VER", "[scanMapping]");
+  protected static final Logger SCAN_VER_LOGGER =
+      LoggerFactory.getLogger("SCAN-VER", "[scanMapping]");
 
-  private final Map<String/*dataInfoId*/, MappingVersionStorage> versions = Maps.newConcurrentMap();
+  private final Map<String /*dataInfoId*/, MappingVersionStorage> versions =
+      Maps.newConcurrentMap();
 
   private final VersionWatchDog versionWatchDog = new VersionWatchDog();
 
-  @Autowired
-  private RegistryScanCallable registryScanCallable;
+  @Autowired private RegistryScanCallable registryScanCallable;
 
   public ServiceAppMappingCacheService() {
     this.readWriteCacheMap =
@@ -92,7 +107,8 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
   }
 
   @Override
-  protected InterfaceMapping decode(MultiSubDatum datum) throws IOException, ClassNotFoundException {
+  protected InterfaceMapping decode(MultiSubDatum datum)
+      throws IOException, ClassNotFoundException {
     if (CollectionUtils.isEmpty(datum.getDatumMap())) {
       throw new SofaRegistryRuntimeException("query revision failed");
     }
@@ -128,7 +144,8 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
 
   private void updateVersions(long version, Map<String, Long> updates) {
     for (Entry<String, Long> entry : updates.entrySet()) {
-      MappingVersionStorage storage = versions.computeIfAbsent(entry.getKey(), k -> new MappingVersionStorage());
+      MappingVersionStorage storage =
+          versions.computeIfAbsent(entry.getKey(), k -> new MappingVersionStorage());
       storage.update(version, updates);
     }
   }
@@ -137,8 +154,7 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
 
     volatile long maxVersion;
 
-    final Map<String/*dataCenter*/, Long> versions = Maps.newHashMapWithExpectedSize(4096);
-
+    final Map<String /*dataCenter*/, Long> versions = Maps.newHashMapWithExpectedSize(4096);
 
     public synchronized Long getVersion(String dataCenter) {
       return versions.get(dataCenter);
@@ -153,9 +169,9 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
         long preMaxVersion = maxVersion;
         Map<String, Long> preVersions = Maps.newHashMap(versions);
         update(updates);
-        LOG.info("[update]prev: {}/{}, current:{}/{}", preMaxVersion, preVersions, maxVersion, versions);
+        LOG.info(
+            "[update]prev: {}/{}, current:{}/{}", preMaxVersion, preVersions, maxVersion, versions);
       }
-
     }
 
     private void update(Map<String, Long> updates) {
@@ -173,8 +189,11 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
       for (Entry<String, Long> exist : exists.entrySet()) {
         Long update = updates.get(exist.getKey());
         if (exist.getValue().longValue() != update.longValue()) {
-          LOG.error("[checkVersions]maxVersion:{}, exist.versions:{}, update.versions:{}",
-                  maxVersion, versions, update);
+          LOG.error(
+              "[checkVersions]maxVersion:{}, exist.versions:{}, update.versions:{}",
+              maxVersion,
+              versions,
+              update);
         }
       }
     }
@@ -210,7 +229,6 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
     }
   }
 
-
   private void scanVersions(long round) {
 
     Set<String> dataCenters = Sets.newLinkedHashSet();
@@ -227,7 +245,11 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
           dataCenter,
           interest,
           callableInfo -> {
-            if (checkInterest(callableInfo.getDataCenter(), callableInfo.getDataInfoId(), callableInfo.getVersion().getValue()).interested) {
+            if (checkInterest(
+                    callableInfo.getDataCenter(),
+                    callableInfo.getDataInfoId(),
+                    callableInfo.getVersion().getValue())
+                .interested) {
               query(callableInfo.getDataInfoId());
               SCAN_VER_LOGGER.info(
                   "[fetchSlotVerNotify]round={},{},{},{},{}",
@@ -239,7 +261,6 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
             }
           });
     }
-
   }
 
   private InterestVersionCheck checkInterest(String dataCenter, String dataInfoId, long version) {
@@ -257,7 +278,6 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
   private Map<String, DatumVersion> interestVersions(String dataCenter) {
     Map<String, DatumVersion> ret = Maps.newHashMapWithExpectedSize(4096);
 
-
     for (Entry<String, MappingVersionStorage> entry : versions.entrySet()) {
       String dataInfoId = entry.getKey();
       Long version = entry.getValue().getVersion(dataCenter);
@@ -270,6 +290,7 @@ public class ServiceAppMappingCacheService extends BaseMetadataCache<InterfaceMa
 
     /**
      * Notifies the listener that a removal occurred at some point in the past.
+     *
      * @param notification
      */
     @Override

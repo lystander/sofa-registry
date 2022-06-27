@@ -20,7 +20,6 @@ import com.alipay.sofa.registry.common.model.ClientOffPublishers;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.Publisher;
-import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.remoting.exchange.ExchangeCallback;
 import java.util.Map;
 import java.util.Set;

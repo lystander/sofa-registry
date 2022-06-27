@@ -1,16 +1,30 @@
-/** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.alipay.sofa.registry.common.model.store;
 
 import com.alipay.sofa.registry.cache.Sizer;
 import com.google.common.collect.Maps;
-import org.springframework.util.CollectionUtils;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author xiaojian.xj
@@ -50,12 +64,16 @@ public class MultiSubDatum implements Serializable, Sizer {
   }
 
   public static MultiSubDatum of(SubDatum datum) {
-    return new MultiSubDatum(datum.getDataInfoId(), Collections.singletonMap(datum.getDataCenter(), SubDatum.intern(datum)));
+    return new MultiSubDatum(
+        datum.getDataInfoId(),
+        Collections.singletonMap(datum.getDataCenter(), SubDatum.intern(datum)));
   }
 
   @Override
   public int size() {
-    return CollectionUtils.isEmpty(datumMap) ? 0 : datumMap.values().stream().mapToInt(SubDatum::size).sum();
+    return CollectionUtils.isEmpty(datumMap)
+        ? 0
+        : datumMap.values().stream().mapToInt(SubDatum::size).sum();
   }
 
   /**
@@ -93,12 +111,15 @@ public class MultiSubDatum implements Serializable, Sizer {
   }
 
   public int getPubNum() {
-    return CollectionUtils.isEmpty(datumMap) ? 0 : datumMap.values().stream().mapToInt(SubDatum::getPubNum).sum();
+    return CollectionUtils.isEmpty(datumMap)
+        ? 0
+        : datumMap.values().stream().mapToInt(SubDatum::getPubNum).sum();
   }
 
   public int getDataBoxBytes() {
-    return CollectionUtils.isEmpty(datumMap) ? 0 : datumMap.values().stream().mapToInt(SubDatum::getDataBoxBytes).sum();
-
+    return CollectionUtils.isEmpty(datumMap)
+        ? 0
+        : datumMap.values().stream().mapToInt(SubDatum::getDataBoxBytes).sum();
   }
 
   public Map<String, Long> getVersion() {

@@ -30,8 +30,6 @@ import com.alipay.sofa.registry.util.DatumVersionUtil;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.springframework.util.CollectionUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.springframework.util.CollectionUtils;
 
 /**
  * The type Received data converter.
@@ -87,22 +86,31 @@ public final class ReceivedDataConverter {
 
     Map<String, Integer> dataCount;
     if (acceptMulti) {
-      dataCount = fillMultiRegionData(unzipDatum, receivedData, zonePredicate, allLocalSegmentZones, localSegmentZonePredicate);
+      dataCount =
+          fillMultiRegionData(
+              unzipDatum,
+              receivedData,
+              zonePredicate,
+              allLocalSegmentZones,
+              localSegmentZonePredicate);
     } else {
       dataCount = fillRegionDatas(unzipDatum, receivedData, localDataCenter, zonePredicate);
     }
     return new PushData<>(receivedData, dataCount);
   }
 
-  private static Map<String, Integer> fillMultiRegionData(MultiSubDatum unzipDatum, ReceivedData receivedData,
-                                                          Predicate<String> zonePredicate,
-                                                          Set<String> allLocalSegmentZones,
-                                                          Predicate<String> localSegmentZonePredicate) {
+  private static Map<String, Integer> fillMultiRegionData(
+      MultiSubDatum unzipDatum,
+      ReceivedData receivedData,
+      Predicate<String> zonePredicate,
+      Set<String> allLocalSegmentZones,
+      Predicate<String> localSegmentZonePredicate) {
     int size = unzipDatum.getDatumMap().size();
 
     final Map<String, Integer> dataCount = Maps.newHashMapWithExpectedSize(size);
-    final Map<String/*dataCenter*/, Map<String/*zone*/, List<DataBox>>> multiDatas = Maps.newHashMapWithExpectedSize(size);
-    final Map<String/*dataCenter*/, Long> multiVersion = Maps.newHashMapWithExpectedSize(size);
+    final Map<String /*dataCenter*/, Map<String /*zone*/, List<DataBox>>> multiDatas =
+        Maps.newHashMapWithExpectedSize(size);
+    final Map<String /*dataCenter*/, Long> multiVersion = Maps.newHashMapWithExpectedSize(size);
 
     for (Entry<String, SubDatum> entry : unzipDatum.getDatumMap().entrySet()) {
       Tuple<Integer, Map<String, List<DataBox>>> tuple = swizzData(entry.getValue(), zonePredicate);
@@ -110,7 +118,10 @@ public final class ReceivedDataConverter {
       multiVersion.put(entry.getKey(), entry.getValue().getVersion());
       dataCount.put(entry.getKey(), tuple.o1);
     }
-    final Set<String> localSegmentZones = allLocalSegmentZones.stream().filter(zone -> localSegmentZonePredicate.test(zone)).collect(Collectors.toSet());
+    final Set<String> localSegmentZones =
+        allLocalSegmentZones.stream()
+            .filter(zone -> localSegmentZonePredicate.test(zone))
+            .collect(Collectors.toSet());
 
     receivedData.setMultiDatas(multiDatas);
     receivedData.setMultiVersion(multiVersion);
@@ -118,9 +129,16 @@ public final class ReceivedDataConverter {
     return dataCount;
   }
 
-  private static Map<String, Integer> fillRegionDatas(MultiSubDatum unzipDatum, ReceivedData receivedData, String localDataCenter, Predicate<String> zonePredicate) {
+  private static Map<String, Integer> fillRegionDatas(
+      MultiSubDatum unzipDatum,
+      ReceivedData receivedData,
+      String localDataCenter,
+      Predicate<String> zonePredicate) {
 
-    ParaCheckUtil.checkEquals(unzipDatum.dataCenters(), Collections.singletonList(localDataCenter), "fillRegionDatas.dataCenter");
+    ParaCheckUtil.checkEquals(
+        unzipDatum.dataCenters(),
+        Collections.singletonList(localDataCenter),
+        "fillRegionDatas.dataCenter");
     SubDatum subDatum = unzipDatum.getSubDatum(localDataCenter);
     receivedData.setSegment(localDataCenter);
     receivedData.setVersion(subDatum.getVersion());
@@ -130,7 +148,8 @@ public final class ReceivedDataConverter {
     return Collections.singletonMap(localDataCenter, tuple.o1);
   }
 
-  private static Tuple<Integer, Map<String /*zone*/, List<DataBox>>> swizzData(SubDatum subDatum, Predicate<String> zonePredicate) {
+  private static Tuple<Integer, Map<String /*zone*/, List<DataBox>>> swizzData(
+      SubDatum subDatum, Predicate<String> zonePredicate) {
     Map<String /*zone*/, List<DataBox>> swizzMap = new HashMap<>();
     List<SubPublisher> publishers = subDatum.mustGetPublishers();
     if (publishers.isEmpty()) {

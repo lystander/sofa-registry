@@ -38,6 +38,7 @@ import com.alipay.sofa.registry.task.KeyedThreadPoolExecutor;
 import com.alipay.sofa.registry.util.DatumVersionUtil;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,9 +48,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 
@@ -59,8 +57,7 @@ public class FirePushService {
   @Autowired PushSwitchService pushSwitchService;
   @Autowired SessionServerConfig sessionServerConfig;
 
-  @Resource
-  CacheService sessionDatumCacheService;
+  @Resource CacheService sessionDatumCacheService;
 
   @Autowired Interests sessionInterests;
 
@@ -115,7 +112,8 @@ public class FirePushService {
     final long now = System.currentTimeMillis();
     TriggerPushContext pushCtx =
         new TriggerPushContext(dataCenter, emptyDatum.getVersion(), null, now);
-    PushCause cause = new PushCause(pushCtx, PushType.Empty, Collections.singletonMap(dataCenter, now));
+    PushCause cause =
+        new PushCause(pushCtx, PushType.Empty, Collections.singletonMap(dataCenter, now));
     processPush(cause, MultiSubDatum.of(emptyDatum), Collections.singletonList(subscriber));
     PUSH_EMPTY_COUNTER.inc();
     return true;
@@ -166,7 +164,11 @@ public class FirePushService {
       TriggerPushContext pushCtx =
           new TriggerPushContext(datum.getDataCenter(), datum.getVersion(), dataNode, now);
       final long datumTimestamp = PushTrace.getTriggerPushTimestamp(datum);
-      final PushCause cause = new PushCause(pushCtx, PushType.Temp, Collections.singletonMap(datum.getDataCenter(), datumTimestamp));
+      final PushCause cause =
+          new PushCause(
+              pushCtx,
+              PushType.Temp,
+              Collections.singletonMap(datum.getDataCenter(), datumTimestamp));
       processPush(cause, MultiSubDatum.of(datum), subscribers);
       PUSH_TEMP_COUNTER.inc();
       return true;
@@ -210,7 +212,8 @@ public class FirePushService {
     Map<ScopeEnum, List<Subscriber>> scopes =
         SubscriberUtils.groupByScope(sessionInterests.getDatas(datum.getDataInfoId()));
 
-    final Map<String, Long> datumTimestamp = Maps.newHashMapWithExpectedSize(datum.getDatumMap().size());
+    final Map<String, Long> datumTimestamp =
+        Maps.newHashMapWithExpectedSize(datum.getDatumMap().size());
     for (Entry<String, SubDatum> entry : datum.getDatumMap().entrySet()) {
       datumTimestamp.put(entry.getKey(), PushTrace.getTriggerPushTimestamp(entry.getValue()));
     }
@@ -278,7 +281,7 @@ public class FirePushService {
   }
 
   private List<Subscriber> subscribersPushCheck(
-          PushCause pushCause, Map<String, SubDatum> datumMap, Collection<Subscriber> subscribers) {
+      PushCause pushCause, Map<String, SubDatum> datumMap, Collection<Subscriber> subscribers) {
     List<Subscriber> subscribersSend = Lists.newArrayList();
     for (Subscriber subscriber : subscribers) {
       CircuitBreakerStatistic statistic = subscriber.getStatistic();
@@ -344,17 +347,22 @@ public class FirePushService {
     // TODO xiaojian.xj multi switch
     boolean multiSwitch = true;
 
-    Map<Boolean, List<Subscriber>> acceptMultiMap = SubscriberUtils.groupByMulti(multiSwitch, subscribers);
+    Map<Boolean, List<Subscriber>> acceptMultiMap =
+        SubscriberUtils.groupByMulti(multiSwitch, subscribers);
     // TODO xiaojian.xj datacenters list
     // accept multi sub register
     doExecuteOnReg(dataInfoId, acceptMultiMap.get(true), Collections.emptySet());
 
     // not accept multi sub register
-    doExecuteOnReg(dataInfoId, acceptMultiMap.get(false), Collections.singleton(sessionServerConfig.getSessionServerDataCenter()));
+    doExecuteOnReg(
+        dataInfoId,
+        acceptMultiMap.get(false),
+        Collections.singleton(sessionServerConfig.getSessionServerDataCenter()));
     return true;
   }
 
-  private void doExecuteOnReg(String dataInfoId, List<Subscriber> subscribers, Set<String> dataCenters) {
+  private void doExecuteOnReg(
+      String dataInfoId, List<Subscriber> subscribers, Set<String> dataCenters) {
     if (CollectionUtils.isEmpty(subscribers)) {
       return;
     }
@@ -375,13 +383,14 @@ public class FirePushService {
               first, dataCenters, ValueConstants.DEFAULT_NO_DATUM_VERSION);
       LOGGER.warn(
           "[registerEmptyPush]{},{},subNum={},{}",
-              dataInfoId,
-              dataCenters,
+          dataInfoId,
+          dataCenters,
           subscribers.size(),
           first.shortDesc());
     }
     TriggerPushContext pushCtx =
-        new TriggerPushContext(expectDatumVersions, null, SubscriberUtils.getMinRegisterTimestamp(subscribers));
+        new TriggerPushContext(
+            expectDatumVersions, null, SubscriberUtils.getMinRegisterTimestamp(subscribers));
     PushCause cause = new PushCause(pushCtx, PushType.Reg, datumTimestamp);
     Map<ScopeEnum, List<Subscriber>> scopes = SubscriberUtils.groupByScope(subscribers);
     for (List<Subscriber> scopeList : scopes.values()) {

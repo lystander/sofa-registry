@@ -23,12 +23,8 @@ import com.alipay.sofa.registry.common.model.dataserver.DatumDigest;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
-import com.alipay.sofa.registry.log.LoggerFactory;
-import com.alipay.sofa.registry.util.StringFormatter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.logging.log4j.core.config.Loggers;
-
 import java.util.*;
 
 /**
@@ -133,26 +129,28 @@ public final class DataSlotDiffUtils {
   public static void logDiffResult(DataSlotDiffPublisherResult result, int slotId, Logger logger) {
     if (!result.isEmpty()) {
 
-      logger.info("DiffPublisher, slotId={}, remain={}, update={}/{}, remove={}/{}, removes={}",
-              slotId,
-              result.isHasRemain(),
-              result.getUpdatedPublishers().size(),
-              result.getUpdatedPublishersCount(),
-              result.getRemovedPublishers().size(),
-              result.getRemovedPublishersCount(),
-              result.getRemovedPublishers().keySet());
+      logger.info(
+          "DiffPublisher, slotId={}, remain={}, update={}/{}, remove={}/{}, removes={}",
+          slotId,
+          result.isHasRemain(),
+          result.getUpdatedPublishers().size(),
+          result.getUpdatedPublishersCount(),
+          result.getRemovedPublishers().size(),
+          result.getRemovedPublishersCount(),
+          result.getRemovedPublishers().keySet());
     }
   }
 
   public static void logDiffResult(DataSlotDiffDigestResult result, int slotId, Logger logger) {
     if (!result.isEmpty()) {
-      logger.info("DiffDigest, slotId={}, update={}, add={}, remove={}, adds={}, removes={}",
-              slotId,
-              result.getUpdatedDataInfoIds().size(),
-              result.getAddedDataInfoIds().size(),
-              result.getRemovedDataInfoIds().size(),
-              result.getAddedDataInfoIds(),
-              result.getRemovedDataInfoIds());
+      logger.info(
+          "DiffDigest, slotId={}, update={}, add={}, remove={}, adds={}, removes={}",
+          slotId,
+          result.getUpdatedDataInfoIds().size(),
+          result.getAddedDataInfoIds().size(),
+          result.getRemovedDataInfoIds().size(),
+          result.getAddedDataInfoIds(),
+          result.getRemovedDataInfoIds());
     }
   }
 }

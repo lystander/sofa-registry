@@ -21,7 +21,6 @@ import com.alipay.sofa.registry.common.model.constants.ValueConstants;
 import com.alipay.sofa.registry.common.model.metaserver.CompressDatumSwitch;
 import com.alipay.sofa.registry.common.model.metaserver.CompressPushSwitch;
 import com.alipay.sofa.registry.common.model.metaserver.ProvideData;
-import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.SubDatum;
 import com.alipay.sofa.registry.compress.CompressUtils;
 import com.alipay.sofa.registry.compress.Compressor;
@@ -32,7 +31,6 @@ import com.alipay.sofa.registry.server.shared.providedata.AbstractFetchSystemPro
 import com.alipay.sofa.registry.server.shared.providedata.SystemDataStorage;
 import com.alipay.sofa.registry.util.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
 
 public class CompressDatumService
     extends AbstractFetchSystemPropertyService<CompressDatumService.CompressStorage> {

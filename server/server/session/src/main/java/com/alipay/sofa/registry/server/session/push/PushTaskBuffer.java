@@ -174,7 +174,10 @@ public final class PushTaskBuffer {
     final int hashCode;
 
     BufferTaskKey(
-            Set<String> dataCenters, InetSocketAddress addr, String dataInfoId, Set<String> subscriberIds) {
+        Set<String> dataCenters,
+        InetSocketAddress addr,
+        String dataInfoId,
+        Set<String> subscriberIds) {
       // all data change push task dataCenters.size=1
       if (dataCenters.size() > 1) {
         this.dataCenters = Sets.newTreeSet(dataCenters);

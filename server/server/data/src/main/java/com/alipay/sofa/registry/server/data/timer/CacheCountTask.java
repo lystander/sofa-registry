@@ -97,7 +97,8 @@ public class CacheCountTask {
 
   boolean count() {
     try {
-      Map<String, Map<String, List<Publisher>>> allMap = datumStorageDelegate.getLocalAllPublisher();
+      Map<String, Map<String, List<Publisher>>> allMap =
+          datumStorageDelegate.getLocalAllPublisher();
       if (!allMap.isEmpty()) {
         for (Entry<String, Map<String, List<Publisher>>> dataCenterEntry : allMap.entrySet()) {
           final String dataCenter = dataCenterEntry.getKey();
