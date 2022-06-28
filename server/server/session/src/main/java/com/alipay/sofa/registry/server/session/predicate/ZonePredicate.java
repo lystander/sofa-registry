@@ -35,12 +35,16 @@ public final class ZonePredicate {
       boolean acceptMulti,
       SessionServerConfig sessionServerConfig) {
     Predicate<String> zonePredicate =
-        (zone) ->
-            acceptMulti || zoneFilter(dataId, clientCell, scopeEnum, sessionServerConfig, zone);
+        (zone) -> {
+          if (acceptMulti) {
+            return false;
+          }
+          return zoneFilter(dataId, clientCell, scopeEnum, sessionServerConfig, zone);
+        };
     return zonePredicate;
   }
 
-  public static Predicate<String> localSegmentZonesPredicate(
+  public static Predicate<String> segmentZonesPredicate(
       String dataId,
       String clientCell,
       ScopeEnum scopeEnum,

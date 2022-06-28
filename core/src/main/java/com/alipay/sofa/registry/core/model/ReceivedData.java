@@ -50,11 +50,13 @@ public class ReceivedData implements Serializable {
   private String localZone;
 
   /** support multi dataCenter */
-  private Map<String /*dataCenter*/, Map<String /*zone*/, List<DataBox>>> multiDatas;
+  private Map<String /*dataCenter*/, Map<String /*zone*/, List<DataBox>>> unzipMultiDatas;
+
+  private Map<String /*dataCenter*/, Map<String /*zone*/, byte[]>>zipMultiDatas;
 
   private Map<String /*dataCenter*/, Long> multiVersion;
 
-  private Set<String> localSegmentZones;
+  private Map<String /*dataCenter*/, SegmentMetadata> segmentMetadata;
 
   /** Instantiates a new Received data multi. */
   public ReceivedData() {}
@@ -250,21 +252,58 @@ public class ReceivedData implements Serializable {
   }
 
   /**
-   * Getter method for property <tt>multiDatas</tt>.
+   * Getter method for property <tt>unzipMultiDatas</tt>.
    *
-   * @return property value of multiDatas
+   * @return property value of unzipMultiDatas
    */
-  public Map<String, Map<String, List<DataBox>>> getMultiDatas() {
-    return multiDatas;
+  public Map<String, Map<String, List<DataBox>>> getUnzipMultiDatas() {
+    return unzipMultiDatas;
   }
 
   /**
-   * Setter method for property <tt>multiDatas</tt>.
+   * Setter method for property <tt>unzipMultiDatas</tt>.
    *
-   * @param multiDatas value to be assigned to property multiDatas
+   * @param unzipMultiDatas value to be assigned to property unzipMultiDatas
    */
-  public void setMultiDatas(Map<String, Map<String, List<DataBox>>> multiDatas) {
-    this.multiDatas = multiDatas;
+  public void setUnzipMultiDatas(
+          Map<String, Map<String, List<DataBox>>> unzipMultiDatas) {
+    this.unzipMultiDatas = unzipMultiDatas;
+  }
+
+  /**
+   * Getter method for property <tt>zipMultiDatas</tt>.
+   *
+   * @return property value of zipMultiDatas
+   */
+  public Map<String, Map<String, byte[]>> getZipMultiDatas() {
+    return zipMultiDatas;
+  }
+
+  /**
+   * Setter method for property <tt>zipMultiDatas</tt>.
+   *
+   * @param zipMultiDatas value to be assigned to property zipMultiDatas
+   */
+  public void setZipMultiDatas(Map<String, Map<String, byte[]>> zipMultiDatas) {
+    this.zipMultiDatas = zipMultiDatas;
+  }
+
+  /**
+   * Getter method for property <tt>segmentMetadata</tt>.
+   *
+   * @return property value of segmentMetadata
+   */
+  public Map<String, SegmentMetadata> getSegmentMetadata() {
+    return segmentMetadata;
+  }
+
+  /**
+   * Setter method for property <tt>segmentMetadata</tt>.
+   *
+   * @param segmentMetadata value to be assigned to property segmentMetadata
+   */
+  public void setSegmentMetadata(Map<String, SegmentMetadata> segmentMetadata) {
+    this.segmentMetadata = segmentMetadata;
   }
 
   /**
@@ -283,24 +322,6 @@ public class ReceivedData implements Serializable {
    */
   public void setMultiVersion(Map<String, Long> multiVersion) {
     this.multiVersion = multiVersion;
-  }
-
-  /**
-   * Getter method for property <tt>localSegmentZones</tt>.
-   *
-   * @return property value of localSegmentZones
-   */
-  public Set<String> getLocalSegmentZones() {
-    return localSegmentZones;
-  }
-
-  /**
-   * Setter method for property <tt>localSegmentZones</tt>.
-   *
-   * @param localSegmentZones value to be assigned to property localSegmentZones
-   */
-  public void setLocalSegmentZones(Set<String> localSegmentZones) {
-    this.localSegmentZones = localSegmentZones;
   }
 
   /**

@@ -169,45 +169,79 @@ public interface ReceivedDataPbOrBuilder extends
   int getOriginBodySize();
 
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
-  int getMultiDataCount();
+  int getZipMultiDataCount();
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
-  boolean containsMultiData(
+  boolean containsZipMultiData(
       java.lang.String key);
   /**
-   * Use {@link #getMultiDataMap()} instead.
+   * Use {@link #getZipMultiDataMap()} instead.
    */
   @java.lang.Deprecated
   java.util.Map<java.lang.String, com.google.protobuf.ByteString>
-  getMultiData();
+  getZipMultiData();
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
   java.util.Map<java.lang.String, com.google.protobuf.ByteString>
-  getMultiDataMap();
+  getZipMultiDataMap();
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
 
-  com.google.protobuf.ByteString getMultiDataOrDefault(
+  com.google.protobuf.ByteString getZipMultiDataOrDefault(
       java.lang.String key,
       com.google.protobuf.ByteString defaultValue);
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
 
-  com.google.protobuf.ByteString getMultiDataOrThrow(
+  com.google.protobuf.ByteString getZipMultiDataOrThrow(
       java.lang.String key);
 
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+  int getUnzipMultiDataCount();
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+  boolean containsUnzipMultiData(
+      java.lang.String key);
+  /**
+   * Use {@link #getUnzipMultiDataMap()} instead.
+   */
+  @java.lang.Deprecated
+  java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+  getUnzipMultiData();
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+  java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+  getUnzipMultiDataMap();
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+
+  com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb getUnzipMultiDataOrDefault(
+      java.lang.String key,
+      com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb defaultValue);
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+
+  com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb getUnzipMultiDataOrThrow(
+      java.lang.String key);
+
+  /**
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
   int getMultiVersionCount();
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
   boolean containsMultiVersion(
       java.lang.String key);
@@ -218,46 +252,36 @@ public interface ReceivedDataPbOrBuilder extends
   java.util.Map<java.lang.String, java.lang.Long>
   getMultiVersion();
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
   java.util.Map<java.lang.String, java.lang.Long>
   getMultiVersionMap();
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
 
   long getMultiVersionOrDefault(
       java.lang.String key,
       long defaultValue);
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
 
   long getMultiVersionOrThrow(
       java.lang.String key);
 
   /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @return A list containing the localSegmentZones.
+   * <code>.SegmentMetadataPb segMetadata = 16;</code>
+   * @return Whether the segMetadata field is set.
    */
-  java.util.List<java.lang.String>
-      getLocalSegmentZonesList();
+  boolean hasSegMetadata();
   /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @return The count of localSegmentZones.
+   * <code>.SegmentMetadataPb segMetadata = 16;</code>
+   * @return The segMetadata.
    */
-  int getLocalSegmentZonesCount();
+  com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb getSegMetadata();
   /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @param index The index of the element to return.
-   * @return The localSegmentZones at the given index.
+   * <code>.SegmentMetadataPb segMetadata = 16;</code>
    */
-  java.lang.String getLocalSegmentZones(int index);
-  /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @param index The index of the value to return.
-   * @return The bytes of the localSegmentZones at the given index.
-   */
-  com.google.protobuf.ByteString
-      getLocalSegmentZonesBytes(int index);
+  com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOrBuilder getSegMetadataOrBuilder();
 }

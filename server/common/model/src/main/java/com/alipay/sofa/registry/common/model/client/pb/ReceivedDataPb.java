@@ -25,7 +25,6 @@ private static final long serialVersionUID = 0L;
     localZone_ = "";
     encoding_ = "";
     body_ = com.google.protobuf.ByteString.EMPTY;
-    localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
   }
 
   @java.lang.Override
@@ -140,22 +139,35 @@ private static final long serialVersionUID = 0L;
           }
           case 106: {
             if (!((mutable_bitField0_ & 0x00000004) != 0)) {
-              multiData_ = com.google.protobuf.MapField.newMapField(
-                  MultiDataDefaultEntryHolder.defaultEntry);
+              zipMultiData_ = com.google.protobuf.MapField.newMapField(
+                  ZipMultiDataDefaultEntryHolder.defaultEntry);
               mutable_bitField0_ |= 0x00000004;
             }
             com.google.protobuf.MapEntry<java.lang.String, com.google.protobuf.ByteString>
-            multiData__ = input.readMessage(
-                MultiDataDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-            multiData_.getMutableMap().put(
-                multiData__.getKey(), multiData__.getValue());
+            zipMultiData__ = input.readMessage(
+                ZipMultiDataDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+            zipMultiData_.getMutableMap().put(
+                zipMultiData__.getKey(), zipMultiData__.getValue());
             break;
           }
           case 114: {
             if (!((mutable_bitField0_ & 0x00000008) != 0)) {
+              unzipMultiData_ = com.google.protobuf.MapField.newMapField(
+                  UnzipMultiDataDefaultEntryHolder.defaultEntry);
+              mutable_bitField0_ |= 0x00000008;
+            }
+            com.google.protobuf.MapEntry<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+            unzipMultiData__ = input.readMessage(
+                UnzipMultiDataDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+            unzipMultiData_.getMutableMap().put(
+                unzipMultiData__.getKey(), unzipMultiData__.getValue());
+            break;
+          }
+          case 122: {
+            if (!((mutable_bitField0_ & 0x00000010) != 0)) {
               multiVersion_ = com.google.protobuf.MapField.newMapField(
                   MultiVersionDefaultEntryHolder.defaultEntry);
-              mutable_bitField0_ |= 0x00000008;
+              mutable_bitField0_ |= 0x00000010;
             }
             com.google.protobuf.MapEntry<java.lang.String, java.lang.Long>
             multiVersion__ = input.readMessage(
@@ -164,13 +176,17 @@ private static final long serialVersionUID = 0L;
                 multiVersion__.getKey(), multiVersion__.getValue());
             break;
           }
-          case 122: {
-            java.lang.String s = input.readStringRequireUtf8();
-            if (!((mutable_bitField0_ & 0x00000010) != 0)) {
-              localSegmentZones_ = new com.google.protobuf.LazyStringArrayList();
-              mutable_bitField0_ |= 0x00000010;
+          case 130: {
+            com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.Builder subBuilder = null;
+            if (segMetadata_ != null) {
+              subBuilder = segMetadata_.toBuilder();
             }
-            localSegmentZones_.add(s);
+            segMetadata_ = input.readMessage(com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.parser(), extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(segMetadata_);
+              segMetadata_ = subBuilder.buildPartial();
+            }
+
             break;
           }
           default: {
@@ -191,9 +207,6 @@ private static final long serialVersionUID = 0L;
       if (((mutable_bitField0_ & 0x00000001) != 0)) {
         subscriberRegistIds_ = subscriberRegistIds_.getUnmodifiableView();
       }
-      if (((mutable_bitField0_ & 0x00000010) != 0)) {
-        localSegmentZones_ = localSegmentZones_.getUnmodifiableView();
-      }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
@@ -211,8 +224,10 @@ private static final long serialVersionUID = 0L;
       case 7:
         return internalGetData();
       case 13:
-        return internalGetMultiData();
+        return internalGetZipMultiData();
       case 14:
+        return internalGetUnzipMultiData();
+      case 15:
         return internalGetMultiVersion();
       default:
         throw new RuntimeException(
@@ -642,88 +657,169 @@ private static final long serialVersionUID = 0L;
     return originBodySize_;
   }
 
-  public static final int MULTIDATA_FIELD_NUMBER = 13;
-  private static final class MultiDataDefaultEntryHolder {
+  public static final int ZIPMULTIDATA_FIELD_NUMBER = 13;
+  private static final class ZipMultiDataDefaultEntryHolder {
     static final com.google.protobuf.MapEntry<
         java.lang.String, com.google.protobuf.ByteString> defaultEntry =
             com.google.protobuf.MapEntry
             .<java.lang.String, com.google.protobuf.ByteString>newDefaultInstance(
-                com.alipay.sofa.registry.common.model.client.pb.ReceivedDataPbOuterClass.internal_static_ReceivedDataPb_MultiDataEntry_descriptor, 
+                com.alipay.sofa.registry.common.model.client.pb.ReceivedDataPbOuterClass.internal_static_ReceivedDataPb_ZipMultiDataEntry_descriptor, 
                 com.google.protobuf.WireFormat.FieldType.STRING,
                 "",
                 com.google.protobuf.WireFormat.FieldType.BYTES,
                 com.google.protobuf.ByteString.EMPTY);
   }
   private com.google.protobuf.MapField<
-      java.lang.String, com.google.protobuf.ByteString> multiData_;
+      java.lang.String, com.google.protobuf.ByteString> zipMultiData_;
   private com.google.protobuf.MapField<java.lang.String, com.google.protobuf.ByteString>
-  internalGetMultiData() {
-    if (multiData_ == null) {
+  internalGetZipMultiData() {
+    if (zipMultiData_ == null) {
       return com.google.protobuf.MapField.emptyMapField(
-          MultiDataDefaultEntryHolder.defaultEntry);
+          ZipMultiDataDefaultEntryHolder.defaultEntry);
     }
-    return multiData_;
+    return zipMultiData_;
   }
 
-  public int getMultiDataCount() {
-    return internalGetMultiData().getMap().size();
+  public int getZipMultiDataCount() {
+    return internalGetZipMultiData().getMap().size();
   }
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
 
   @java.lang.Override
-  public boolean containsMultiData(
+  public boolean containsZipMultiData(
       java.lang.String key) {
     if (key == null) { throw new NullPointerException("map key"); }
-    return internalGetMultiData().getMap().containsKey(key);
+    return internalGetZipMultiData().getMap().containsKey(key);
   }
   /**
-   * Use {@link #getMultiDataMap()} instead.
+   * Use {@link #getZipMultiDataMap()} instead.
    */
   @java.lang.Override
   @java.lang.Deprecated
-  public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getMultiData() {
-    return getMultiDataMap();
+  public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getZipMultiData() {
+    return getZipMultiDataMap();
   }
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
   @java.lang.Override
 
-  public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getMultiDataMap() {
-    return internalGetMultiData().getMap();
+  public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getZipMultiDataMap() {
+    return internalGetZipMultiData().getMap();
   }
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
   @java.lang.Override
 
-  public com.google.protobuf.ByteString getMultiDataOrDefault(
+  public com.google.protobuf.ByteString getZipMultiDataOrDefault(
       java.lang.String key,
       com.google.protobuf.ByteString defaultValue) {
     if (key == null) { throw new NullPointerException("map key"); }
     java.util.Map<java.lang.String, com.google.protobuf.ByteString> map =
-        internalGetMultiData().getMap();
+        internalGetZipMultiData().getMap();
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
   /**
-   * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+   * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
    */
   @java.lang.Override
 
-  public com.google.protobuf.ByteString getMultiDataOrThrow(
+  public com.google.protobuf.ByteString getZipMultiDataOrThrow(
       java.lang.String key) {
     if (key == null) { throw new NullPointerException("map key"); }
     java.util.Map<java.lang.String, com.google.protobuf.ByteString> map =
-        internalGetMultiData().getMap();
+        internalGetZipMultiData().getMap();
     if (!map.containsKey(key)) {
       throw new java.lang.IllegalArgumentException();
     }
     return map.get(key);
   }
 
-  public static final int MULTIVERSION_FIELD_NUMBER = 14;
+  public static final int UNZIPMULTIDATA_FIELD_NUMBER = 14;
+  private static final class UnzipMultiDataDefaultEntryHolder {
+    static final com.google.protobuf.MapEntry<
+        java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> defaultEntry =
+            com.google.protobuf.MapEntry
+            .<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>newDefaultInstance(
+                com.alipay.sofa.registry.common.model.client.pb.ReceivedDataPbOuterClass.internal_static_ReceivedDataPb_UnzipMultiDataEntry_descriptor, 
+                com.google.protobuf.WireFormat.FieldType.STRING,
+                "",
+                com.google.protobuf.WireFormat.FieldType.MESSAGE,
+                com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb.getDefaultInstance());
+  }
+  private com.google.protobuf.MapField<
+      java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> unzipMultiData_;
+  private com.google.protobuf.MapField<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+  internalGetUnzipMultiData() {
+    if (unzipMultiData_ == null) {
+      return com.google.protobuf.MapField.emptyMapField(
+          UnzipMultiDataDefaultEntryHolder.defaultEntry);
+    }
+    return unzipMultiData_;
+  }
+
+  public int getUnzipMultiDataCount() {
+    return internalGetUnzipMultiData().getMap().size();
+  }
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+
+  @java.lang.Override
+  public boolean containsUnzipMultiData(
+      java.lang.String key) {
+    if (key == null) { throw new NullPointerException("map key"); }
+    return internalGetUnzipMultiData().getMap().containsKey(key);
+  }
+  /**
+   * Use {@link #getUnzipMultiDataMap()} instead.
+   */
+  @java.lang.Override
+  @java.lang.Deprecated
+  public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> getUnzipMultiData() {
+    return getUnzipMultiDataMap();
+  }
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+  @java.lang.Override
+
+  public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> getUnzipMultiDataMap() {
+    return internalGetUnzipMultiData().getMap();
+  }
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+  @java.lang.Override
+
+  public com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb getUnzipMultiDataOrDefault(
+      java.lang.String key,
+      com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb defaultValue) {
+    if (key == null) { throw new NullPointerException("map key"); }
+    java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> map =
+        internalGetUnzipMultiData().getMap();
+    return map.containsKey(key) ? map.get(key) : defaultValue;
+  }
+  /**
+   * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+   */
+  @java.lang.Override
+
+  public com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb getUnzipMultiDataOrThrow(
+      java.lang.String key) {
+    if (key == null) { throw new NullPointerException("map key"); }
+    java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> map =
+        internalGetUnzipMultiData().getMap();
+    if (!map.containsKey(key)) {
+      throw new java.lang.IllegalArgumentException();
+    }
+    return map.get(key);
+  }
+
+  public static final int MULTIVERSION_FIELD_NUMBER = 15;
   private static final class MultiVersionDefaultEntryHolder {
     static final com.google.protobuf.MapEntry<
         java.lang.String, java.lang.Long> defaultEntry =
@@ -750,7 +846,7 @@ private static final long serialVersionUID = 0L;
     return internalGetMultiVersion().getMap().size();
   }
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
 
   @java.lang.Override
@@ -768,7 +864,7 @@ private static final long serialVersionUID = 0L;
     return getMultiVersionMap();
   }
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
   @java.lang.Override
 
@@ -776,7 +872,7 @@ private static final long serialVersionUID = 0L;
     return internalGetMultiVersion().getMap();
   }
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
   @java.lang.Override
 
@@ -789,7 +885,7 @@ private static final long serialVersionUID = 0L;
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
   /**
-   * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+   * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
    */
   @java.lang.Override
 
@@ -804,39 +900,30 @@ private static final long serialVersionUID = 0L;
     return map.get(key);
   }
 
-  public static final int LOCALSEGMENTZONES_FIELD_NUMBER = 15;
-  private com.google.protobuf.LazyStringList localSegmentZones_;
+  public static final int SEGMETADATA_FIELD_NUMBER = 16;
+  private com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb segMetadata_;
   /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @return A list containing the localSegmentZones.
+   * <code>.SegmentMetadataPb segMetadata = 16;</code>
+   * @return Whether the segMetadata field is set.
    */
-  public com.google.protobuf.ProtocolStringList
-      getLocalSegmentZonesList() {
-    return localSegmentZones_;
+  @java.lang.Override
+  public boolean hasSegMetadata() {
+    return segMetadata_ != null;
   }
   /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @return The count of localSegmentZones.
+   * <code>.SegmentMetadataPb segMetadata = 16;</code>
+   * @return The segMetadata.
    */
-  public int getLocalSegmentZonesCount() {
-    return localSegmentZones_.size();
+  @java.lang.Override
+  public com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb getSegMetadata() {
+    return segMetadata_ == null ? com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.getDefaultInstance() : segMetadata_;
   }
   /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @param index The index of the element to return.
-   * @return The localSegmentZones at the given index.
+   * <code>.SegmentMetadataPb segMetadata = 16;</code>
    */
-  public java.lang.String getLocalSegmentZones(int index) {
-    return localSegmentZones_.get(index);
-  }
-  /**
-   * <code>repeated string localSegmentZones = 15;</code>
-   * @param index The index of the value to return.
-   * @return The bytes of the localSegmentZones at the given index.
-   */
-  public com.google.protobuf.ByteString
-      getLocalSegmentZonesBytes(int index) {
-    return localSegmentZones_.getByteString(index);
+  @java.lang.Override
+  public com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOrBuilder getSegMetadataOrBuilder() {
+    return getSegMetadata();
   }
 
   private byte memoizedIsInitialized = -1;
@@ -895,17 +982,23 @@ private static final long serialVersionUID = 0L;
     com.google.protobuf.GeneratedMessageV3
       .serializeStringMapTo(
         output,
-        internalGetMultiData(),
-        MultiDataDefaultEntryHolder.defaultEntry,
+        internalGetZipMultiData(),
+        ZipMultiDataDefaultEntryHolder.defaultEntry,
         13);
+    com.google.protobuf.GeneratedMessageV3
+      .serializeStringMapTo(
+        output,
+        internalGetUnzipMultiData(),
+        UnzipMultiDataDefaultEntryHolder.defaultEntry,
+        14);
     com.google.protobuf.GeneratedMessageV3
       .serializeStringMapTo(
         output,
         internalGetMultiVersion(),
         MultiVersionDefaultEntryHolder.defaultEntry,
-        14);
-    for (int i = 0; i < localSegmentZones_.size(); i++) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 15, localSegmentZones_.getRaw(i));
+        15);
+    if (segMetadata_ != null) {
+      output.writeMessage(16, getSegMetadata());
     }
     unknownFields.writeTo(output);
   }
@@ -968,14 +1061,24 @@ private static final long serialVersionUID = 0L;
         .computeInt32Size(12, originBodySize_);
     }
     for (java.util.Map.Entry<java.lang.String, com.google.protobuf.ByteString> entry
-         : internalGetMultiData().getMap().entrySet()) {
+         : internalGetZipMultiData().getMap().entrySet()) {
       com.google.protobuf.MapEntry<java.lang.String, com.google.protobuf.ByteString>
-      multiData__ = MultiDataDefaultEntryHolder.defaultEntry.newBuilderForType()
+      zipMultiData__ = ZipMultiDataDefaultEntryHolder.defaultEntry.newBuilderForType()
           .setKey(entry.getKey())
           .setValue(entry.getValue())
           .build();
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(13, multiData__);
+          .computeMessageSize(13, zipMultiData__);
+    }
+    for (java.util.Map.Entry<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> entry
+         : internalGetUnzipMultiData().getMap().entrySet()) {
+      com.google.protobuf.MapEntry<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+      unzipMultiData__ = UnzipMultiDataDefaultEntryHolder.defaultEntry.newBuilderForType()
+          .setKey(entry.getKey())
+          .setValue(entry.getValue())
+          .build();
+      size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(14, unzipMultiData__);
     }
     for (java.util.Map.Entry<java.lang.String, java.lang.Long> entry
          : internalGetMultiVersion().getMap().entrySet()) {
@@ -985,15 +1088,11 @@ private static final long serialVersionUID = 0L;
           .setValue(entry.getValue())
           .build();
       size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(14, multiVersion__);
+          .computeMessageSize(15, multiVersion__);
     }
-    {
-      int dataSize = 0;
-      for (int i = 0; i < localSegmentZones_.size(); i++) {
-        dataSize += computeStringSizeNoTag(localSegmentZones_.getRaw(i));
-      }
-      size += dataSize;
-      size += 1 * getLocalSegmentZonesList().size();
+    if (segMetadata_ != null) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(16, getSegMetadata());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -1034,12 +1133,17 @@ private static final long serialVersionUID = 0L;
         .equals(other.getBody())) return false;
     if (getOriginBodySize()
         != other.getOriginBodySize()) return false;
-    if (!internalGetMultiData().equals(
-        other.internalGetMultiData())) return false;
+    if (!internalGetZipMultiData().equals(
+        other.internalGetZipMultiData())) return false;
+    if (!internalGetUnzipMultiData().equals(
+        other.internalGetUnzipMultiData())) return false;
     if (!internalGetMultiVersion().equals(
         other.internalGetMultiVersion())) return false;
-    if (!getLocalSegmentZonesList()
-        .equals(other.getLocalSegmentZonesList())) return false;
+    if (hasSegMetadata() != other.hasSegMetadata()) return false;
+    if (hasSegMetadata()) {
+      if (!getSegMetadata()
+          .equals(other.getSegMetadata())) return false;
+    }
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -1080,17 +1184,21 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getBody().hashCode();
     hash = (37 * hash) + ORIGINBODYSIZE_FIELD_NUMBER;
     hash = (53 * hash) + getOriginBodySize();
-    if (!internalGetMultiData().getMap().isEmpty()) {
-      hash = (37 * hash) + MULTIDATA_FIELD_NUMBER;
-      hash = (53 * hash) + internalGetMultiData().hashCode();
+    if (!internalGetZipMultiData().getMap().isEmpty()) {
+      hash = (37 * hash) + ZIPMULTIDATA_FIELD_NUMBER;
+      hash = (53 * hash) + internalGetZipMultiData().hashCode();
+    }
+    if (!internalGetUnzipMultiData().getMap().isEmpty()) {
+      hash = (37 * hash) + UNZIPMULTIDATA_FIELD_NUMBER;
+      hash = (53 * hash) + internalGetUnzipMultiData().hashCode();
     }
     if (!internalGetMultiVersion().getMap().isEmpty()) {
       hash = (37 * hash) + MULTIVERSION_FIELD_NUMBER;
       hash = (53 * hash) + internalGetMultiVersion().hashCode();
     }
-    if (getLocalSegmentZonesCount() > 0) {
-      hash = (37 * hash) + LOCALSEGMENTZONES_FIELD_NUMBER;
-      hash = (53 * hash) + getLocalSegmentZonesList().hashCode();
+    if (hasSegMetadata()) {
+      hash = (37 * hash) + SEGMETADATA_FIELD_NUMBER;
+      hash = (53 * hash) + getSegMetadata().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -1206,8 +1314,10 @@ private static final long serialVersionUID = 0L;
         case 7:
           return internalGetData();
         case 13:
-          return internalGetMultiData();
+          return internalGetZipMultiData();
         case 14:
+          return internalGetUnzipMultiData();
+        case 15:
           return internalGetMultiVersion();
         default:
           throw new RuntimeException(
@@ -1221,8 +1331,10 @@ private static final long serialVersionUID = 0L;
         case 7:
           return internalGetMutableData();
         case 13:
-          return internalGetMutableMultiData();
+          return internalGetMutableZipMultiData();
         case 14:
+          return internalGetMutableUnzipMultiData();
+        case 15:
           return internalGetMutableMultiVersion();
         default:
           throw new RuntimeException(
@@ -1278,10 +1390,15 @@ private static final long serialVersionUID = 0L;
 
       originBodySize_ = 0;
 
-      internalGetMutableMultiData().clear();
+      internalGetMutableZipMultiData().clear();
+      internalGetMutableUnzipMultiData().clear();
       internalGetMutableMultiVersion().clear();
-      localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000010);
+      if (segMetadataBuilder_ == null) {
+        segMetadata_ = null;
+      } else {
+        segMetadata_ = null;
+        segMetadataBuilder_ = null;
+      }
       return this;
     }
 
@@ -1326,15 +1443,17 @@ private static final long serialVersionUID = 0L;
       result.encoding_ = encoding_;
       result.body_ = body_;
       result.originBodySize_ = originBodySize_;
-      result.multiData_ = internalGetMultiData();
-      result.multiData_.makeImmutable();
+      result.zipMultiData_ = internalGetZipMultiData();
+      result.zipMultiData_.makeImmutable();
+      result.unzipMultiData_ = internalGetUnzipMultiData();
+      result.unzipMultiData_.makeImmutable();
       result.multiVersion_ = internalGetMultiVersion();
       result.multiVersion_.makeImmutable();
-      if (((bitField0_ & 0x00000010) != 0)) {
-        localSegmentZones_ = localSegmentZones_.getUnmodifiableView();
-        bitField0_ = (bitField0_ & ~0x00000010);
+      if (segMetadataBuilder_ == null) {
+        result.segMetadata_ = segMetadata_;
+      } else {
+        result.segMetadata_ = segMetadataBuilder_.build();
       }
-      result.localSegmentZones_ = localSegmentZones_;
       onBuilt();
       return result;
     }
@@ -1432,19 +1551,14 @@ private static final long serialVersionUID = 0L;
       if (other.getOriginBodySize() != 0) {
         setOriginBodySize(other.getOriginBodySize());
       }
-      internalGetMutableMultiData().mergeFrom(
-          other.internalGetMultiData());
+      internalGetMutableZipMultiData().mergeFrom(
+          other.internalGetZipMultiData());
+      internalGetMutableUnzipMultiData().mergeFrom(
+          other.internalGetUnzipMultiData());
       internalGetMutableMultiVersion().mergeFrom(
           other.internalGetMultiVersion());
-      if (!other.localSegmentZones_.isEmpty()) {
-        if (localSegmentZones_.isEmpty()) {
-          localSegmentZones_ = other.localSegmentZones_;
-          bitField0_ = (bitField0_ & ~0x00000010);
-        } else {
-          ensureLocalSegmentZonesIsMutable();
-          localSegmentZones_.addAll(other.localSegmentZones_);
-        }
-        onChanged();
+      if (other.hasSegMetadata()) {
+        mergeSegMetadata(other.getSegMetadata());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -2346,99 +2460,99 @@ private static final long serialVersionUID = 0L;
     }
 
     private com.google.protobuf.MapField<
-        java.lang.String, com.google.protobuf.ByteString> multiData_;
+        java.lang.String, com.google.protobuf.ByteString> zipMultiData_;
     private com.google.protobuf.MapField<java.lang.String, com.google.protobuf.ByteString>
-    internalGetMultiData() {
-      if (multiData_ == null) {
+    internalGetZipMultiData() {
+      if (zipMultiData_ == null) {
         return com.google.protobuf.MapField.emptyMapField(
-            MultiDataDefaultEntryHolder.defaultEntry);
+            ZipMultiDataDefaultEntryHolder.defaultEntry);
       }
-      return multiData_;
+      return zipMultiData_;
     }
     private com.google.protobuf.MapField<java.lang.String, com.google.protobuf.ByteString>
-    internalGetMutableMultiData() {
+    internalGetMutableZipMultiData() {
       onChanged();;
-      if (multiData_ == null) {
-        multiData_ = com.google.protobuf.MapField.newMapField(
-            MultiDataDefaultEntryHolder.defaultEntry);
+      if (zipMultiData_ == null) {
+        zipMultiData_ = com.google.protobuf.MapField.newMapField(
+            ZipMultiDataDefaultEntryHolder.defaultEntry);
       }
-      if (!multiData_.isMutable()) {
-        multiData_ = multiData_.copy();
+      if (!zipMultiData_.isMutable()) {
+        zipMultiData_ = zipMultiData_.copy();
       }
-      return multiData_;
+      return zipMultiData_;
     }
 
-    public int getMultiDataCount() {
-      return internalGetMultiData().getMap().size();
+    public int getZipMultiDataCount() {
+      return internalGetZipMultiData().getMap().size();
     }
     /**
-     * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+     * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
      */
 
     @java.lang.Override
-    public boolean containsMultiData(
+    public boolean containsZipMultiData(
         java.lang.String key) {
       if (key == null) { throw new NullPointerException("map key"); }
-      return internalGetMultiData().getMap().containsKey(key);
+      return internalGetZipMultiData().getMap().containsKey(key);
     }
     /**
-     * Use {@link #getMultiDataMap()} instead.
+     * Use {@link #getZipMultiDataMap()} instead.
      */
     @java.lang.Override
     @java.lang.Deprecated
-    public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getMultiData() {
-      return getMultiDataMap();
+    public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getZipMultiData() {
+      return getZipMultiDataMap();
     }
     /**
-     * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+     * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
      */
     @java.lang.Override
 
-    public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getMultiDataMap() {
-      return internalGetMultiData().getMap();
+    public java.util.Map<java.lang.String, com.google.protobuf.ByteString> getZipMultiDataMap() {
+      return internalGetZipMultiData().getMap();
     }
     /**
-     * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+     * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
      */
     @java.lang.Override
 
-    public com.google.protobuf.ByteString getMultiDataOrDefault(
+    public com.google.protobuf.ByteString getZipMultiDataOrDefault(
         java.lang.String key,
         com.google.protobuf.ByteString defaultValue) {
       if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, com.google.protobuf.ByteString> map =
-          internalGetMultiData().getMap();
+          internalGetZipMultiData().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+     * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
      */
     @java.lang.Override
 
-    public com.google.protobuf.ByteString getMultiDataOrThrow(
+    public com.google.protobuf.ByteString getZipMultiDataOrThrow(
         java.lang.String key) {
       if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, com.google.protobuf.ByteString> map =
-          internalGetMultiData().getMap();
+          internalGetZipMultiData().getMap();
       if (!map.containsKey(key)) {
         throw new java.lang.IllegalArgumentException();
       }
       return map.get(key);
     }
 
-    public Builder clearMultiData() {
-      internalGetMutableMultiData().getMutableMap()
+    public Builder clearZipMultiData() {
+      internalGetMutableZipMultiData().getMutableMap()
           .clear();
       return this;
     }
     /**
-     * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+     * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
      */
 
-    public Builder removeMultiData(
+    public Builder removeZipMultiData(
         java.lang.String key) {
       if (key == null) { throw new NullPointerException("map key"); }
-      internalGetMutableMultiData().getMutableMap()
+      internalGetMutableZipMultiData().getMutableMap()
           .remove(key);
       return this;
     }
@@ -2447,13 +2561,13 @@ private static final long serialVersionUID = 0L;
      */
     @java.lang.Deprecated
     public java.util.Map<java.lang.String, com.google.protobuf.ByteString>
-    getMutableMultiData() {
-      return internalGetMutableMultiData().getMutableMap();
+    getMutableZipMultiData() {
+      return internalGetMutableZipMultiData().getMutableMap();
     }
     /**
-     * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+     * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
      */
-    public Builder putMultiData(
+    public Builder putZipMultiData(
         java.lang.String key,
         com.google.protobuf.ByteString value) {
       if (key == null) { throw new NullPointerException("map key"); }
@@ -2461,17 +2575,148 @@ private static final long serialVersionUID = 0L;
   throw new NullPointerException("map value");
 }
 
-      internalGetMutableMultiData().getMutableMap()
+      internalGetMutableZipMultiData().getMutableMap()
           .put(key, value);
       return this;
     }
     /**
-     * <code>map&lt;string, bytes&gt; multiData = 13;</code>
+     * <code>map&lt;string, bytes&gt; zipMultiData = 13;</code>
      */
 
-    public Builder putAllMultiData(
+    public Builder putAllZipMultiData(
         java.util.Map<java.lang.String, com.google.protobuf.ByteString> values) {
-      internalGetMutableMultiData().getMutableMap()
+      internalGetMutableZipMultiData().getMutableMap()
+          .putAll(values);
+      return this;
+    }
+
+    private com.google.protobuf.MapField<
+        java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> unzipMultiData_;
+    private com.google.protobuf.MapField<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+    internalGetUnzipMultiData() {
+      if (unzipMultiData_ == null) {
+        return com.google.protobuf.MapField.emptyMapField(
+            UnzipMultiDataDefaultEntryHolder.defaultEntry);
+      }
+      return unzipMultiData_;
+    }
+    private com.google.protobuf.MapField<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+    internalGetMutableUnzipMultiData() {
+      onChanged();;
+      if (unzipMultiData_ == null) {
+        unzipMultiData_ = com.google.protobuf.MapField.newMapField(
+            UnzipMultiDataDefaultEntryHolder.defaultEntry);
+      }
+      if (!unzipMultiData_.isMutable()) {
+        unzipMultiData_ = unzipMultiData_.copy();
+      }
+      return unzipMultiData_;
+    }
+
+    public int getUnzipMultiDataCount() {
+      return internalGetUnzipMultiData().getMap().size();
+    }
+    /**
+     * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+     */
+
+    @java.lang.Override
+    public boolean containsUnzipMultiData(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      return internalGetUnzipMultiData().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getUnzipMultiDataMap()} instead.
+     */
+    @java.lang.Override
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> getUnzipMultiData() {
+      return getUnzipMultiDataMap();
+    }
+    /**
+     * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+     */
+    @java.lang.Override
+
+    public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> getUnzipMultiDataMap() {
+      return internalGetUnzipMultiData().getMap();
+    }
+    /**
+     * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+     */
+    @java.lang.Override
+
+    public com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb getUnzipMultiDataOrDefault(
+        java.lang.String key,
+        com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb defaultValue) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> map =
+          internalGetUnzipMultiData().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+     */
+    @java.lang.Override
+
+    public com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb getUnzipMultiDataOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> map =
+          internalGetUnzipMultiData().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    public Builder clearUnzipMultiData() {
+      internalGetMutableUnzipMultiData().getMutableMap()
+          .clear();
+      return this;
+    }
+    /**
+     * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+     */
+
+    public Builder removeUnzipMultiData(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      internalGetMutableUnzipMultiData().getMutableMap()
+          .remove(key);
+      return this;
+    }
+    /**
+     * Use alternate mutation accessors instead.
+     */
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb>
+    getMutableUnzipMultiData() {
+      return internalGetMutableUnzipMultiData().getMutableMap();
+    }
+    /**
+     * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+     */
+    public Builder putUnzipMultiData(
+        java.lang.String key,
+        com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb value) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      if (value == null) {
+  throw new NullPointerException("map value");
+}
+
+      internalGetMutableUnzipMultiData().getMutableMap()
+          .put(key, value);
+      return this;
+    }
+    /**
+     * <code>map&lt;string, .ReceivedDataBodyPb&gt; unzipMultiData = 14;</code>
+     */
+
+    public Builder putAllUnzipMultiData(
+        java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.ReceivedDataBodyPb> values) {
+      internalGetMutableUnzipMultiData().getMutableMap()
           .putAll(values);
       return this;
     }
@@ -2503,7 +2748,7 @@ private static final long serialVersionUID = 0L;
       return internalGetMultiVersion().getMap().size();
     }
     /**
-     * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+     * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
      */
 
     @java.lang.Override
@@ -2521,7 +2766,7 @@ private static final long serialVersionUID = 0L;
       return getMultiVersionMap();
     }
     /**
-     * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+     * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
      */
     @java.lang.Override
 
@@ -2529,7 +2774,7 @@ private static final long serialVersionUID = 0L;
       return internalGetMultiVersion().getMap();
     }
     /**
-     * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+     * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
      */
     @java.lang.Override
 
@@ -2542,7 +2787,7 @@ private static final long serialVersionUID = 0L;
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+     * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
      */
     @java.lang.Override
 
@@ -2563,7 +2808,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+     * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
      */
 
     public Builder removeMultiVersion(
@@ -2582,7 +2827,7 @@ private static final long serialVersionUID = 0L;
       return internalGetMutableMultiVersion().getMutableMap();
     }
     /**
-     * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+     * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
      */
     public Builder putMultiVersion(
         java.lang.String key,
@@ -2594,7 +2839,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>map&lt;string, int64&gt; multiVersion = 14;</code>
+     * <code>map&lt;string, int64&gt; multiVersion = 15;</code>
      */
 
     public Builder putAllMultiVersion(
@@ -2604,114 +2849,123 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private com.google.protobuf.LazyStringList localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-    private void ensureLocalSegmentZonesIsMutable() {
-      if (!((bitField0_ & 0x00000010) != 0)) {
-        localSegmentZones_ = new com.google.protobuf.LazyStringArrayList(localSegmentZones_);
-        bitField0_ |= 0x00000010;
-       }
+    private com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb segMetadata_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb, com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.Builder, com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOrBuilder> segMetadataBuilder_;
+    /**
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
+     * @return Whether the segMetadata field is set.
+     */
+    public boolean hasSegMetadata() {
+      return segMetadataBuilder_ != null || segMetadata_ != null;
     }
     /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @return A list containing the localSegmentZones.
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
+     * @return The segMetadata.
      */
-    public com.google.protobuf.ProtocolStringList
-        getLocalSegmentZonesList() {
-      return localSegmentZones_.getUnmodifiableView();
+    public com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb getSegMetadata() {
+      if (segMetadataBuilder_ == null) {
+        return segMetadata_ == null ? com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.getDefaultInstance() : segMetadata_;
+      } else {
+        return segMetadataBuilder_.getMessage();
+      }
     }
     /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @return The count of localSegmentZones.
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
      */
-    public int getLocalSegmentZonesCount() {
-      return localSegmentZones_.size();
-    }
-    /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @param index The index of the element to return.
-     * @return The localSegmentZones at the given index.
-     */
-    public java.lang.String getLocalSegmentZones(int index) {
-      return localSegmentZones_.get(index);
-    }
-    /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the localSegmentZones at the given index.
-     */
-    public com.google.protobuf.ByteString
-        getLocalSegmentZonesBytes(int index) {
-      return localSegmentZones_.getByteString(index);
-    }
-    /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @param index The index to set the value at.
-     * @param value The localSegmentZones to set.
-     * @return This builder for chaining.
-     */
-    public Builder setLocalSegmentZones(
-        int index, java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureLocalSegmentZonesIsMutable();
-      localSegmentZones_.set(index, value);
-      onChanged();
+    public Builder setSegMetadata(com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb value) {
+      if (segMetadataBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        segMetadata_ = value;
+        onChanged();
+      } else {
+        segMetadataBuilder_.setMessage(value);
+      }
+
       return this;
     }
     /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @param value The localSegmentZones to add.
-     * @return This builder for chaining.
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
      */
-    public Builder addLocalSegmentZones(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureLocalSegmentZonesIsMutable();
-      localSegmentZones_.add(value);
-      onChanged();
+    public Builder setSegMetadata(
+        com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.Builder builderForValue) {
+      if (segMetadataBuilder_ == null) {
+        segMetadata_ = builderForValue.build();
+        onChanged();
+      } else {
+        segMetadataBuilder_.setMessage(builderForValue.build());
+      }
+
       return this;
     }
     /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @param values The localSegmentZones to add.
-     * @return This builder for chaining.
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
      */
-    public Builder addAllLocalSegmentZones(
-        java.lang.Iterable<java.lang.String> values) {
-      ensureLocalSegmentZonesIsMutable();
-      com.google.protobuf.AbstractMessageLite.Builder.addAll(
-          values, localSegmentZones_);
-      onChanged();
+    public Builder mergeSegMetadata(com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb value) {
+      if (segMetadataBuilder_ == null) {
+        if (segMetadata_ != null) {
+          segMetadata_ =
+            com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.newBuilder(segMetadata_).mergeFrom(value).buildPartial();
+        } else {
+          segMetadata_ = value;
+        }
+        onChanged();
+      } else {
+        segMetadataBuilder_.mergeFrom(value);
+      }
+
       return this;
     }
     /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @return This builder for chaining.
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
      */
-    public Builder clearLocalSegmentZones() {
-      localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000010);
-      onChanged();
+    public Builder clearSegMetadata() {
+      if (segMetadataBuilder_ == null) {
+        segMetadata_ = null;
+        onChanged();
+      } else {
+        segMetadata_ = null;
+        segMetadataBuilder_ = null;
+      }
+
       return this;
     }
     /**
-     * <code>repeated string localSegmentZones = 15;</code>
-     * @param value The bytes of the localSegmentZones to add.
-     * @return This builder for chaining.
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
      */
-    public Builder addLocalSegmentZonesBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      ensureLocalSegmentZonesIsMutable();
-      localSegmentZones_.add(value);
+    public com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.Builder getSegMetadataBuilder() {
+      
       onChanged();
-      return this;
+      return getSegMetadataFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
+     */
+    public com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOrBuilder getSegMetadataOrBuilder() {
+      if (segMetadataBuilder_ != null) {
+        return segMetadataBuilder_.getMessageOrBuilder();
+      } else {
+        return segMetadata_ == null ?
+            com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.getDefaultInstance() : segMetadata_;
+      }
+    }
+    /**
+     * <code>.SegmentMetadataPb segMetadata = 16;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb, com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.Builder, com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOrBuilder> 
+        getSegMetadataFieldBuilder() {
+      if (segMetadataBuilder_ == null) {
+        segMetadataBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb, com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb.Builder, com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOrBuilder>(
+                getSegMetadata(),
+                getParentForChildren(),
+                isClean());
+        segMetadata_ = null;
+      }
+      return segMetadataBuilder_;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

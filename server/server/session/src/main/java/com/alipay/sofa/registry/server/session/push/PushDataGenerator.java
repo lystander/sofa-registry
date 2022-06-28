@@ -20,13 +20,16 @@ import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.client.pb.ReceivedDataPb;
 import com.alipay.sofa.registry.common.model.store.*;
 import com.alipay.sofa.registry.compress.Compressor;
+import com.alipay.sofa.registry.core.model.DataBox;
 import com.alipay.sofa.registry.core.model.ReceivedConfigData;
 import com.alipay.sofa.registry.core.model.ReceivedData;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
 import com.alipay.sofa.registry.server.session.converter.ReceivedDataConverter;
 import com.alipay.sofa.registry.server.session.converter.pb.ReceivedDataConvertor;
+import com.alipay.sofa.registry.server.session.converter.pb.ReceivedDataConvertor.CompressorGetter;
 import com.alipay.sofa.registry.server.session.predicate.ZonePredicate;
 import com.alipay.sofa.registry.server.session.providedata.CompressPushService;
+import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.*;
@@ -62,12 +65,9 @@ public class PushDataGenerator {
         ZonePredicate.pushDataPredicate(
             dataId, clientCell, subscriber.getScope(), multi, sessionServerConfig);
 
-    Predicate<String> localSegmentZonePredicate =
-        ZonePredicate.localSegmentZonesPredicate(
+    Predicate<String> segmentZonePredicate =
+        ZonePredicate.segmentZonesPredicate(
             dataId, clientCell, subscriber.getScope(), multi, sessionServerConfig);
-
-    // todo xiaojian.xj get all localSegmentZones.
-    Set<String> allLocalSegmentZones = Sets.newHashSet();
 
     PushData<ReceivedData> pushData =
         ReceivedDataConverter.getReceivedDataMulti(
@@ -77,19 +77,39 @@ public class PushDataGenerator {
             Lists.newArrayList(subscriberMap.keySet()),
             sessionServerConfig.getSessionServerDataCenter(),
             clientCell,
-            allLocalSegmentZones,
             pushDataPredicate,
-            localSegmentZonePredicate);
+            segmentZonePredicate);
 
     final Byte serializerIndex = subscriber.getSourceAddress().getSerializerIndex();
     if (serializerIndex == null || URL.PROTOBUF != serializerIndex) {
       return pushData;
     }
-    Compressor compressor =
-        compressPushService.getCompressor(
-            pushData.getPayload(),
+
+    CompressorGetter compressorGetter = (Map<String, List<DataBox>> data) -> compressPushService.getCompressor(
+            data,
             subscriber.getAcceptEncodes(),
             subscriber.getSourceAddress().getIpAddress());
+
+    if (multi) {
+      ParaCheckUtil.checkNotEmpty(pushData.getPayload().getUnzipMultiDatas(), "unzipMultiDatas");
+      ReceivedDataPb receivedDataPb =
+              ReceivedDataConvertor.convert2MultiPb(pushData.getPayload(), compressor, multi);
+    } else {
+      ParaCheckUtil.checkNotNull(pushData.getPayload().getData(), "datas");
+      ReceivedDataPb receivedDataPb = ReceivedDataConvertor.convert2Pb(pushData.getPayload(), compressorGetter);
+
+      receivedDataPb.
+
+      return new PushData<>(
+              receivedDataPb,
+              pushData.getDataCountMap(),
+              compressor.getEncoding(),
+              receivedDataPb.getBody().size());
+    }
+
+
+
+
     if (compressor == null) {
       ReceivedDataPb receivedDataPb = ReceivedDataConvertor.convert2Pb(pushData.getPayload());
       return new PushData<>(receivedDataPb, pushData.getDataCountMap());

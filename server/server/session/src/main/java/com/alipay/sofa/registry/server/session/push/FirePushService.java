@@ -312,7 +312,7 @@ public class FirePushService {
         }
       } else {
         // sub only accept local datacenter
-        if (localDataCenter.equals(versions) && subscriber.checkVersion(versions)) {
+        if (localDataCenter.equals(versions.keySet()) && subscriber.checkVersion(versions)) {
           subscribersSend.add(subscriber);
         }
       }

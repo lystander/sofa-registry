@@ -83,12 +83,13 @@ public class CompressPushService
   }
 
   public Compressor getCompressor(
-      ReceivedData receivedData, String[] acceptEncodes, String clientIp) {
+          Map<String, List<DataBox>> data, String[] acceptEncodes, String clientIp) {
     CompressPushSwitch compressPushSwitch = getCompressSwitch();
     if (!compressEnabled(compressPushSwitch, clientIp)) {
       return null;
     }
-    if (dataBoxesMapSize(receivedData.getData()) < compressPushSwitch.getCompressMinSize()) {
+    // todo xiaojian.xj
+    if (dataBoxesMapSize(data) < compressPushSwitch.getCompressMinSize()) {
       return null;
     }
     return CompressUtils.find(acceptEncodes, compressPushSwitch.getForbidEncodes());

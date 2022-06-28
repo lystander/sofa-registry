@@ -24,14 +24,10 @@ public class PushData<T> {
   private final T payload;
   private final int totalDataCount;
   private final Map<String, Integer> dataCountMap;
-  private final String encode;
-  private final int encodeSize;
+  private final Map<String, String> encode;
+  private final Map<String, Integer> encodeSize;
 
-  public PushData(T payload, Map<String, Integer> dataCountMap) {
-    this(payload, dataCountMap, StringUtils.EMPTY, 0);
-  }
-
-  public PushData(T payload, Map<String, Integer> dataCountMap, String encode, int encodeSize) {
+  public PushData(T payload, Map<String, Integer> dataCountMap, Map<String, String> encode, Map<String, Integer> encodeSize) {
     this.payload = payload;
     this.encode = encode;
     this.encodeSize = encodeSize;
@@ -64,11 +60,21 @@ public class PushData<T> {
     return dataCountMap;
   }
 
-  public String getEncode() {
+  /**
+   * Getter method for property <tt>encode</tt>.
+   *
+   * @return property value of encode
+   */
+  public Map<String, String> getEncode() {
     return encode;
   }
 
-  public int getEncodeSize() {
+  /**
+   * Getter method for property <tt>encodeSize</tt>.
+   *
+   * @return property value of encodeSize
+   */
+  public Map<String, Integer> getEncodeSize() {
     return encodeSize;
   }
 }
