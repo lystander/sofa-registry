@@ -118,14 +118,15 @@ public final class PushTrace {
       Map<String, Long> subscriberPushedVersion,
       Map<String, Integer> pushNum,
       int retry,
-      String pushEncode,
-      int encodeSize) {
+      Map<String, String> pushEncodes,
+      Map<String, Integer> encodeSizes) {
     try {
       ParaCheckUtil.checkEquals(
           subscriberPushedVersion.keySet(), pushNum.keySet(), "finishPush.datacenters");
 
       for (Entry<String, Long> entry : subscriberPushedVersion.entrySet()) {
         String dataCenter = entry.getKey();
+        Integer encodeSize = encodeSizes.get(dataCenter);
         finish(
             dataCenter,
             status,
@@ -133,8 +134,8 @@ public final class PushTrace {
             entry.getValue(),
             pushNum.get(dataCenter),
             retry,
-            pushEncode,
-            encodeSize);
+            pushEncodes.get(dataCenter),
+            encodeSize == null ? 0 : encodeSize);
       }
     } catch (Throwable t) {
       LOGGER.error(

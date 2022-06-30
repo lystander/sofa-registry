@@ -559,16 +559,16 @@ public class PushProcessor {
     final int retryCount;
     final Map<String, Integer> pushDataCount;
     final int pushTotalDataCount;
-    final String pushEncode;
-    final int encodeSize;
+    final Map<String, String> pushEncode;
+    final Map<String, Integer> encodeSize;
 
     PushRecord(
         PushTrace pushTrace,
         TraceID taskID,
         int retryCount,
-        String pushEncode,
+        Map<String, String> pushEncode,
         Map<String, Integer> pushDataCount,
-        int encodeSize) {
+        Map<String, Integer> encodeSize) {
       this.trace = pushTrace;
       this.taskID = taskID;
       this.retryCount = retryCount;

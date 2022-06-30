@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 
 public abstract class PushTask {
@@ -48,8 +47,8 @@ public abstract class PushTask {
   protected int retryCount;
   private int pushTotalDataCount = -1;
   private Map<String, Integer> pushDataCount;
-  private String pushEncode = StringUtils.EMPTY;
-  private int encodeSize = 0;
+  private Map<String, String> pushEncode;
+  private Map<String, Integer> encodeSize;
 
   protected PushTask(
       PushCause pushCause,
@@ -182,20 +181,40 @@ public abstract class PushTask {
     this.pushDataCount = pushDataCount;
   }
 
-  public void setPushEncode(String pushEncode) {
-    this.pushEncode = pushEncode;
-  }
-
-  public void setEncodeSize(int encodeSize) {
-    this.encodeSize = encodeSize;
-  }
-
-  public String getPushEncode() {
+  /**
+   * Getter method for property <tt>pushEncode</tt>.
+   *
+   * @return property value of pushEncode
+   */
+  public Map<String, String> getPushEncode() {
     return pushEncode;
   }
 
-  public int getEncodeSize() {
+  /**
+   * Setter method for property <tt>pushEncode</tt>.
+   *
+   * @param pushEncode value to be assigned to property pushEncode
+   */
+  public void setPushEncode(Map<String, String> pushEncode) {
+    this.pushEncode = pushEncode;
+  }
+
+  /**
+   * Getter method for property <tt>encodeSize</tt>.
+   *
+   * @return property value of encodeSize
+   */
+  public Map<String, Integer> getEncodeSize() {
     return encodeSize;
+  }
+
+  /**
+   * Setter method for property <tt>encodeSize</tt>.
+   *
+   * @param encodeSize value to be assigned to property encodeSize
+   */
+  public void setEncodeSize(Map<String, Integer> encodeSize) {
+    this.encodeSize = encodeSize;
   }
 
   protected static final class PushingTaskKey {

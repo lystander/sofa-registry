@@ -69,7 +69,7 @@ public final class ReceivedDataConverter {
       List<String> subscriberRegisterIdList,
       String regionLocal,
       String localDataCenter,
-      Predicate<String> zonePredicate,
+      Predicate<String> pushdataPredicate,
       Predicate<String> segmentZonePredicate) {
 
     if (null == unzipDatum || CollectionUtils.isEmpty(unzipDatum.getDatumMap())) {
@@ -89,13 +89,9 @@ public final class ReceivedDataConverter {
     if (acceptMulti) {
       dataCount =
           fillMultiRegionData(
-              unzipDatum,
-              localDataCenter,
-              receivedData,
-              zonePredicate,
-              segmentZonePredicate);
+              unzipDatum, localDataCenter, receivedData, pushdataPredicate, segmentZonePredicate);
     } else {
-      dataCount = fillRegionDatas(unzipDatum, receivedData, localDataCenter, zonePredicate);
+      dataCount = fillRegionDatas(unzipDatum, receivedData, localDataCenter, pushdataPredicate);
     }
     return new PushData<>(receivedData, dataCount);
   }
@@ -104,7 +100,7 @@ public final class ReceivedDataConverter {
       MultiSubDatum unzipDatum,
       String localDataCenter,
       ReceivedData receivedData,
-      Predicate<String> zonePredicate,
+      Predicate<String> pushdataPredicate,
       Predicate<String> segmentZonePredicate) {
     int size = unzipDatum.getDatumMap().size();
 
@@ -116,21 +112,22 @@ public final class ReceivedDataConverter {
     final Map<String /*dataCenter*/, Long> multiVersion = Maps.newHashMapWithExpectedSize(size);
 
     for (Entry<String, SubDatum> entry : unzipDatum.getDatumMap().entrySet()) {
-      Tuple<Integer, Map<String, List<DataBox>>> tuple = swizzData(entry.getValue(), zonePredicate);
+      Tuple<Integer, Map<String, List<DataBox>>> tuple = swizzData(entry.getValue(), pushdataPredicate);
       multiDatas.put(entry.getKey(), tuple.o2);
       multiVersion.put(entry.getKey(), entry.getValue().getVersion());
       dataCount.put(entry.getKey(), tuple.o1);
 
       final Set<String> segmentZones =
-              tuple.o2.keySet().stream()
-                      .filter(zone -> segmentZonePredicate.test(zone))
-                      .collect(Collectors.toSet());
-      segmentMetadataMap.put(entry.getKey(), new SegmentMetadata(
+          tuple.o2.keySet().stream()
+              .filter(zone -> segmentZonePredicate.test(zone))
+              .collect(Collectors.toSet());
+      segmentMetadataMap.put(
+          entry.getKey(),
+          new SegmentMetadata(
               StringUtils.endsWithIgnoreCase(localDataCenter, entry.getKey()),
               entry.getKey(),
               segmentZones));
     }
-
 
     receivedData.setUnzipMultiDatas(multiDatas);
     receivedData.setMultiVersion(multiVersion);
@@ -142,7 +139,7 @@ public final class ReceivedDataConverter {
       MultiSubDatum unzipDatum,
       ReceivedData receivedData,
       String localDataCenter,
-      Predicate<String> zonePredicate) {
+      Predicate<String> pushdataPredicate) {
 
     ParaCheckUtil.checkEquals(
         unzipDatum.dataCenters(),
@@ -152,13 +149,13 @@ public final class ReceivedDataConverter {
     receivedData.setSegment(localDataCenter);
     receivedData.setVersion(subDatum.getVersion());
 
-    Tuple<Integer, Map<String, List<DataBox>>> tuple = swizzData(subDatum, zonePredicate);
+    Tuple<Integer, Map<String, List<DataBox>>> tuple = swizzData(subDatum, pushdataPredicate);
     receivedData.setData(tuple.o2);
     return Collections.singletonMap(localDataCenter, tuple.o1);
   }
 
   private static Tuple<Integer, Map<String /*zone*/, List<DataBox>>> swizzData(
-      SubDatum subDatum, Predicate<String> zonePredicate) {
+      SubDatum subDatum, Predicate<String> pushdataPredicate) {
     Map<String /*zone*/, List<DataBox>> swizzMap = new HashMap<>();
     List<SubPublisher> publishers = subDatum.mustGetPublishers();
     if (publishers.isEmpty()) {
@@ -170,7 +167,7 @@ public final class ReceivedDataConverter {
 
       String region = publisher.getCell();
 
-      if (zonePredicate.test(region)) {
+      if (pushdataPredicate.test(region)) {
         continue;
       }
       if (null == datas) {

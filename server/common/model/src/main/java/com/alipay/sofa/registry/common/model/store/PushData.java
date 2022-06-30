@@ -18,7 +18,6 @@ package com.alipay.sofa.registry.common.model.store;
 
 import java.util.Collections;
 import java.util.Map;
-import org.apache.commons.lang.StringUtils;
 
 public class PushData<T> {
   private final T payload;
@@ -27,7 +26,15 @@ public class PushData<T> {
   private final Map<String, String> encode;
   private final Map<String, Integer> encodeSize;
 
-  public PushData(T payload, Map<String, Integer> dataCountMap, Map<String, String> encode, Map<String, Integer> encodeSize) {
+  public PushData(T payload, Map<String, Integer> dataCountMap) {
+    this(payload, dataCountMap, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+  }
+
+  public PushData(
+      T payload,
+      Map<String, Integer> dataCountMap,
+      Map<String, String> encode,
+      Map<String, Integer> encodeSize) {
     this.payload = payload;
     this.encode = encode;
     this.encodeSize = encodeSize;

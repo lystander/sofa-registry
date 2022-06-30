@@ -19,7 +19,6 @@ package com.alipay.sofa.registry.server.session.push;
 import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.client.pb.ReceivedDataPb;
 import com.alipay.sofa.registry.common.model.store.*;
-import com.alipay.sofa.registry.compress.Compressor;
 import com.alipay.sofa.registry.core.model.DataBox;
 import com.alipay.sofa.registry.core.model.ReceivedConfigData;
 import com.alipay.sofa.registry.core.model.ReceivedData;
@@ -31,11 +30,14 @@ import com.alipay.sofa.registry.server.session.predicate.ZonePredicate;
 import com.alipay.sofa.registry.server.session.providedata.CompressPushService;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
+import com.google.protobuf.ByteString;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Predicate;
 import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 public class PushDataGenerator {
 
@@ -85,42 +87,40 @@ public class PushDataGenerator {
       return pushData;
     }
 
-    CompressorGetter compressorGetter = (Map<String, List<DataBox>> data) -> compressPushService.getCompressor(
-            data,
-            subscriber.getAcceptEncodes(),
-            subscriber.getSourceAddress().getIpAddress());
+    CompressorGetter compressorGetter =
+        (Map<String, List<DataBox>> data) ->
+            compressPushService.getCompressor(
+                data, subscriber.getAcceptEncodes(), subscriber.getSourceAddress().getIpAddress());
 
     if (multi) {
       ParaCheckUtil.checkNotEmpty(pushData.getPayload().getUnzipMultiDatas(), "unzipMultiDatas");
       ReceivedDataPb receivedDataPb =
-              ReceivedDataConvertor.convert2MultiPb(pushData.getPayload(), compressor, multi);
-    } else {
-      ParaCheckUtil.checkNotNull(pushData.getPayload().getData(), "datas");
-      ReceivedDataPb receivedDataPb = ReceivedDataConvertor.convert2Pb(pushData.getPayload(), compressorGetter);
+          ReceivedDataConvertor.convert2MultiPb(pushData.getPayload(), compressorGetter);
 
-      receivedDataPb.
-
-      return new PushData<>(
-              receivedDataPb,
-              pushData.getDataCountMap(),
-              compressor.getEncoding(),
-              receivedDataPb.getBody().size());
-    }
-
-
-
-
-    if (compressor == null) {
-      ReceivedDataPb receivedDataPb = ReceivedDataConvertor.convert2Pb(pushData.getPayload());
-      return new PushData<>(receivedDataPb, pushData.getDataCountMap());
-    } else {
-      ReceivedDataPb receivedDataPb =
-          ReceivedDataConvertor.convert2CompressedPb(pushData.getPayload(), compressor, multi);
+      Map<String, Integer> encodeSize =
+          Maps.newHashMapWithExpectedSize(receivedDataPb.getZipMultiDataMap().size());
+      for (Entry<String, ByteString> entry : receivedDataPb.getZipMultiDataMap().entrySet()) {
+        encodeSize.put(entry.getKey(), entry.getValue().size());
+      }
       return new PushData<>(
           receivedDataPb,
           pushData.getDataCountMap(),
-          compressor.getEncoding(),
-          receivedDataPb.getBody().size());
+          receivedDataPb.getMultiEncodingMap(),
+          encodeSize);
+
+    } else {
+      ParaCheckUtil.checkNotNull(pushData.getPayload().getData(), "datas");
+      ReceivedDataPb receivedDataPb =
+          ReceivedDataConvertor.convert2Pb(pushData.getPayload(), compressorGetter);
+      if (receivedDataPb.getBody() == null || StringUtils.isEmpty(receivedDataPb.getEncoding())) {
+        return new PushData(receivedDataPb, pushData.getDataCountMap());
+      } else {
+        return new PushData<>(
+            receivedDataPb,
+            pushData.getDataCountMap(),
+            Collections.singletonMap(receivedDataPb.getSegment(), receivedDataPb.getEncoding()),
+            Collections.singletonMap(receivedDataPb.getSegment(), receivedDataPb.getBody().size()));
+      }
     }
   }
 

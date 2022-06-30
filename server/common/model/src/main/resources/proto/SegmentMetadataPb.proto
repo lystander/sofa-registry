@@ -5,8 +5,6 @@ option go_package = "proto";
 
 message SegmentMetadataPb {
     bool localSegment = 1;
-
     string segment = 2;
-
     repeated string zones = 3;
 }

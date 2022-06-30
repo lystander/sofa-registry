@@ -21,7 +21,7 @@ import com.alipay.sofa.registry.compress.*;
 import com.alipay.sofa.registry.core.model.DataBox;
 import com.alipay.sofa.registry.core.model.ReceivedConfigData;
 import com.alipay.sofa.registry.core.model.ReceivedData;
-import com.alipay.sofa.registry.server.session.providedata.CompressPushService;
+import com.alipay.sofa.registry.core.model.SegmentMetadata;
 import com.alipay.sofa.registry.util.SystemUtils;
 import com.google.protobuf.UnsafeByteOperations;
 import java.util.*;
@@ -64,7 +64,7 @@ public final class ReceivedDataConvertor {
   }
 
   public static ReceivedDataPb convert2MultiPb(
-          ReceivedData receivedDataJava, CompressorGetter compressorGetter) {
+      ReceivedData receivedDataJava, CompressorGetter compressorGetter) {
     if (receivedDataJava == null) {
       return null;
     }
@@ -84,19 +84,35 @@ public final class ReceivedDataConvertor {
           .setSegment(segment)
           .addAllSubscriberRegistIds(receivedDataJava.getSubscriberRegistIds());
 
-        int originSize = 0;
-        for (Entry<String, Map<String, List<DataBox>>> dataCenterEntry :
-            receivedDataJava.getUnzipMultiDatas().entrySet()) {
-          String dataCenter = dataCenterEntry.getKey();
-          long version = receivedDataJava.getMultiVersion().get(dataCenter);
-          Map<String, List<DataBox>> data = dataCenterEntry.getValue();
+      int originSize = 0;
+      for (Entry<String, Map<String, List<DataBox>>> dataCenterEntry :
+          receivedDataJava.getUnzipMultiDatas().entrySet()) {
+        String dataCenter = dataCenterEntry.getKey();
+        long version = receivedDataJava.getMultiVersion().get(dataCenter);
+        Map<String, List<DataBox>> data = dataCenterEntry.getValue();
+
+        Compressor compressor = compressorGetter.get(data);
+        if (compressor == null) {
+          Map<String, DataBoxesPb> dataBoxesPbMap = DataBoxConvertor.convert2PbMaps(data);
+          builder.putUnzipMultiData(
+              dataCenter, ReceivedDataBodyConvertor.convert2Pb(dataBoxesPbMap));
+        } else {
           CompressedItem compressedItem =
               dataCenterCompressed(segment, dataId, instanceId, group, version, data, compressor);
-          // todo xiaojian.xj set receivedDataPb multiDatas multiVersion
-          originSize += compressedItem.getOriginSize();
-          builder.setOriginBodySize(originSize);
-        }
+          builder
+              .putZipMultiData(
+                  dataCenter, UnsafeByteOperations.unsafeWrap(compressedItem.getCompressedData()))
+              .putMultiEncoding(dataCenter, compressedItem.getEncoding());
 
+          originSize += compressedItem.getOriginSize();
+        }
+        builder.setOriginBodySize(originSize);
+
+        SegmentMetadata segmentMetadata = receivedDataJava.getSegmentMetadata().get(dataCenter);
+        builder.putSegMetadata(dataCenter, SegmentMetadataConvertor.convert2Pb(segmentMetadata));
+      }
+
+      builder.putAllMultiVersion(receivedDataJava.getMultiVersion());
       return builder.build();
     } catch (Throwable e) {
       throw new IllegalStateException(e);
@@ -127,7 +143,8 @@ public final class ReceivedDataConvertor {
     return compressedItem;
   }
 
-  public static ReceivedDataPb convert2Pb(ReceivedData receivedDataJava, CompressorGetter compressorGetter) {
+  public static ReceivedDataPb convert2Pb(
+      ReceivedData receivedDataJava, CompressorGetter compressorGetter) {
     if (receivedDataJava == null) {
       return null;
     }
@@ -139,34 +156,36 @@ public final class ReceivedDataConvertor {
       String group = receivedDataJava.getGroup();
 
       ReceivedDataPb.Builder builder = ReceivedDataPb.newBuilder();
-      builder.setDataId(receivedDataJava.getDataId())
-              .setGroup(receivedDataJava.getGroup())
-              .setInstanceId(receivedDataJava.getInstanceId())
-              .setLocalZone(receivedDataJava.getLocalZone())
-              .setScope(receivedDataJava.getScope())
-              .setSegment(receivedDataJava.getSegment())
-              .setVersion(receivedDataJava.getVersion())
-              .addAllSubscriberRegistIds(receivedDataJava.getSubscriberRegistIds());
+      builder
+          .setDataId(receivedDataJava.getDataId())
+          .setGroup(receivedDataJava.getGroup())
+          .setInstanceId(receivedDataJava.getInstanceId())
+          .setLocalZone(receivedDataJava.getLocalZone())
+          .setScope(receivedDataJava.getScope())
+          .setSegment(receivedDataJava.getSegment())
+          .setVersion(receivedDataJava.getVersion())
+          .addAllSubscriberRegistIds(receivedDataJava.getSubscriberRegistIds());
 
       if (compressor == null) {
         Map<String, DataBoxesPb> dataBoxesPbMap =
-                DataBoxConvertor.convert2PbMaps(receivedDataJava.getData());
+            DataBoxConvertor.convert2PbMaps(receivedDataJava.getData());
         builder.putAllData(dataBoxesPbMap);
       } else {
         CompressedItem compressedItem =
-                dataCenterCompressed(
-                        segment,
-                        dataId,
-                        instanceId,
-                        group,
-                        receivedDataJava.getVersion(),
-                        receivedDataJava.getData(),
-                        compressor);
+            dataCenterCompressed(
+                segment,
+                dataId,
+                instanceId,
+                group,
+                receivedDataJava.getVersion(),
+                receivedDataJava.getData(),
+                compressor);
         // compressed data is immutable, use unsafe wrap to avoid copy
-        builder.setBody(UnsafeByteOperations.unsafeWrap(compressedItem.getCompressedData()))
-                .setOriginBodySize(compressedItem.getOriginSize());
+        builder
+            .setEncoding(compressedItem.getEncoding())
+            .setBody(UnsafeByteOperations.unsafeWrap(compressedItem.getCompressedData()))
+            .setOriginBodySize(compressedItem.getOriginSize());
       }
-
 
       return builder.build();
     } catch (Throwable e) {
@@ -195,5 +214,24 @@ public final class ReceivedDataConvertor {
 
   public interface CompressorGetter {
     Compressor get(Map<String, List<DataBox>> data);
+  }
+
+  static final class ReceivedDataBodyConvertor {
+    public static ReceivedDataBodyPb convert2Pb(Map<String, DataBoxesPb> dataBoxesPbMap) {
+
+      ReceivedDataBodyPb.Builder builder = ReceivedDataBodyPb.newBuilder();
+      builder.putAllData(dataBoxesPbMap);
+      return builder.build();
+    }
+  }
+
+  static final class SegmentMetadataConvertor {
+    public static SegmentMetadataPb convert2Pb(SegmentMetadata metadata) {
+      SegmentMetadataPb.Builder builder = SegmentMetadataPb.newBuilder();
+      builder.setLocalSegment(metadata.isLocalSegment())
+              .setSegment(metadata.getSegment())
+              .addAllZones(metadata.getZones());
+      return builder.build()
+    }
   }
 }

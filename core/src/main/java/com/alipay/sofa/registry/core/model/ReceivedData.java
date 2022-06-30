@@ -19,7 +19,6 @@ package com.alipay.sofa.registry.core.model;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The type Received data multi.
@@ -52,7 +51,7 @@ public class ReceivedData implements Serializable {
   /** support multi dataCenter */
   private Map<String /*dataCenter*/, Map<String /*zone*/, List<DataBox>>> unzipMultiDatas;
 
-  private Map<String /*dataCenter*/, Map<String /*zone*/, byte[]>>zipMultiDatas;
+  private Map<String /*dataCenter*/, Map<String /*zone*/, byte[]>> zipMultiDatas;
 
   private Map<String /*dataCenter*/, Long> multiVersion;
 
@@ -265,8 +264,7 @@ public class ReceivedData implements Serializable {
    *
    * @param unzipMultiDatas value to be assigned to property unzipMultiDatas
    */
-  public void setUnzipMultiDatas(
-          Map<String, Map<String, List<DataBox>>> unzipMultiDatas) {
+  public void setUnzipMultiDatas(Map<String, Map<String, List<DataBox>>> unzipMultiDatas) {
     this.unzipMultiDatas = unzipMultiDatas;
   }
 

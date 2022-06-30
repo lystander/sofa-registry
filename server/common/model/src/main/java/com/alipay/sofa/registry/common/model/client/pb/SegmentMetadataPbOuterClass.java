@@ -19,11 +19,6 @@ public final class SegmentMetadataPbOuterClass {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_SegmentMetadataPb_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_SegmentMetadataPb_DataEntry_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_SegmentMetadataPb_DataEntry_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -33,33 +28,22 @@ public final class SegmentMetadataPbOuterClass {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\027SegmentMetadataPb.proto\032\030AppDiscoveryM" +
-      "etaPb.proto\"\252\001\n\021SegmentMetadataPb\022\024\n\014loc" +
-      "alSegment\030\001 \001(\010\022\031\n\021localSegmentZones\030\002 \003" +
-      "(\t\022*\n\004data\030\003 \003(\0132\034.SegmentMetadataPb.Dat" +
-      "aEntry\0328\n\tDataEntry\022\013\n\003key\030\001 \001(\t\022\032\n\005valu" +
-      "e\030\002 \001(\0132\013.StringList:\0028\001B:\n/com.alipay.s" +
-      "ofa.registry.common.model.client.pbP\001Z\005p" +
-      "rotob\006proto3"
+      "\n\027SegmentMetadataPb.proto\"I\n\021SegmentMeta" +
+      "dataPb\022\024\n\014localSegment\030\001 \001(\010\022\017\n\007segment\030" +
+      "\002 \001(\t\022\r\n\005zones\030\003 \003(\tB:\n/com.alipay.sofa." +
+      "registry.common.model.client.pbP\001Z\005proto" +
+      "b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
-          com.alipay.sofa.registry.common.model.client.pb.AppDiscoveryMetaPb.getDescriptor(),
         });
     internal_static_SegmentMetadataPb_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_SegmentMetadataPb_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_SegmentMetadataPb_descriptor,
-        new java.lang.String[] { "LocalSegment", "LocalSegmentZones", "Data", });
-    internal_static_SegmentMetadataPb_DataEntry_descriptor =
-      internal_static_SegmentMetadataPb_descriptor.getNestedTypes().get(0);
-    internal_static_SegmentMetadataPb_DataEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_SegmentMetadataPb_DataEntry_descriptor,
-        new java.lang.String[] { "Key", "Value", });
-    com.alipay.sofa.registry.common.model.client.pb.AppDiscoveryMetaPb.getDescriptor();
+        new java.lang.String[] { "LocalSegment", "Segment", "Zones", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

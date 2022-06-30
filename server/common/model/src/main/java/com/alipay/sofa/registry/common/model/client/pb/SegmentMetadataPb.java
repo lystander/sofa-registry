@@ -16,7 +16,8 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private SegmentMetadataPb() {
-    localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    segment_ = "";
+    zones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
   }
 
   @java.lang.Override
@@ -57,24 +58,17 @@ private static final long serialVersionUID = 0L;
           }
           case 18: {
             java.lang.String s = input.readStringRequireUtf8();
-            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
-              localSegmentZones_ = new com.google.protobuf.LazyStringArrayList();
-              mutable_bitField0_ |= 0x00000001;
-            }
-            localSegmentZones_.add(s);
+
+            segment_ = s;
             break;
           }
           case 26: {
-            if (!((mutable_bitField0_ & 0x00000002) != 0)) {
-              data_ = com.google.protobuf.MapField.newMapField(
-                  DataDefaultEntryHolder.defaultEntry);
-              mutable_bitField0_ |= 0x00000002;
+            java.lang.String s = input.readStringRequireUtf8();
+            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              zones_ = new com.google.protobuf.LazyStringArrayList();
+              mutable_bitField0_ |= 0x00000001;
             }
-            com.google.protobuf.MapEntry<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-            data__ = input.readMessage(
-                DataDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-            data_.getMutableMap().put(
-                data__.getKey(), data__.getValue());
+            zones_.add(s);
             break;
           }
           default: {
@@ -93,7 +87,7 @@ private static final long serialVersionUID = 0L;
           e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) != 0)) {
-        localSegmentZones_ = localSegmentZones_.getUnmodifiableView();
+        zones_ = zones_.getUnmodifiableView();
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -104,18 +98,6 @@ private static final long serialVersionUID = 0L;
     return com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOuterClass.internal_static_SegmentMetadataPb_descriptor;
   }
 
-  @SuppressWarnings({"rawtypes"})
-  @java.lang.Override
-  protected com.google.protobuf.MapField internalGetMapField(
-      int number) {
-    switch (number) {
-      case 3:
-        return internalGetData();
-      default:
-        throw new RuntimeException(
-            "Invalid map field number: " + number);
-    }
-  }
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
@@ -135,120 +117,77 @@ private static final long serialVersionUID = 0L;
     return localSegment_;
   }
 
-  public static final int LOCALSEGMENTZONES_FIELD_NUMBER = 2;
-  private com.google.protobuf.LazyStringList localSegmentZones_;
+  public static final int SEGMENT_FIELD_NUMBER = 2;
+  private volatile java.lang.Object segment_;
   /**
-   * <code>repeated string localSegmentZones = 2;</code>
-   * @return A list containing the localSegmentZones.
+   * <code>string segment = 2;</code>
+   * @return The segment.
+   */
+  @java.lang.Override
+  public java.lang.String getSegment() {
+    java.lang.Object ref = segment_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      segment_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string segment = 2;</code>
+   * @return The bytes for segment.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getSegmentBytes() {
+    java.lang.Object ref = segment_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      segment_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int ZONES_FIELD_NUMBER = 3;
+  private com.google.protobuf.LazyStringList zones_;
+  /**
+   * <code>repeated string zones = 3;</code>
+   * @return A list containing the zones.
    */
   public com.google.protobuf.ProtocolStringList
-      getLocalSegmentZonesList() {
-    return localSegmentZones_;
+      getZonesList() {
+    return zones_;
   }
   /**
-   * <code>repeated string localSegmentZones = 2;</code>
-   * @return The count of localSegmentZones.
+   * <code>repeated string zones = 3;</code>
+   * @return The count of zones.
    */
-  public int getLocalSegmentZonesCount() {
-    return localSegmentZones_.size();
+  public int getZonesCount() {
+    return zones_.size();
   }
   /**
-   * <code>repeated string localSegmentZones = 2;</code>
+   * <code>repeated string zones = 3;</code>
    * @param index The index of the element to return.
-   * @return The localSegmentZones at the given index.
+   * @return The zones at the given index.
    */
-  public java.lang.String getLocalSegmentZones(int index) {
-    return localSegmentZones_.get(index);
+  public java.lang.String getZones(int index) {
+    return zones_.get(index);
   }
   /**
-   * <code>repeated string localSegmentZones = 2;</code>
+   * <code>repeated string zones = 3;</code>
    * @param index The index of the value to return.
-   * @return The bytes of the localSegmentZones at the given index.
+   * @return The bytes of the zones at the given index.
    */
   public com.google.protobuf.ByteString
-      getLocalSegmentZonesBytes(int index) {
-    return localSegmentZones_.getByteString(index);
-  }
-
-  public static final int DATA_FIELD_NUMBER = 3;
-  private static final class DataDefaultEntryHolder {
-    static final com.google.protobuf.MapEntry<
-        java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> defaultEntry =
-            com.google.protobuf.MapEntry
-            .<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>newDefaultInstance(
-                com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOuterClass.internal_static_SegmentMetadataPb_DataEntry_descriptor, 
-                com.google.protobuf.WireFormat.FieldType.STRING,
-                "",
-                com.google.protobuf.WireFormat.FieldType.MESSAGE,
-                com.alipay.sofa.registry.common.model.client.pb.StringList.getDefaultInstance());
-  }
-  private com.google.protobuf.MapField<
-      java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> data_;
-  private com.google.protobuf.MapField<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-  internalGetData() {
-    if (data_ == null) {
-      return com.google.protobuf.MapField.emptyMapField(
-          DataDefaultEntryHolder.defaultEntry);
-    }
-    return data_;
-  }
-
-  public int getDataCount() {
-    return internalGetData().getMap().size();
-  }
-  /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
-   */
-
-  @java.lang.Override
-  public boolean containsData(
-      java.lang.String key) {
-    if (key == null) { throw new NullPointerException("map key"); }
-    return internalGetData().getMap().containsKey(key);
-  }
-  /**
-   * Use {@link #getDataMap()} instead.
-   */
-  @java.lang.Override
-  @java.lang.Deprecated
-  public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> getData() {
-    return getDataMap();
-  }
-  /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
-   */
-  @java.lang.Override
-
-  public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> getDataMap() {
-    return internalGetData().getMap();
-  }
-  /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
-   */
-  @java.lang.Override
-
-  public com.alipay.sofa.registry.common.model.client.pb.StringList getDataOrDefault(
-      java.lang.String key,
-      com.alipay.sofa.registry.common.model.client.pb.StringList defaultValue) {
-    if (key == null) { throw new NullPointerException("map key"); }
-    java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> map =
-        internalGetData().getMap();
-    return map.containsKey(key) ? map.get(key) : defaultValue;
-  }
-  /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
-   */
-  @java.lang.Override
-
-  public com.alipay.sofa.registry.common.model.client.pb.StringList getDataOrThrow(
-      java.lang.String key) {
-    if (key == null) { throw new NullPointerException("map key"); }
-    java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> map =
-        internalGetData().getMap();
-    if (!map.containsKey(key)) {
-      throw new java.lang.IllegalArgumentException();
-    }
-    return map.get(key);
+      getZonesBytes(int index) {
+    return zones_.getByteString(index);
   }
 
   private byte memoizedIsInitialized = -1;
@@ -268,15 +207,12 @@ private static final long serialVersionUID = 0L;
     if (localSegment_ != false) {
       output.writeBool(1, localSegment_);
     }
-    for (int i = 0; i < localSegmentZones_.size(); i++) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, localSegmentZones_.getRaw(i));
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(segment_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, segment_);
     }
-    com.google.protobuf.GeneratedMessageV3
-      .serializeStringMapTo(
-        output,
-        internalGetData(),
-        DataDefaultEntryHolder.defaultEntry,
-        3);
+    for (int i = 0; i < zones_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, zones_.getRaw(i));
+    }
     unknownFields.writeTo(output);
   }
 
@@ -290,23 +226,16 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(1, localSegment_);
     }
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(segment_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, segment_);
+    }
     {
       int dataSize = 0;
-      for (int i = 0; i < localSegmentZones_.size(); i++) {
-        dataSize += computeStringSizeNoTag(localSegmentZones_.getRaw(i));
+      for (int i = 0; i < zones_.size(); i++) {
+        dataSize += computeStringSizeNoTag(zones_.getRaw(i));
       }
       size += dataSize;
-      size += 1 * getLocalSegmentZonesList().size();
-    }
-    for (java.util.Map.Entry<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> entry
-         : internalGetData().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-      data__ = DataDefaultEntryHolder.defaultEntry.newBuilderForType()
-          .setKey(entry.getKey())
-          .setValue(entry.getValue())
-          .build();
-      size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, data__);
+      size += 1 * getZonesList().size();
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -325,10 +254,10 @@ private static final long serialVersionUID = 0L;
 
     if (getLocalSegment()
         != other.getLocalSegment()) return false;
-    if (!getLocalSegmentZonesList()
-        .equals(other.getLocalSegmentZonesList())) return false;
-    if (!internalGetData().equals(
-        other.internalGetData())) return false;
+    if (!getSegment()
+        .equals(other.getSegment())) return false;
+    if (!getZonesList()
+        .equals(other.getZonesList())) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -343,13 +272,11 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + LOCALSEGMENT_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getLocalSegment());
-    if (getLocalSegmentZonesCount() > 0) {
-      hash = (37 * hash) + LOCALSEGMENTZONES_FIELD_NUMBER;
-      hash = (53 * hash) + getLocalSegmentZonesList().hashCode();
-    }
-    if (!internalGetData().getMap().isEmpty()) {
-      hash = (37 * hash) + DATA_FIELD_NUMBER;
-      hash = (53 * hash) + internalGetData().hashCode();
+    hash = (37 * hash) + SEGMENT_FIELD_NUMBER;
+    hash = (53 * hash) + getSegment().hashCode();
+    if (getZonesCount() > 0) {
+      hash = (37 * hash) + ZONES_FIELD_NUMBER;
+      hash = (53 * hash) + getZonesList().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -458,28 +385,6 @@ private static final long serialVersionUID = 0L;
       return com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPbOuterClass.internal_static_SegmentMetadataPb_descriptor;
     }
 
-    @SuppressWarnings({"rawtypes"})
-    protected com.google.protobuf.MapField internalGetMapField(
-        int number) {
-      switch (number) {
-        case 3:
-          return internalGetData();
-        default:
-          throw new RuntimeException(
-              "Invalid map field number: " + number);
-      }
-    }
-    @SuppressWarnings({"rawtypes"})
-    protected com.google.protobuf.MapField internalGetMutableMapField(
-        int number) {
-      switch (number) {
-        case 3:
-          return internalGetMutableData();
-        default:
-          throw new RuntimeException(
-              "Invalid map field number: " + number);
-      }
-    }
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
@@ -508,9 +413,10 @@ private static final long serialVersionUID = 0L;
       super.clear();
       localSegment_ = false;
 
-      localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      segment_ = "";
+
+      zones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
       bitField0_ = (bitField0_ & ~0x00000001);
-      internalGetMutableData().clear();
       return this;
     }
 
@@ -539,13 +445,12 @@ private static final long serialVersionUID = 0L;
       com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb result = new com.alipay.sofa.registry.common.model.client.pb.SegmentMetadataPb(this);
       int from_bitField0_ = bitField0_;
       result.localSegment_ = localSegment_;
+      result.segment_ = segment_;
       if (((bitField0_ & 0x00000001) != 0)) {
-        localSegmentZones_ = localSegmentZones_.getUnmodifiableView();
+        zones_ = zones_.getUnmodifiableView();
         bitField0_ = (bitField0_ & ~0x00000001);
       }
-      result.localSegmentZones_ = localSegmentZones_;
-      result.data_ = internalGetData();
-      result.data_.makeImmutable();
+      result.zones_ = zones_;
       onBuilt();
       return result;
     }
@@ -597,18 +502,20 @@ private static final long serialVersionUID = 0L;
       if (other.getLocalSegment() != false) {
         setLocalSegment(other.getLocalSegment());
       }
-      if (!other.localSegmentZones_.isEmpty()) {
-        if (localSegmentZones_.isEmpty()) {
-          localSegmentZones_ = other.localSegmentZones_;
+      if (!other.getSegment().isEmpty()) {
+        segment_ = other.segment_;
+        onChanged();
+      }
+      if (!other.zones_.isEmpty()) {
+        if (zones_.isEmpty()) {
+          zones_ = other.zones_;
           bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          ensureLocalSegmentZonesIsMutable();
-          localSegmentZones_.addAll(other.localSegmentZones_);
+          ensureZonesIsMutable();
+          zones_.addAll(other.zones_);
         }
         onChanged();
       }
-      internalGetMutableData().mergeFrom(
-          other.internalGetData());
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
       return this;
@@ -670,244 +577,189 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private com.google.protobuf.LazyStringList localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-    private void ensureLocalSegmentZonesIsMutable() {
-      if (!((bitField0_ & 0x00000001) != 0)) {
-        localSegmentZones_ = new com.google.protobuf.LazyStringArrayList(localSegmentZones_);
-        bitField0_ |= 0x00000001;
-       }
-    }
+    private java.lang.Object segment_ = "";
     /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @return A list containing the localSegmentZones.
+     * <code>string segment = 2;</code>
+     * @return The segment.
      */
-    public com.google.protobuf.ProtocolStringList
-        getLocalSegmentZonesList() {
-      return localSegmentZones_.getUnmodifiableView();
+    public java.lang.String getSegment() {
+      java.lang.Object ref = segment_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        segment_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
     /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @return The count of localSegmentZones.
-     */
-    public int getLocalSegmentZonesCount() {
-      return localSegmentZones_.size();
-    }
-    /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @param index The index of the element to return.
-     * @return The localSegmentZones at the given index.
-     */
-    public java.lang.String getLocalSegmentZones(int index) {
-      return localSegmentZones_.get(index);
-    }
-    /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the localSegmentZones at the given index.
+     * <code>string segment = 2;</code>
+     * @return The bytes for segment.
      */
     public com.google.protobuf.ByteString
-        getLocalSegmentZonesBytes(int index) {
-      return localSegmentZones_.getByteString(index);
+        getSegmentBytes() {
+      java.lang.Object ref = segment_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        segment_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
     }
     /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @param index The index to set the value at.
-     * @param value The localSegmentZones to set.
+     * <code>string segment = 2;</code>
+     * @param value The segment to set.
      * @return This builder for chaining.
      */
-    public Builder setLocalSegmentZones(
-        int index, java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureLocalSegmentZonesIsMutable();
-      localSegmentZones_.set(index, value);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @param value The localSegmentZones to add.
-     * @return This builder for chaining.
-     */
-    public Builder addLocalSegmentZones(
+    public Builder setSegment(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  ensureLocalSegmentZonesIsMutable();
-      localSegmentZones_.add(value);
+  
+      segment_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @param values The localSegmentZones to add.
+     * <code>string segment = 2;</code>
      * @return This builder for chaining.
      */
-    public Builder addAllLocalSegmentZones(
-        java.lang.Iterable<java.lang.String> values) {
-      ensureLocalSegmentZonesIsMutable();
-      com.google.protobuf.AbstractMessageLite.Builder.addAll(
-          values, localSegmentZones_);
+    public Builder clearSegment() {
+      
+      segment_ = getDefaultInstance().getSegment();
       onChanged();
       return this;
     }
     /**
-     * <code>repeated string localSegmentZones = 2;</code>
+     * <code>string segment = 2;</code>
+     * @param value The bytes for segment to set.
      * @return This builder for chaining.
      */
-    public Builder clearLocalSegmentZones() {
-      localSegmentZones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000001);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated string localSegmentZones = 2;</code>
-     * @param value The bytes of the localSegmentZones to add.
-     * @return This builder for chaining.
-     */
-    public Builder addLocalSegmentZonesBytes(
+    public Builder setSegmentBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      ensureLocalSegmentZonesIsMutable();
-      localSegmentZones_.add(value);
+      
+      segment_ = value;
       onChanged();
       return this;
     }
 
-    private com.google.protobuf.MapField<
-        java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> data_;
-    private com.google.protobuf.MapField<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-    internalGetData() {
-      if (data_ == null) {
-        return com.google.protobuf.MapField.emptyMapField(
-            DataDefaultEntryHolder.defaultEntry);
-      }
-      return data_;
-    }
-    private com.google.protobuf.MapField<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-    internalGetMutableData() {
-      onChanged();;
-      if (data_ == null) {
-        data_ = com.google.protobuf.MapField.newMapField(
-            DataDefaultEntryHolder.defaultEntry);
-      }
-      if (!data_.isMutable()) {
-        data_ = data_.copy();
-      }
-      return data_;
-    }
-
-    public int getDataCount() {
-      return internalGetData().getMap().size();
+    private com.google.protobuf.LazyStringList zones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    private void ensureZonesIsMutable() {
+      if (!((bitField0_ & 0x00000001) != 0)) {
+        zones_ = new com.google.protobuf.LazyStringArrayList(zones_);
+        bitField0_ |= 0x00000001;
+       }
     }
     /**
-     * <code>map&lt;string, .StringList&gt; data = 3;</code>
+     * <code>repeated string zones = 3;</code>
+     * @return A list containing the zones.
      */
-
-    @java.lang.Override
-    public boolean containsData(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      return internalGetData().getMap().containsKey(key);
+    public com.google.protobuf.ProtocolStringList
+        getZonesList() {
+      return zones_.getUnmodifiableView();
     }
     /**
-     * Use {@link #getDataMap()} instead.
+     * <code>repeated string zones = 3;</code>
+     * @return The count of zones.
      */
-    @java.lang.Override
-    @java.lang.Deprecated
-    public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> getData() {
-      return getDataMap();
+    public int getZonesCount() {
+      return zones_.size();
     }
     /**
-     * <code>map&lt;string, .StringList&gt; data = 3;</code>
+     * <code>repeated string zones = 3;</code>
+     * @param index The index of the element to return.
+     * @return The zones at the given index.
      */
-    @java.lang.Override
-
-    public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> getDataMap() {
-      return internalGetData().getMap();
+    public java.lang.String getZones(int index) {
+      return zones_.get(index);
     }
     /**
-     * <code>map&lt;string, .StringList&gt; data = 3;</code>
+     * <code>repeated string zones = 3;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the zones at the given index.
      */
-    @java.lang.Override
-
-    public com.alipay.sofa.registry.common.model.client.pb.StringList getDataOrDefault(
-        java.lang.String key,
-        com.alipay.sofa.registry.common.model.client.pb.StringList defaultValue) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> map =
-          internalGetData().getMap();
-      return map.containsKey(key) ? map.get(key) : defaultValue;
+    public com.google.protobuf.ByteString
+        getZonesBytes(int index) {
+      return zones_.getByteString(index);
     }
     /**
-     * <code>map&lt;string, .StringList&gt; data = 3;</code>
+     * <code>repeated string zones = 3;</code>
+     * @param index The index to set the value at.
+     * @param value The zones to set.
+     * @return This builder for chaining.
      */
-    @java.lang.Override
-
-    public com.alipay.sofa.registry.common.model.client.pb.StringList getDataOrThrow(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> map =
-          internalGetData().getMap();
-      if (!map.containsKey(key)) {
-        throw new java.lang.IllegalArgumentException();
-      }
-      return map.get(key);
-    }
-
-    public Builder clearData() {
-      internalGetMutableData().getMutableMap()
-          .clear();
-      return this;
-    }
-    /**
-     * <code>map&lt;string, .StringList&gt; data = 3;</code>
-     */
-
-    public Builder removeData(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      internalGetMutableData().getMutableMap()
-          .remove(key);
-      return this;
-    }
-    /**
-     * Use alternate mutation accessors instead.
-     */
-    @java.lang.Deprecated
-    public java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-    getMutableData() {
-      return internalGetMutableData().getMutableMap();
-    }
-    /**
-     * <code>map&lt;string, .StringList&gt; data = 3;</code>
-     */
-    public Builder putData(
-        java.lang.String key,
-        com.alipay.sofa.registry.common.model.client.pb.StringList value) {
-      if (key == null) { throw new NullPointerException("map key"); }
+    public Builder setZones(
+        int index, java.lang.String value) {
       if (value == null) {
-  throw new NullPointerException("map value");
-}
-
-      internalGetMutableData().getMutableMap()
-          .put(key, value);
+    throw new NullPointerException();
+  }
+  ensureZonesIsMutable();
+      zones_.set(index, value);
+      onChanged();
       return this;
     }
     /**
-     * <code>map&lt;string, .StringList&gt; data = 3;</code>
+     * <code>repeated string zones = 3;</code>
+     * @param value The zones to add.
+     * @return This builder for chaining.
      */
-
-    public Builder putAllData(
-        java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList> values) {
-      internalGetMutableData().getMutableMap()
-          .putAll(values);
+    public Builder addZones(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureZonesIsMutable();
+      zones_.add(value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string zones = 3;</code>
+     * @param values The zones to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllZones(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureZonesIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, zones_);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string zones = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearZones() {
+      zones_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000001);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string zones = 3;</code>
+     * @param value The bytes of the zones to add.
+     * @return This builder for chaining.
+     */
+    public Builder addZonesBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      ensureZonesIsMutable();
+      zones_.add(value);
+      onChanged();
       return this;
     }
     @java.lang.Override

@@ -14,61 +14,39 @@ public interface SegmentMetadataPbOrBuilder extends
   boolean getLocalSegment();
 
   /**
-   * <code>repeated string localSegmentZones = 2;</code>
-   * @return A list containing the localSegmentZones.
+   * <code>string segment = 2;</code>
+   * @return The segment.
    */
-  java.util.List<java.lang.String>
-      getLocalSegmentZonesList();
+  java.lang.String getSegment();
   /**
-   * <code>repeated string localSegmentZones = 2;</code>
-   * @return The count of localSegmentZones.
-   */
-  int getLocalSegmentZonesCount();
-  /**
-   * <code>repeated string localSegmentZones = 2;</code>
-   * @param index The index of the element to return.
-   * @return The localSegmentZones at the given index.
-   */
-  java.lang.String getLocalSegmentZones(int index);
-  /**
-   * <code>repeated string localSegmentZones = 2;</code>
-   * @param index The index of the value to return.
-   * @return The bytes of the localSegmentZones at the given index.
+   * <code>string segment = 2;</code>
+   * @return The bytes for segment.
    */
   com.google.protobuf.ByteString
-      getLocalSegmentZonesBytes(int index);
+      getSegmentBytes();
 
   /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
+   * <code>repeated string zones = 3;</code>
+   * @return A list containing the zones.
    */
-  int getDataCount();
+  java.util.List<java.lang.String>
+      getZonesList();
   /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
+   * <code>repeated string zones = 3;</code>
+   * @return The count of zones.
    */
-  boolean containsData(
-      java.lang.String key);
+  int getZonesCount();
   /**
-   * Use {@link #getDataMap()} instead.
+   * <code>repeated string zones = 3;</code>
+   * @param index The index of the element to return.
+   * @return The zones at the given index.
    */
-  @java.lang.Deprecated
-  java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-  getData();
+  java.lang.String getZones(int index);
   /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
+   * <code>repeated string zones = 3;</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the zones at the given index.
    */
-  java.util.Map<java.lang.String, com.alipay.sofa.registry.common.model.client.pb.StringList>
-  getDataMap();
-  /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
-   */
-
-  com.alipay.sofa.registry.common.model.client.pb.StringList getDataOrDefault(
-      java.lang.String key,
-      com.alipay.sofa.registry.common.model.client.pb.StringList defaultValue);
-  /**
-   * <code>map&lt;string, .StringList&gt; data = 3;</code>
-   */
-
-  com.alipay.sofa.registry.common.model.client.pb.StringList getDataOrThrow(
-      java.lang.String key);
+  com.google.protobuf.ByteString
+      getZonesBytes(int index);
 }
