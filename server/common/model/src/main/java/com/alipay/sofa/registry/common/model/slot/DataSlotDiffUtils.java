@@ -21,6 +21,8 @@ import com.alipay.sofa.registry.common.model.PublisherUtils;
 import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.DatumDigest;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncAcceptorRequest;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.google.common.collect.Lists;
@@ -37,8 +39,9 @@ public final class DataSlotDiffUtils {
 
   public static DataSlotDiffDigestResult diffDigestResult(
       Map<String, DatumDigest> targetDigestMap,
-      Map<String, Map<String, Publisher>> sourcePublishers) {
-    Map<String, DatumSummary> sourceSummaryMap = PublisherUtils.getDatumSummary(sourcePublishers);
+      Map<String, Map<String, Publisher>> sourcePublishers,
+      SyncSlotAcceptorManager acceptorManager) {
+    Map<String, DatumSummary> sourceSummaryMap = PublisherUtils.getDatumSummary(sourcePublishers, acceptorManager);
     Map<String, DatumDigest> digestMap = PublisherDigestUtil.digest(sourceSummaryMap);
     return diffDigest(targetDigestMap, digestMap);
   }
@@ -73,7 +76,8 @@ public final class DataSlotDiffUtils {
   public static DataSlotDiffPublisherResult diffPublishersResult(
       Collection<DatumSummary> targetDatumSummaries,
       Map<String, Map<String, Publisher>> sourcePublishers,
-      int publisherMaxNum) {
+      int publisherMaxNum,
+      SyncSlotAcceptorManager acceptorManager) {
     Map<String, List<Publisher>> updatePublishers =
         Maps.newHashMapWithExpectedSize(targetDatumSummaries.size());
     Map<String, List<String>> removedPublishers = new HashMap<>();
@@ -98,6 +102,11 @@ public final class DataSlotDiffUtils {
       List<Publisher> publishers = new ArrayList<>();
       Map<String, RegisterVersion> versions = summary.getPublisherVersions();
       for (Map.Entry<String, Publisher> p : publisherMap.entrySet()) {
+
+        // filter publishers
+        if (!acceptorManager.accept(SyncAcceptorRequest.buildRequest(p.getValue().getPublishSource()))) {
+          continue;
+        }
         final String registerId = p.getKey();
         if (!versions.containsKey(registerId)) {
           publishers.add(p.getValue());

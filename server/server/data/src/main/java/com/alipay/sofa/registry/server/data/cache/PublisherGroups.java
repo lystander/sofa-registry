@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncAcceptorRequest;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.util.StringFormatter;
@@ -166,10 +167,11 @@ public final class PublisherGroups {
   Map<String, DatumSummary> getAcceptSummary(SyncSlotAcceptorManager acceptorManager) {
     Map<String, DatumSummary> summaries = Maps.newHashMap();
     publisherGroupMap.entrySet().stream()
-        .filter(entry -> acceptorManager == null || acceptorManager.accept(entry.getKey()))
+        .filter(entry -> acceptorManager.accept(SyncAcceptorRequest.buildRequest(entry.getKey(),
+                entry.getValue().serviceGroupType)))
         .forEach(
             entry -> {
-              DatumSummary summary = entry.getValue().getAllSummary();
+              DatumSummary summary = entry.getValue().getAllSummary(acceptorManager);
               if (!summary.isEmpty()) {
                 summaries.put(entry.getKey(), summary);
               }

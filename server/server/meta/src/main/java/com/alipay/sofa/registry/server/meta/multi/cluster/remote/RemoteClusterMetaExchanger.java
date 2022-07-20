@@ -22,7 +22,7 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.ChannelHandler;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MultiClusterMetaServerConfig;
-import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
+import com.alipay.sofa.registry.server.shared.constant.MetaLeaderLearnModeEnum;
 import com.alipay.sofa.registry.server.shared.meta.AbstractMetaLeaderExchanger;
 import com.alipay.sofa.registry.store.api.meta.MultiClusterSyncRepository;
 import com.google.common.collect.Maps;
@@ -54,10 +54,12 @@ public class RemoteClusterMetaExchanger extends AbstractMetaLeaderExchanger {
   private volatile Map<String, MultiClusterSyncInfo> syncConfigMap = Maps.newConcurrentMap();
 
   public RemoteClusterMetaExchanger() {
-    super(
-        Exchange.REMOTE_CLUSTER_META,
-        ExchangerModeEnum.REMOTE_DATA_CENTER,
-        MULTI_CLUSTER_CLIENT_LOGGER);
+    super(Exchange.REMOTE_CLUSTER_META, MULTI_CLUSTER_CLIENT_LOGGER);
+  }
+
+  @Override
+  protected MetaLeaderLearnModeEnum getMode() {
+    return MetaLeaderLearnModeEnum.SLB;
   }
 
   @Override

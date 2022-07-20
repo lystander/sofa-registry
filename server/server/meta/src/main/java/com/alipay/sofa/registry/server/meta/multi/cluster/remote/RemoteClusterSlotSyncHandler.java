@@ -24,9 +24,11 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.ExecutorManager;
+import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.metaserver.CurrentDcMetaServer;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.server.shared.slot.SlotTableUtils;
+import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.store.api.elector.AbstractLeaderElector.LeaderInfo;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,10 @@ public class RemoteClusterSlotSyncHandler
 
   @Autowired private MetaLeaderService metaLeaderService;
 
+  @Autowired private MetaServerConfig metaServerConfig;
+
+  @Autowired private DefaultCommonConfig defaultCommonConfig;
+
   @Override
   public Class interest() {
     return RemoteClusterSlotSyncRequest.class;
@@ -57,7 +63,7 @@ public class RemoteClusterSlotSyncHandler
   }
 
   /**
-   * todo xiaojian.xj filter return leaders, ignore followers
+   * todo xiaojian.xj filter return leaders, ignore followers, slot follower不需要返回;
    *
    * @param channel
    * @param request
@@ -67,13 +73,14 @@ public class RemoteClusterSlotSyncHandler
   public GenericResponse<RemoteClusterSlotSyncResponse> doHandle(
       Channel channel, RemoteClusterSlotSyncRequest request) {
 
+    String clusterId = defaultCommonConfig.getDefaultClusterId();
     LeaderInfo leaderInfo = metaLeaderService.getLeaderInfo();
     // wrong leader
     if (!metaLeaderService.amILeader()) {
       LOGGER.error("request: {} sync on follower, leader is:{}", request, leaderInfo.getLeader());
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillFailData(
-              RemoteClusterSlotSyncResponse.wrongLeader(
+              RemoteClusterSlotSyncResponse.wrongLeader(clusterId, metaServerConfig.getLocalDataCenterZones(),
                   leaderInfo.getLeader(), leaderInfo.getEpoch()));
     }
 
@@ -82,7 +89,7 @@ public class RemoteClusterSlotSyncHandler
       LOGGER.error("request: {} sync on leader not warmuped.", request);
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillFailData(
-              RemoteClusterSlotSyncResponse.leaderNotWarmuped(
+              RemoteClusterSlotSyncResponse.leaderNotWarmuped(clusterId, metaServerConfig.getLocalDataCenterZones(),
                   leaderInfo.getLeader(), leaderInfo.getEpoch()));
     }
 
@@ -101,7 +108,7 @@ public class RemoteClusterSlotSyncHandler
     } else if (request.getSlotTableEpoch() == slotTable.getEpoch()) {
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillSucceed(
-              RemoteClusterSlotSyncResponse.notUpgrade(
+              RemoteClusterSlotSyncResponse.notUpgrade(clusterId, metaServerConfig.getLocalDataCenterZones(),
                   leaderInfo.getLeader(), leaderInfo.getEpoch()));
     } else {
       LOGGER.info(
@@ -113,7 +120,7 @@ public class RemoteClusterSlotSyncHandler
           slotTable);
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillSucceed(
-              RemoteClusterSlotSyncResponse.upgrade(
+              RemoteClusterSlotSyncResponse.upgrade(clusterId, metaServerConfig.getLocalDataCenterZones(),
                   leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable));
     }
   }

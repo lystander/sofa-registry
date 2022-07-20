@@ -19,6 +19,7 @@ package com.alipay.sofa.registry.server.session.push;
 import static com.alipay.sofa.registry.server.session.push.PushMetrics.Push.*;
 
 import com.alipay.remoting.rpc.exception.InvokeTimeoutException;
+import com.alipay.sofa.registry.common.model.DataCenterPushInfo;
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
 import com.alipay.sofa.registry.common.model.store.PushData;
@@ -167,19 +168,14 @@ public class PushProcessor {
       // force to remove the prev task
       final boolean cleaned = pushingRecords.remove(pushingTaskKey, task);
       if (cleaned) {
-        Set<String> dataCenters = task.pushDataCount.keySet();
-        Map<String, Long> pushedVersion = Maps.newHashMapWithExpectedSize(dataCenters.size());
-        for (String dataCenter : dataCenters) {
-          pushedVersion.put(dataCenter, 0L);
+        for (DataCenterPushInfo value : task.dataCenterPushInfos.values()) {
+          value.setPushVersion(0L);
         }
         task.trace.finishPush(
             PushTrace.PushStatus.Busy,
             task.taskID,
-            pushedVersion,
-            task.pushDataCount,
-            task.retryCount,
-            task.pushEncode,
-            task.encodeSize);
+            task.dataCenterPushInfos,
+            task.retryCount);
       }
       return span;
     }
@@ -236,7 +232,7 @@ public class PushProcessor {
     Collection<Subscriber> subs = task.subscriberMap.values();
     for (Subscriber subscriber : subs) {
       boolean canSkip =
-          subscriber.checkSkipPushEmpty(task.datum.getVersion(), task.getPushDataCount());
+          subscriber.checkSkipPushEmpty(task.datum.getVersion(), task.getDataCenterPushCount());
       if (canSkip
           && subscriber.getRegisterTimestamp()
               < now - sessionServerConfig.getSkipPushEmptySilentMillis()) {
@@ -247,7 +243,7 @@ public class PushProcessor {
       return false;
     }
     for (Subscriber subscriber : subs) {
-      subscriber.checkAndUpdateCtx(task.datum.getVersion(), task.getPushDataCount());
+      subscriber.checkAndUpdateCtx(task.datum.getVersion(), task.getDataCenterPushCount());
     }
     PUSH_EMPTY_SKIP_COUNTER.inc();
     LOGGER.info(
@@ -315,9 +311,7 @@ public class PushProcessor {
       }
 
       final PushData pushData = task.createPushData();
-      task.setPushDataCount(pushData.getDataCountMap());
-      task.setPushEncode(pushData.getEncode());
-      task.setEncodeSize(pushData.getEncodeSize());
+      task.setDataCenterPushInfos(pushData.getDataCenterPushInfo());
 
       if (interruptOnPushEmpty(
           task.datum, pushData, task.trace.pushCause, task.subscriber, task.pushingTaskKey.addr)) {
@@ -339,9 +333,7 @@ public class PushProcessor {
               task.trace,
               task.taskID,
               task.retryCount,
-              pushData.getEncode(),
-              pushData.getDataCountMap(),
-              pushData.getEncodeSize()));
+              pushData.getDataCenterPushInfo()));
       clientNodeService.pushWithCallback(
           pushData.getPayload(), task.subscriber.getSourceAddress(), new PushClientCallback(task));
       PUSH_CLIENT_ING_COUNTER.inc();
@@ -365,11 +357,8 @@ public class PushProcessor {
       task.trace.finishPush(
           PushTrace.PushStatus.ChanClosed,
           task.taskID,
-          task.getMaxPushedVersion(),
-          task.getPushDataCount(),
-          task.retryCount,
-          task.getPushEncode(),
-          task.getEncodeSize());
+          task.getDataCenterPushInfos(),
+          task.retryCount);
       // channel closed, just warn
       LOGGER.warn(
           "[PushChanClosed]taskId={}, {}, {}", task.taskID, task.pushingTaskKey, e.getMessage());
@@ -390,11 +379,8 @@ public class PushProcessor {
       task.trace.finishPush(
           PushTrace.PushStatus.ChanOverflow,
           task.taskID,
-          task.getMaxPushedVersion(),
-          task.getPushDataCount(),
-          task.retryCount,
-          task.getPushEncode(),
-          task.getEncodeSize());
+          task.getDataCenterPushInfos(),
+          task.retryCount);
       LOGGER.error(
           "[PushChanOverflow]taskId={}, {}, {}", task.taskID, task.pushingTaskKey, e.getMessage());
       return;
@@ -402,11 +388,8 @@ public class PushProcessor {
     task.trace.finishPush(
         PushTrace.PushStatus.Fail,
         task.taskID,
-        task.getMaxPushedVersion(),
-        task.getPushDataCount(),
-        task.retryCount,
-        task.getPushEncode(),
-        task.getEncodeSize());
+        task.getDataCenterPushInfos(),
+        task.retryCount);
     LOGGER.error("[PushFail]taskId={}, {}", task.taskID, task.pushingTaskKey, e);
   }
 
@@ -465,7 +448,7 @@ public class PushProcessor {
       pushingRecords.remove(pushTask.pushingTaskKey);
       for (Subscriber subscriber : pushTask.subscriberMap.values()) {
         if (!circuitBreakerService.onPushSuccess(
-            pushTask.datum.getVersion(), pushTask.getPushDataCount(), subscriber)) {
+            pushTask.datum.getVersion(), pushTask.getDataCenterPushCount(), subscriber)) {
           LOGGER.info(
               "PushY, but failed to updateVersion, {}, {}",
               pushTask.taskID,
@@ -475,11 +458,8 @@ public class PushProcessor {
       this.pushTask.trace.finishPush(
           PushTrace.PushStatus.OK,
           pushTask.taskID,
-          pushTask.getMaxPushedVersion(),
-          this.pushTask.getPushDataCount(),
-          pushTask.retryCount,
-          pushTask.getPushEncode(),
-          pushTask.getEncodeSize());
+          pushTask.getDataCenterPushInfos(),
+          pushTask.retryCount);
     }
 
     @Override
@@ -496,22 +476,16 @@ public class PushProcessor {
         this.pushTask.trace.finishPush(
             PushTrace.PushStatus.Timeout,
             pushTask.taskID,
-            pushTask.getMaxPushedVersion(),
-            pushTask.getPushDataCount(),
-            pushTask.retryCount,
-            pushTask.getPushEncode(),
-            pushTask.getEncodeSize());
+            pushTask.getDataCenterPushInfos(),
+            pushTask.retryCount);
         LOGGER.error("[PushTimeout]taskId={}, {}", pushTask.taskID, pushTask.pushingTaskKey);
       } else {
         if (channelConnected) {
           this.pushTask.trace.finishPush(
               PushTrace.PushStatus.Fail,
               pushTask.taskID,
-              pushTask.getMaxPushedVersion(),
-              pushTask.getPushDataCount(),
-              pushTask.retryCount,
-              pushTask.getPushEncode(),
-              pushTask.getEncodeSize());
+              pushTask.getDataCenterPushInfos(),
+              pushTask.retryCount);
           LOGGER.error(
               "[PushFailed]taskId={}, {}", pushTask.taskID, pushTask.pushingTaskKey, exception);
         } else {
@@ -519,11 +493,8 @@ public class PushProcessor {
           this.pushTask.trace.finishPush(
               PushTrace.PushStatus.ChanClosed,
               pushTask.taskID,
-              pushTask.getMaxPushedVersion(),
-              pushTask.getPushDataCount(),
-              pushTask.retryCount,
-              pushTask.getPushEncode(),
-              pushTask.getEncodeSize());
+              pushTask.getDataCenterPushInfos(),
+              pushTask.retryCount);
           // channel closed, just warn
           LOGGER.warn("[PushChanClosed]taskId={}, {}", pushTask.taskID, pushTask.pushingTaskKey);
         }
@@ -557,28 +528,18 @@ public class PushProcessor {
     final PushTrace trace;
     final TraceID taskID;
     final int retryCount;
-    final Map<String, Integer> pushDataCount;
-    final int pushTotalDataCount;
-    final Map<String, String> pushEncode;
-    final Map<String, Integer> encodeSize;
+
+    private Map<String, DataCenterPushInfo> dataCenterPushInfos;
 
     PushRecord(
         PushTrace pushTrace,
         TraceID taskID,
         int retryCount,
-        Map<String, String> pushEncode,
-        Map<String, Integer> pushDataCount,
-        Map<String, Integer> encodeSize) {
+        Map<String, DataCenterPushInfo> dataCenterPushInfos) {
       this.trace = pushTrace;
       this.taskID = taskID;
       this.retryCount = retryCount;
-      this.pushEncode = pushEncode;
-      this.encodeSize = encodeSize;
-      if (pushDataCount == null) {
-        pushDataCount = Collections.emptyMap();
-      }
-      this.pushDataCount = pushDataCount;
-      this.pushTotalDataCount = pushDataCount.values().stream().mapToInt(Integer::intValue).sum();
+      this.dataCenterPushInfos = dataCenterPushInfos;
     }
   }
 }

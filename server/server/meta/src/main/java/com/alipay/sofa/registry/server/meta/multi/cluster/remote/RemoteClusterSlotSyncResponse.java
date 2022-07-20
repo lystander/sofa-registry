@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.meta.multi.cluster.remote;
 
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * @author xiaojian.xj
@@ -25,6 +26,12 @@ import java.io.Serializable;
  */
 public class RemoteClusterSlotSyncResponse implements Serializable {
   private static final long serialVersionUID = -2923303142018284216L;
+
+  /** nodes.clusterId */
+  private final String clusterId;
+
+  /** nodes.localSegmentRegions */
+  private final Set<String> localSegZones;
 
   /** meta leader */
   private final String metaLeader;
@@ -45,12 +52,16 @@ public class RemoteClusterSlotSyncResponse implements Serializable {
   private final SlotTable slotTable;
 
   public RemoteClusterSlotSyncResponse(
+      String clusterId,
+      Set<String> localSegZones,
       String metaLeader,
       long metaLeaderEpoch,
       boolean syncOnLeader,
       boolean leaderWarmuped,
       boolean slotTableUpgrade,
       SlotTable slotTable) {
+    this.clusterId = clusterId;
+    this.localSegZones = localSegZones;
     this.metaLeader = metaLeader;
     this.metaLeaderEpoch = metaLeaderEpoch;
     this.syncOnLeader = syncOnLeader;
@@ -59,24 +70,42 @@ public class RemoteClusterSlotSyncResponse implements Serializable {
     this.slotTable = slotTable;
   }
 
-  public static RemoteClusterSlotSyncResponse wrongLeader(String metaLeader, long metaLeaderEpoch) {
-    return new RemoteClusterSlotSyncResponse(
+  public static RemoteClusterSlotSyncResponse wrongLeader(String clusterId, Set<String> localSegZones, String metaLeader, long metaLeaderEpoch) {
+    return new RemoteClusterSlotSyncResponse(clusterId, localSegZones,
         metaLeader, metaLeaderEpoch, false, false, false, null);
   }
 
   public static RemoteClusterSlotSyncResponse leaderNotWarmuped(
-      String metaLeader, long metaLeaderEpoch) {
-    return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, true, false, false, null);
+          String clusterId, Set<String> localSegZones, String metaLeader, long metaLeaderEpoch) {
+    return new RemoteClusterSlotSyncResponse(clusterId, localSegZones, metaLeader, metaLeaderEpoch, true, false, false, null);
   }
 
-  public static RemoteClusterSlotSyncResponse notUpgrade(String metaLeader, long metaLeaderEpoch) {
-    return new RemoteClusterSlotSyncResponse(metaLeader, metaLeaderEpoch, true, true, false, null);
+  public static RemoteClusterSlotSyncResponse notUpgrade(String clusterId, Set<String> localSegZones, String metaLeader, long metaLeaderEpoch) {
+    return new RemoteClusterSlotSyncResponse(clusterId, localSegZones, metaLeader, metaLeaderEpoch, true, true, false, null);
   }
 
   public static RemoteClusterSlotSyncResponse upgrade(
-      String metaLeader, long metaLeaderEpoch, SlotTable slotTable) {
-    return new RemoteClusterSlotSyncResponse(
+          String clusterId,Set<String> localSegZones, String metaLeader, long metaLeaderEpoch, SlotTable slotTable) {
+    return new RemoteClusterSlotSyncResponse(clusterId, localSegZones,
         metaLeader, metaLeaderEpoch, true, true, true, slotTable);
+  }
+
+  /**
+   * Getter method for property <tt>clusterId</tt>.
+   *
+   * @return property value of clusterId
+   */
+  public String getClusterId() {
+    return clusterId;
+  }
+
+  /**
+   * Getter method for property <tt>localSegZones</tt>.
+   *
+   * @return property value of localSegZones
+   */
+  public Set<String> getLocalSegZones() {
+    return localSegZones;
   }
 
   public boolean isSyncOnLeader() {

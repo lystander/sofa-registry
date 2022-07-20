@@ -90,9 +90,6 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
   @Override
   public void onSlotAdd(
       String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
-    if (role != Role.Leader) {
-      LOGGER.info("[onSlotAdd]skip dataCenter={}, slotId={}, role={}", dataCenter, slotId, role);
-    }
 
     // reset state
     MetadataLoadState status =

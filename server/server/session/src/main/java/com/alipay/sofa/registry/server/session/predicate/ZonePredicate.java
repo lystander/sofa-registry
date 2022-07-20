@@ -32,26 +32,7 @@ public final class ZonePredicate {
       String dataId,
       String clientCell,
       ScopeEnum scopeEnum,
-      boolean acceptMulti,
       SessionServerConfig sessionServerConfig) {
-    Predicate<String> zonePredicate =
-        (zone) -> {
-          if (acceptMulti) {
-            return false;
-          }
-          return zoneFilter(dataId, clientCell, scopeEnum, sessionServerConfig, zone);
-        };
-    return zonePredicate;
-  }
-
-  public static Predicate<String> segmentZonesPredicate(
-      String dataId,
-      String clientCell,
-      ScopeEnum scopeEnum,
-      boolean acceptMulti,
-      SessionServerConfig sessionServerConfig) {
-    ParaCheckUtil.assertTrue(acceptMulti, "acceptMulti");
-
     Predicate<String> zonePredicate =
         (zone) -> zoneFilter(dataId, clientCell, scopeEnum, sessionServerConfig, zone);
     return zonePredicate;

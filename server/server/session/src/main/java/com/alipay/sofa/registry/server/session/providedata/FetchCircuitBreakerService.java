@@ -43,7 +43,7 @@ public class FetchCircuitBreakerService
 
   @Autowired private SessionServerConfig sessionServerConfig;
 
-  @Resource private ProvideDataRepository provideDataRepository;
+  @Autowired private ProvideDataRepository provideDataRepository;
 
   private static final CircuitBreakerStorage INIT =
       new CircuitBreakerStorage(

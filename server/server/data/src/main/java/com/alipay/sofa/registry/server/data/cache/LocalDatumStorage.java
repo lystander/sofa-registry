@@ -100,13 +100,6 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, Publisher>> getPublishers(
-      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
-    ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
-    return storage.getPublishers(slotId, acceptorManager);
-  }
-
-  @Override
   public DatumVersion createEmptyDatumIfAbsent(String dataCenter, String dataInfoId) {
     return storage.createEmptyDatumIfAbsent(dataInfoId);
   }
@@ -154,11 +147,6 @@ public final class LocalDatumStorage implements DatumStorage {
   public Map<String, Map<String, DatumSummary>> getDatumSummary(
       String dataCenter, int slotId, Set<String> sessions) {
     return storage.getDatumSummary(slotId, sessions);
-  }
-
-  @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId) {
-    return storage.getDatumSummary(slotId);
   }
 
   @Override

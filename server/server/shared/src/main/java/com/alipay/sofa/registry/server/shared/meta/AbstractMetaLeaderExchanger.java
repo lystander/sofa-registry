@@ -30,7 +30,7 @@ import com.alipay.sofa.registry.remoting.exchange.RequestException;
 import com.alipay.sofa.registry.remoting.exchange.message.Request;
 import com.alipay.sofa.registry.remoting.exchange.message.Response;
 import com.alipay.sofa.registry.remoting.jersey.JerseyClient;
-import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
+import com.alipay.sofa.registry.server.shared.constant.MetaLeaderLearnModeEnum;
 import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;
 import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.util.JsonUtils;
@@ -60,8 +60,6 @@ public abstract class AbstractMetaLeaderExchanger extends ClientSideExchanger
 
   private final Map<String, LeaderInfo> leaderInfo = Maps.newConcurrentMap();
 
-  private final ExchangerModeEnum mode;
-
   protected final Retryer<LeaderInfo> retryer =
       RetryerBuilder.<LeaderInfo>newBuilder()
           .retryIfException()
@@ -70,7 +68,7 @@ public abstract class AbstractMetaLeaderExchanger extends ClientSideExchanger
           .withStopStrategy(StopStrategies.stopAfterAttempt(5))
           .build();
 
-  @Autowired private DefaultCommonConfig defaultCommonConfig;
+  @Autowired protected DefaultCommonConfig defaultCommonConfig;
 
   // todo xiaojian.xj change to repository
   @Autowired private DistributeLockMapper distributeLockMapper;
@@ -80,10 +78,10 @@ public abstract class AbstractMetaLeaderExchanger extends ClientSideExchanger
   private static final String LEADER_KEY = "leader";
   private static final String EPOCH_KEY = "epoch";
 
-  protected AbstractMetaLeaderExchanger(String serverType, ExchangerModeEnum mode, Logger logger) {
+  protected AbstractMetaLeaderExchanger(
+      String serverType, Logger logger) {
     super(serverType);
     this.LOGGER = logger;
-    this.mode = mode;
   }
 
   @PostConstruct
@@ -141,35 +139,31 @@ public abstract class AbstractMetaLeaderExchanger extends ClientSideExchanger
    * @param update
    */
   @Override
-  public boolean learn(String dataCenter, LeaderInfo update) {
-    LeaderInfo data = new LeaderInfo(update.getEpoch(), update.getLeader());
+  public synchronized boolean learn(String dataCenter, LeaderInfo update) {
 
-    // use cas instead of synchronized to avoid multi cluster compete lock
-    for (; ; ) {
-      final LeaderInfo exist = this.leaderInfo.get(dataCenter);
-      if (exist == null) {
-        if (leaderInfo.putIfAbsent(dataCenter, data) == null) {
-          setServerIps(Collections.singleton(update.getLeader()));
-          return true;
-        }
-        continue;
-      }
-      if (update.getEpoch() <= exist.getEpoch()) {
-        LOGGER.warn(
-            "[setLeaderConflict]dataCenter={},exist={}/{},input={}/{}",
-            data,
-            exist.getEpoch(),
-            exist.getLeader(),
-            data.getEpoch(),
-            data.getLeader());
-        return false;
-      }
-      if (leaderInfo.replace(dataCenter, exist, data)) {
-        setServerIps(Collections.singleton(update.getLeader()));
-        return true;
-      }
+    final LeaderInfo exist = this.leaderInfo.get(dataCenter);
+    if (exist == null) {
+      leaderInfo.put(dataCenter, update);
+      setServerIps(Collections.singleton(update.getLeader()));
+      return true;
     }
+    if (update.getEpoch() < exist.getEpoch()) {
+      LOGGER.warn(
+          "[setLeaderConflict]dataCenter={},exist={}/{},input={}/{}",
+          dataCenter,
+          exist.getEpoch(),
+          exist.getLeader(),
+          update.getEpoch(),
+          update.getLeader());
+      return false;
+    } else if (exist.getEpoch() < update.getEpoch()) {
+      leaderInfo.put(dataCenter, update);
+      setServerIps(Collections.singleton(update.getLeader()));
+    }
+    return true;
   }
+
+  protected abstract MetaLeaderLearnModeEnum getMode();
 
   /**
    * reset leader from remoteMetaDomain
@@ -179,9 +173,10 @@ public abstract class AbstractMetaLeaderExchanger extends ClientSideExchanger
   @Override
   public LeaderInfo resetLeader(String dataCenter) {
     LeaderInfo leader = null;
-    if (mode == ExchangerModeEnum.LOCAL_DATA_CENTER && defaultCommonConfig.isJdbc()) {
+    MetaLeaderLearnModeEnum mode = getMode();
+    if (mode == MetaLeaderLearnModeEnum.JDBC) {
       leader = queryLeaderFromDb();
-    } else {
+    } else if (mode == MetaLeaderLearnModeEnum.SLB) {
       leader = queryLeaderFromRest(dataCenter);
     }
 

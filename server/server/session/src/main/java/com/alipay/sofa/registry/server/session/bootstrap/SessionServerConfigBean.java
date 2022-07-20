@@ -362,6 +362,11 @@ public class SessionServerConfigBean implements SessionServerConfig {
   }
 
   @Override
+  public Set<String> getLocalDataCenterZones() {
+    return commonConfig.getLocalSegmentRegions();
+  }
+
+  @Override
   public String getClientCell(String subscriberCell) {
     return this.getSessionServerRegion();
   }

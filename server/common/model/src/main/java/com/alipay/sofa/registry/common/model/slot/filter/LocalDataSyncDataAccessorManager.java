@@ -20,11 +20,13 @@ import com.google.common.collect.Sets;
 
 /**
  * @author xiaojian.xj
- * @version : LocalSyncSlotAccessorManager.java, v 0.1 2022年05月24日 21:37 xiaojian.xj Exp $
+ * @version : LocalDataSyncDataAccessorManager.java, v 0.1 2022年05月24日 21:37 xiaojian.xj Exp $
  */
-public class LocalSyncDataAccessorManager extends BaseSyncSlotAcceptorManager {
+public class LocalDataSyncDataAccessorManager extends BaseSyncSlotAcceptorManager {
 
-  public LocalSyncDataAccessorManager() {
+  // todo xiaojian.xj  accept = all, filter = metadata
+  public LocalDataSyncDataAccessorManager() {
+    // only group acceptor
     super(Sets.newConcurrentHashSet());
   }
 }

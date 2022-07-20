@@ -16,6 +16,8 @@
  */
 package com.alipay.sofa.registry.server.session.push;
 
+import com.alipay.sofa.registry.common.model.DataCenterPushInfo;
+import com.alipay.sofa.registry.common.model.SegmentPushInfo;
 import com.alipay.sofa.registry.common.model.SubscriberUtils;
 import com.alipay.sofa.registry.common.model.store.BaseInfo;
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
@@ -31,6 +33,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
+
 import org.springframework.util.CollectionUtils;
 
 public abstract class PushTask {
@@ -45,10 +49,7 @@ public abstract class PushTask {
   protected final PushTrace trace;
 
   protected int retryCount;
-  private int pushTotalDataCount = -1;
-  private Map<String, Integer> pushDataCount;
-  private Map<String, String> pushEncode;
-  private Map<String, Integer> encodeSize;
+  private Map<String, DataCenterPushInfo> dataCenterPushInfos;
 
   protected PushTask(
       PushCause pushCause,
@@ -152,69 +153,61 @@ public abstract class PushTask {
   }
 
   /**
-   * Getter method for property <tt>pushTotalDataCount</tt>.
+   * Getter method for property <tt>dataCenterPushInfos</tt>.
    *
-   * @return property value of pushTotalDataCount
+   * @return property value of dataCenterPushInfos
    */
-  public int getPushTotalDataCount() {
-    return pushTotalDataCount;
+  public Map<String, DataCenterPushInfo> getDataCenterPushInfos() {
+    return dataCenterPushInfos;
   }
 
   /**
-   * Getter method for property <tt>pushDataCount</tt>.
+   * Setter method for property <tt>dataCenterPushInfos</tt>.
    *
-   * @return property value of pushDataCount
+   * @param dataCenterPushInfos value to be assigned to property dataCenterPushInfos
    */
-  public Map<String, Integer> getPushDataCount() {
+  public void setDataCenterPushInfos(Map<String, DataCenterPushInfo> dataCenterPushInfos) {
+    this.dataCenterPushInfos = dataCenterPushInfos;
+  }
+
+  public Map<String, Integer> getDataCenterPushCount() {
+    if (dataCenterPushInfos == null) {
+      return Collections.EMPTY_MAP;
+    }
+    Map<String, Integer> pushDataCount =
+        Maps.newHashMapWithExpectedSize(dataCenterPushInfos.size());
+    for (Entry<String, DataCenterPushInfo> entry : dataCenterPushInfos.entrySet()) {
+
+      int dataCenterPushCount = 0;
+      if (entry.getValue().getSegmentPushInfos() != null) {
+        dataCenterPushCount =
+            entry.getValue().getSegmentPushInfos().values().stream()
+                .mapToInt(SegmentPushInfo::getDataCount)
+                .sum();
+      }
+      pushDataCount.put(entry.getKey(), dataCenterPushCount);
+    }
     return pushDataCount;
   }
 
-  /**
-   * Setter method for property <tt>pushDataCount</tt>.
-   *
-   * @param pushDataCount value to be assigned to property pushDataCount
-   */
-  public void setPushDataCount(Map<String, Integer> pushDataCount) {
-    if (pushDataCount == null) {
-      pushDataCount = Collections.emptyMap();
+  public Map<String, Map<String, Integer>> getPushDataCount() {
+    if (dataCenterPushInfos == null) {
+      return Collections.EMPTY_MAP;
     }
-    this.pushDataCount = pushDataCount;
-  }
 
-  /**
-   * Getter method for property <tt>pushEncode</tt>.
-   *
-   * @return property value of pushEncode
-   */
-  public Map<String, String> getPushEncode() {
-    return pushEncode;
-  }
-
-  /**
-   * Setter method for property <tt>pushEncode</tt>.
-   *
-   * @param pushEncode value to be assigned to property pushEncode
-   */
-  public void setPushEncode(Map<String, String> pushEncode) {
-    this.pushEncode = pushEncode;
-  }
-
-  /**
-   * Getter method for property <tt>encodeSize</tt>.
-   *
-   * @return property value of encodeSize
-   */
-  public Map<String, Integer> getEncodeSize() {
-    return encodeSize;
-  }
-
-  /**
-   * Setter method for property <tt>encodeSize</tt>.
-   *
-   * @param encodeSize value to be assigned to property encodeSize
-   */
-  public void setEncodeSize(Map<String, Integer> encodeSize) {
-    this.encodeSize = encodeSize;
+    Map<String, Map<String, Integer>> pushDataCount =
+        Maps.newHashMapWithExpectedSize(dataCenterPushInfos.size());
+    for (Entry<String, DataCenterPushInfo> entry : dataCenterPushInfos.entrySet()) {
+      Map<String, Integer> map =
+          pushDataCount.computeIfAbsent(entry.getKey(), k -> Maps.newHashMap());
+      if (entry.getValue().getSegmentPushInfos() == null) {
+        continue;
+      }
+      for (SegmentPushInfo info : entry.getValue().getSegmentPushInfos().values()) {
+        map.put(info.getSegment(), info.getDataCount());
+      }
+    }
+    return pushDataCount;
   }
 
   protected static final class PushingTaskKey {

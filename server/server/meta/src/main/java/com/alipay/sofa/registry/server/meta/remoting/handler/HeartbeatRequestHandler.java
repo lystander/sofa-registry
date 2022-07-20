@@ -37,12 +37,15 @@ import com.alipay.sofa.registry.server.meta.metaserver.impl.DefaultCurrentDcMeta
 import com.alipay.sofa.registry.server.meta.monitor.data.DataMessageListener;
 import com.alipay.sofa.registry.server.meta.monitor.heartbeat.HeartbeatListener;
 import com.alipay.sofa.registry.server.meta.monitor.session.SessionMessageListener;
+import com.alipay.sofa.registry.server.meta.multi.cluster.DefaultMultiClusterSlotTableSyncer.RemoteClusterSlotState;
 import com.alipay.sofa.registry.server.meta.multi.cluster.MultiClusterSlotTableSyncer;
 import com.alipay.sofa.registry.server.shared.slot.SlotTableUtils;
 import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -316,26 +319,30 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
    * @return
    */
   private Map<String, RemoteSlotTableStatus> calculateStatus(HeartbeatRequest<Node> heartbeat) {
-    Map<String, SlotTable> metaRemoteSlotTable =
+    Map<String, RemoteClusterSlotState> remoteState =
         multiClusterSlotTableSyncer.getMultiClusterSlotTable();
     Map<String, Long> dataRemoteSlotTable = heartbeat.getRemoteClusterSlotTableEpoch();
 
     Map<String, RemoteSlotTableStatus> result = Maps.newHashMap();
-    for (Entry<String, SlotTable> metaEntry : metaRemoteSlotTable.entrySet()) {
+    for (Entry<String, RemoteClusterSlotState> metaEntry : remoteState.entrySet()) {
       String dataCenter = metaEntry.getKey();
-      SlotTable slotTable = metaEntry.getValue();
+      RemoteClusterSlotState state = metaEntry.getValue();
       Long slotTableEpoch = dataRemoteSlotTable.get(dataCenter);
-      if (slotTableEpoch == null || slotTableEpoch < slotTable.getEpoch()) {
+      SlotTable exist = state.getSlotTable();
+      Set<String> segmentZones = metaEntry.getValue().getSegmentZones();
+      if (slotTableEpoch == null || slotTableEpoch < exist.getEpoch()) {
         MULTI_CLUSTER_LOGGER.info(
             "[calculateStatus]node:{}, heartbeat request:{}/{}, newSlotTableEpoch:{}/{}, slotTable upgrade: {}",
             heartbeat.getNode(),
             dataCenter,
             slotTableEpoch,
             dataCenter,
-            slotTable.getEpoch(),
-            slotTable);
-        result.put(dataCenter, RemoteSlotTableStatus.upgrade(slotTable));
-      } else if (slotTableEpoch > slotTable.getEpoch()) {
+                exist.getEpoch(),
+                exist);
+        result.put(
+            dataCenter,
+            RemoteSlotTableStatus.upgrade(exist, segmentZones));
+      } else if (slotTableEpoch > exist.getEpoch()) {
         // it should not happen, print error log and return false
         MULTI_CLUSTER_LOGGER.error(
             "[calculateStatus]node:{}, heartbeat request:{}/{}, newSlotTableEpoch:{}/{}, heartbeat error.",
@@ -343,10 +350,10 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
             dataCenter,
             slotTableEpoch,
             dataCenter,
-            slotTable.getEpoch());
-        result.put(dataCenter, RemoteSlotTableStatus.conflict(slotTable));
+                exist.getEpoch());
+        result.put(dataCenter, RemoteSlotTableStatus.conflict(exist, segmentZones));
       } else {
-        result.put(dataCenter, RemoteSlotTableStatus.notUpgrade(slotTableEpoch));
+        result.put(dataCenter, RemoteSlotTableStatus.notUpgrade(slotTableEpoch, segmentZones));
       }
     }
     return result;

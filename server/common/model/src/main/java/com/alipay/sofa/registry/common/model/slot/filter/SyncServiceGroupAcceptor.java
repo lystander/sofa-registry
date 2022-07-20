@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.registry.common.model.slot.filter;
 
+import com.alipay.sofa.registry.common.model.ServiceGroupType;
 import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.google.common.base.Objects;
 import java.util.Set;
@@ -23,23 +24,24 @@ import org.springframework.util.CollectionUtils;
 
 /**
  * @author xiaojian.xj
- * @version : SyncSlotGroupAcceptor.java, v 0.1 2022年05月14日 14:48 xiaojian.xj Exp $
+ * @version : SyncServiceGroupAcceptor.java, v 0.1 2022年05月14日 14:48 xiaojian.xj Exp $
  */
-public class SyncSlotGroupAcceptor implements SyncSlotAcceptor {
+public class SyncServiceGroupAcceptor implements SyncSlotAcceptor {
 
-  private final String NAME = "SyncSlotGroupAcceptor";
-  private final Set<String> acceptGroups;
-  private final Set<String> filterGroups;
+  private final String NAME = "SyncServiceGroupAcceptor";
+  private final Set<ServiceGroupType> acceptGroups;
 
-  public SyncSlotGroupAcceptor(Set<String> acceptGroups, Set<String> filterGroups) {
+  public SyncServiceGroupAcceptor(Set<ServiceGroupType> acceptGroups) {
     this.acceptGroups = acceptGroups;
-    this.filterGroups = filterGroups;
   }
 
   @Override
-  public boolean accept(String dataInfoId) {
-    DataInfo dataInfo = DataInfo.valueOf(dataInfoId);
-    return !CollectionUtils.isEmpty(acceptGroups) && acceptGroups.contains(dataInfo.getGroup());
+  public boolean accept(SyncAcceptorRequest request) {
+
+    if (CollectionUtils.isEmpty(acceptGroups)) {
+      return false;
+    }
+    return acceptGroups.contains(request.getServiceGroup());
   }
 
   @Override
@@ -55,7 +57,7 @@ public class SyncSlotGroupAcceptor implements SyncSlotAcceptor {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SyncSlotGroupAcceptor that = (SyncSlotGroupAcceptor) o;
+    SyncServiceGroupAcceptor that = (SyncServiceGroupAcceptor) o;
     return Objects.equal(NAME, that.NAME);
   }
 

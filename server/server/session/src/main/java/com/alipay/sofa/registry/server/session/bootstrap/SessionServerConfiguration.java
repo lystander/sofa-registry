@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.registry.server.session.bootstrap;
 
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.wrapper.WrapperInterceptor;
 import com.alipay.sofa.registry.jdbc.config.JdbcConfiguration;
 import com.alipay.sofa.registry.jraft.config.RaftConfiguration;
@@ -37,6 +38,7 @@ import com.alipay.sofa.registry.server.session.filter.IPMatchStrategy;
 import com.alipay.sofa.registry.server.session.filter.ProcessFilter;
 import com.alipay.sofa.registry.server.session.filter.blacklist.BlacklistMatchProcessFilter;
 import com.alipay.sofa.registry.server.session.filter.blacklist.DefaultIPMatchStrategy;
+import com.alipay.sofa.registry.server.session.filter.slot.SyncSlotAcceptAllManager;
 import com.alipay.sofa.registry.server.session.limit.AccessLimitService;
 import com.alipay.sofa.registry.server.session.limit.AccessLimitServiceImpl;
 import com.alipay.sofa.registry.server.session.mapper.ConnectionMapper;
@@ -44,6 +46,8 @@ import com.alipay.sofa.registry.server.session.metadata.AppRevisionCacheService;
 import com.alipay.sofa.registry.server.session.metadata.AppRevisionHeartbeatRegistry;
 import com.alipay.sofa.registry.server.session.metadata.MetadataCacheRegistry;
 import com.alipay.sofa.registry.server.session.metadata.ServiceAppMappingCacheService;
+import com.alipay.sofa.registry.server.session.multi.cluster.DataCenterMetadataCache;
+import com.alipay.sofa.registry.server.session.multi.cluster.DataCenterMetadataCacheImpl;
 import com.alipay.sofa.registry.server.session.node.service.*;
 import com.alipay.sofa.registry.server.session.providedata.*;
 import com.alipay.sofa.registry.server.session.push.*;
@@ -187,6 +191,11 @@ public class SessionServerConfiguration {
       return new SlotTableCacheImpl();
     }
 
+    @Bean
+    public DataCenterMetadataCache dataCenterMetadataCache() {
+      return new DataCenterMetadataCacheImpl();
+    }
+
     @Bean(name = "serverHandlers")
     public Collection<AbstractServerHandler> serverHandlers() {
       Collection<AbstractServerHandler> list = new ArrayList<>();
@@ -296,6 +305,11 @@ public class SessionServerConfiguration {
     @Bean
     public AbstractServerHandler dataSlotDiffDigestRequestHandler() {
       return new DataSlotDiffDigestRequestHandler();
+    }
+
+    @Bean
+    public SyncSlotAcceptorManager syncSlotAcceptAllManager() {
+      return new SyncSlotAcceptAllManager();
     }
 
     @Bean
@@ -829,6 +843,15 @@ public class SessionServerConfiguration {
       systemPropertyProcessorManager.addSystemDataPersistenceProcessor(fetchShutdownService);
 
       return fetchShutdownService;
+    }
+
+    @Bean
+    public FetchSystemPropertyService fetchMultiPushService(
+            SystemPropertyProcessorManager systemPropertyProcessorManager) {
+      FetchMultiPushService fetchMultiPushService = new FetchMultiPushService();
+      systemPropertyProcessorManager.addSystemDataPersistenceProcessor(fetchMultiPushService);
+
+      return fetchMultiPushService;
     }
 
     @Bean

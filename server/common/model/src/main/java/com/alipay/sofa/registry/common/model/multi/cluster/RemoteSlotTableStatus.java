@@ -19,6 +19,7 @@ package com.alipay.sofa.registry.common.model.multi.cluster;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * @author xiaojian.xj
@@ -39,28 +40,33 @@ public class RemoteSlotTableStatus implements Serializable {
   /** slot table will be null if syncOnLeader=false or slotTableUpgrade=false */
   private final SlotTable slotTable;
 
+  /** segmentZones */
+  private Set<String> segmentZones;
+
   public RemoteSlotTableStatus(
       long slotTableEpoch,
       boolean slotTableUpgrade,
       boolean slotTableEpochConflict,
-      SlotTable slotTable) {
+      SlotTable slotTable,
+      Set<String> segmentZones) {
     this.slotTableEpoch = slotTableEpoch;
     this.slotTableUpgrade = slotTableUpgrade;
     this.slotTableEpochConflict = slotTableEpochConflict;
     this.slotTable = slotTable;
+    this.segmentZones = segmentZones;
   }
 
-  public static RemoteSlotTableStatus conflict(SlotTable slotTable) {
-    return new RemoteSlotTableStatus(slotTable.getEpoch(), false, true, slotTable);
+  public static RemoteSlotTableStatus conflict(SlotTable slotTable, Set<String> segmentZones) {
+    return new RemoteSlotTableStatus(slotTable.getEpoch(), false, true, slotTable, segmentZones);
   }
 
-  public static RemoteSlotTableStatus notUpgrade(long slotTableEpoch) {
-    return new RemoteSlotTableStatus(slotTableEpoch, false, false, null);
+  public static RemoteSlotTableStatus notUpgrade(long slotTableEpoch, Set<String> segmentZones) {
+    return new RemoteSlotTableStatus(slotTableEpoch, false, false, null, segmentZones);
   }
 
-  public static RemoteSlotTableStatus upgrade(SlotTable slotTable) {
+  public static RemoteSlotTableStatus upgrade(SlotTable slotTable, Set<String> segmentZones) {
     ParaCheckUtil.checkNotNull(slotTable, "slotTable");
-    return new RemoteSlotTableStatus(slotTable.getEpoch(), true, false, slotTable);
+    return new RemoteSlotTableStatus(slotTable.getEpoch(), true, false, slotTable, segmentZones);
   }
 
   /**
@@ -87,6 +93,15 @@ public class RemoteSlotTableStatus implements Serializable {
    */
   public SlotTable getSlotTable() {
     return slotTable;
+  }
+
+  /**
+   * Getter method for property <tt>segmentZones</tt>.
+   *
+   * @return property value of segmentZones
+   */
+  public Set<String> getSegmentZones() {
+    return segmentZones;
   }
 
   @Override

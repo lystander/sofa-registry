@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffUtils;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
@@ -74,12 +75,19 @@ public abstract class BaseSlotDiffPublisherRequestHandler
             "sync slot request from {}, not leader of {}", request.getLocalDataCenter(), slotId);
         return new GenericResponse().fillFailed("not leader of " + slotId);
       }
+
+      // not use acceptorManager to filter in getPublishers() method,
+      // because getPublishers() method only loop dataIndoId, will not loop publishers;
+      Map<String, Map<String, Publisher>> existingPublishers = datumStorageDelegate.getPublishers(dataServerConfig.getLocalDataCenter(), request.getSlotId());
+
+      // use acceptorManager in DataSlotDiffUtils.diffDigestResult,
+      // as it will loop publishers once
       DataSlotDiffPublisherResult result =
           calcDiffResult(
               slotId,
               request.getDatumSummaries(),
-              datumStorageDelegate.getPublishers(
-                  dataServerConfig.getLocalDataCenter(), request.getSlotId()));
+                  existingPublishers,
+                  request.getAcceptorManager());
       result.setSlotTableEpoch(slotManager.getSlotTableEpoch());
       return new GenericResponse().fillSucceed(result);
     } catch (Throwable e) {
@@ -96,10 +104,11 @@ public abstract class BaseSlotDiffPublisherRequestHandler
   private DataSlotDiffPublisherResult calcDiffResult(
       int targetSlot,
       List<DatumSummary> datumSummaries,
-      Map<String, Map<String, Publisher>> existingPublishers) {
+      Map<String, Map<String, Publisher>> existingPublishers,
+      SyncSlotAcceptorManager acceptorManager) {
     DataSlotDiffPublisherResult result =
         DataSlotDiffUtils.diffPublishersResult(
-            datumSummaries, existingPublishers, dataServerConfig.getSlotSyncPublisherMaxNum());
+            datumSummaries, existingPublishers, dataServerConfig.getSlotSyncPublisherMaxNum(), acceptorManager);
     DataSlotDiffUtils.logDiffResult(result, targetSlot, logger);
     return result;
   }

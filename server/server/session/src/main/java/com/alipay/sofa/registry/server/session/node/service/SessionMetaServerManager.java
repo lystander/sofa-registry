@@ -21,7 +21,7 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.remoting.ChannelHandler;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
-import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
+import com.alipay.sofa.registry.server.shared.constant.MetaLeaderLearnModeEnum;
 import com.alipay.sofa.registry.server.shared.meta.AbstractMetaLeaderExchanger;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
@@ -42,7 +42,16 @@ public class SessionMetaServerManager extends AbstractMetaLeaderExchanger {
   private Collection<ChannelHandler> metaClientHandlers;
 
   public SessionMetaServerManager() {
-    super(Exchange.META_SERVER_TYPE, ExchangerModeEnum.LOCAL_DATA_CENTER, LOGGER);
+    super(Exchange.META_SERVER_TYPE, LOGGER);
+  }
+
+  @Override
+  protected MetaLeaderLearnModeEnum getMode() {
+    if (defaultCommonConfig.isJdbc()) {
+      return MetaLeaderLearnModeEnum.JDBC;
+    } else {
+      return MetaLeaderLearnModeEnum.SLB;
+    }
   }
 
   @Override

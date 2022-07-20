@@ -191,7 +191,7 @@ public final class SlotDiffSyncer {
       }
 
       DataSlotDiffPublisherRequest request =
-          new DataSlotDiffPublisherRequest(localDataCenter, slotTableEpoch, slotId, round.values());
+          new DataSlotDiffPublisherRequest(localDataCenter, slotTableEpoch, slotId, syncSlotAcceptorManager, round.values());
 
       GenericResponse<DataSlotDiffPublisherResult> resp =
           (GenericResponse<DataSlotDiffPublisherResult>)
@@ -238,11 +238,7 @@ public final class SlotDiffSyncer {
       RemoteSyncLeader.observeSyncLeaderId(syncDataCenter, slotId, summaryMap.size());
     }
     Map<String, DatumDigest> digestMap = PublisherDigestUtil.digest(summaryMap);
-    DataSlotDiffDigestRequest request =
-        syncLocal
-            ? DataSlotDiffDigestRequest.buildLocalRequest(
-                localDataCenter, slotTableEpoch, slotId, digestMap)
-            : DataSlotDiffDigestRequest.buildRemoteRequest(
+    DataSlotDiffDigestRequest request = DataSlotDiffDigestRequest.buildRequest(
                 localDataCenter, slotTableEpoch, slotId, digestMap, syncSlotAcceptorManager);
     Response exchangeResp = exchanger.requestRaw(targetAddress, request);
     GenericResponse<DataSlotDiffDigestResult> resp =

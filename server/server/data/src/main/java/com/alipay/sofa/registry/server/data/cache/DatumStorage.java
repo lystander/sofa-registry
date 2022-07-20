@@ -56,9 +56,6 @@ public interface DatumStorage {
 
   Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slot);
 
-  Map<String, Map<String, Publisher>> getPublishers(
-      String dataCenter, int slot, SyncSlotAcceptorManager acceptorManager);
-
   /**
    * get all datum
    *
@@ -94,8 +91,6 @@ public interface DatumStorage {
 
   Map<String, Map<String, DatumSummary>> getDatumSummary(
       String dataCenter, int slotId, Set<String> sessions);
-
-  Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId);
 
   Map<String, DatumSummary> getDatumSummary(
       String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager);

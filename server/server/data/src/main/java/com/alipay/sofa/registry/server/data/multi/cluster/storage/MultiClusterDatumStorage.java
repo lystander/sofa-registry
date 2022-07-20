@@ -108,25 +108,13 @@ public class MultiClusterDatumStorage implements DatumStorage {
 
   @Override
   public Map<String, Map<String, Publisher>> getPublishers(String dataCenter, int slotId) {
+
     BaseDatumStorage storage = storageMap.get(dataCenter);
     if (storage == null) {
       LOGGER.warn("[nullStorage]getPublishers dataCenter={},slotId={}", dataCenter, slotId);
       return Collections.emptyMap();
     }
     return storage.getPublishers(slotId);
-  }
-
-  @Override
-  public Map<String, Map<String, Publisher>> getPublishers(
-      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
-    ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
-
-    BaseDatumStorage storage = storageMap.get(dataCenter);
-    if (storage == null) {
-      LOGGER.warn("[nullStorage]getPublishers dataCenter={},slotId={}", dataCenter, slotId);
-      return Collections.emptyMap();
-    }
-    return storage.getPublishers(slotId, acceptorManager);
   }
 
   /**
@@ -267,16 +255,6 @@ public class MultiClusterDatumStorage implements DatumStorage {
         slotId,
         sessions);
     throw new UnSupportOperationException("MultiClusterDatumStorage.getDatumSummaryBySessions");
-  }
-
-  @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId) {
-    BaseDatumStorage storage = storageMap.get(dataCenter);
-    if (storage == null) {
-      LOGGER.warn("[nullStorage]getDatumSummary dataCenter={}, slotId={}", dataCenter, slotId);
-      return Collections.emptyMap();
-    }
-    return storage.getDatumSummary(slotId);
   }
 
   @Override

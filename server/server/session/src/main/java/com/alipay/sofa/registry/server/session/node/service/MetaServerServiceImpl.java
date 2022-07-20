@@ -25,6 +25,7 @@ import com.alipay.sofa.registry.common.model.slot.SlotConfig;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
 import com.alipay.sofa.registry.common.model.store.URL;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
+import com.alipay.sofa.registry.server.session.multi.cluster.DataCenterMetadataCache;
 import com.alipay.sofa.registry.server.session.remoting.DataNodeExchanger;
 import com.alipay.sofa.registry.server.session.remoting.DataNodeNotifyExchanger;
 import com.alipay.sofa.registry.server.session.slot.SlotTableCache;
@@ -43,6 +44,8 @@ public class MetaServerServiceImpl extends AbstractMetaServerService<BaseHeartBe
   @Autowired private SessionServerConfig sessionServerConfig;
 
   @Autowired private SlotTableCache slotTableCache;
+
+  @Autowired private DataCenterMetadataCache dataCenterMetadataCache;
 
   @Autowired private DataNodeExchanger dataNodeExchanger;
 
@@ -74,6 +77,7 @@ public class MetaServerServiceImpl extends AbstractMetaServerService<BaseHeartBe
     }
 
     slotTableCache.updateRemoteSlotTable(result.getRemoteSlotTableStatus());
+    dataCenterMetadataCache.saveDataCenterZones(result.getRemoteSlotTableStatus());
   }
 
   @Override

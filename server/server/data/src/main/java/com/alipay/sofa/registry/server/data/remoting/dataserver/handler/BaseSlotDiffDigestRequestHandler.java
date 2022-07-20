@@ -20,11 +20,10 @@ import com.alipay.sofa.registry.common.model.GenericResponse;
 import com.alipay.sofa.registry.common.model.Node;
 import com.alipay.sofa.registry.common.model.dataserver.DatumDigest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
-import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest.SlotDiffAcceptType;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffUtils;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
-import com.alipay.sofa.registry.exception.UnSupportOperationException;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
@@ -34,9 +33,10 @@ import com.alipay.sofa.registry.server.data.slot.SlotManager;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
-import java.util.Map;
-import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * @author xiaojian.xj
@@ -72,24 +72,15 @@ public abstract class BaseSlotDiffDigestRequestHandler
       }
       slotManager.triggerUpdateSlotTable(request.getSlotTableEpoch());
 
-      Map<String, Map<String, Publisher>> existingPublishers;
-      if (request.getAcceptType() == SlotDiffAcceptType.ALL) {
-        existingPublishers =
-            datumStorageDelegate.getPublishers(
-                dataServerConfig.getLocalDataCenter(), request.getSlotId());
-      } else if (request.getAcceptType() == SlotDiffAcceptType.ACCEPTORS) {
-        existingPublishers =
-            datumStorageDelegate.getPublishers(
-                dataServerConfig.getLocalDataCenter(),
-                request.getSlotId(),
-                request.getAcceptorManager());
-      } else {
-        throw new UnSupportOperationException(
-            "DiffSyncDigest unsupport request.slotDiffAcceptType: " + request.getAcceptType());
-      }
+      // not use acceptorManager to filter in getPublishers() method,
+      // because getPublishers() method only loop dataIndoId, will not loop publishers;
+      Map<String, Map<String, Publisher>> existingPublishers =
+              datumStorageDelegate.getPublishers(dataServerConfig.getLocalDataCenter(), request.getSlotId());
 
+      // use acceptorManager in DataSlotDiffUtils.diffDigestResult,
+      // as it will loop publishers once
       DataSlotDiffDigestResult result =
-          calcDiffResult(slotId, request.getDatumDigest(), existingPublishers);
+          calcDiffResult(slotId, request.getDatumDigest(), existingPublishers, request.getAcceptorManager());
       result.setSlotTableEpoch(slotManager.getSlotTableEpoch());
 
       if (!postCheck(request)) {
@@ -111,9 +102,10 @@ public abstract class BaseSlotDiffDigestRequestHandler
   private DataSlotDiffDigestResult calcDiffResult(
       int targetSlot,
       Map<String, DatumDigest> targetDigestMap,
-      Map<String, Map<String, Publisher>> existingPublishers) {
+      Map<String, Map<String, Publisher>> existingPublishers,
+      SyncSlotAcceptorManager acceptorManager) {
     DataSlotDiffDigestResult result =
-        DataSlotDiffUtils.diffDigestResult(targetDigestMap, existingPublishers);
+        DataSlotDiffUtils.diffDigestResult(targetDigestMap, existingPublishers, acceptorManager);
     DataSlotDiffUtils.logDiffResult(result, targetSlot, logger);
     return result;
   }

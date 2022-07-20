@@ -21,6 +21,8 @@ import com.alipay.sofa.registry.common.model.metaserver.Lease;
 import com.alipay.sofa.registry.server.shared.config.CommonConfig;
 import com.alipay.sofa.registry.util.OsUtils;
 import com.alipay.sofa.registry.util.SystemUtils;
+
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -104,6 +106,11 @@ public class MetaServerConfigBean implements MetaServerConfig {
   @Override
   public boolean isLocalDataCenter(String dataCenter) {
     return commonConfig.getLocalDataCenter().equals(dataCenter);
+  }
+
+  @Override
+  public Set<String> getLocalDataCenterZones() {
+    return commonConfig.getLocalSegmentRegions();
   }
 
   /**

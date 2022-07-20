@@ -16,19 +16,24 @@
  */
 package com.alipay.sofa.registry.server.session.converter;
 
+import com.alipay.sofa.registry.common.model.DataCenterPushInfo;
+import com.alipay.sofa.registry.common.model.SegmentPushInfo;
 import com.alipay.sofa.registry.common.model.ServerDataBox;
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.metaserver.ProvideData;
 import com.alipay.sofa.registry.common.model.store.*;
 import com.alipay.sofa.registry.core.model.DataBox;
+import com.alipay.sofa.registry.core.model.MultiReceivedData;
+import com.alipay.sofa.registry.core.model.MultiSegmentData;
 import com.alipay.sofa.registry.core.model.ReceivedConfigData;
 import com.alipay.sofa.registry.core.model.ReceivedData;
 import com.alipay.sofa.registry.core.model.ScopeEnum;
-import com.alipay.sofa.registry.core.model.SegmentMetadata;
+import com.alipay.sofa.registry.exception.SofaRegistryRuntimeException;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.util.DatumVersionUtil;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
+import com.alipay.sofa.registry.util.StringFormatter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
@@ -39,9 +44,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import com.google.common.collect.Sets;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * The type Received data converter.
@@ -62,21 +67,18 @@ public final class ReceivedDataConverter {
    * @param regionLocal the region local
    * @return received data multi
    */
-  public static PushData<ReceivedData> getReceivedDataMulti(
+  public static PushData<ReceivedData> getReceivedData(
       MultiSubDatum unzipDatum,
-      boolean acceptMulti,
       ScopeEnum scope,
       List<String> subscriberRegisterIdList,
       String regionLocal,
       String localDataCenter,
-      Predicate<String> pushdataPredicate,
-      Predicate<String> segmentZonePredicate) {
+      Predicate<String> pushdataPredicate) {
 
     if (null == unzipDatum || CollectionUtils.isEmpty(unzipDatum.getDatumMap())) {
       return new PushData<>(null, Collections.EMPTY_MAP);
     }
     unzipDatum.mustUnzipped();
-    // todo judge server mode to decide local region
     ReceivedData receivedData = new ReceivedData();
     receivedData.setDataId(unzipDatum.getDataId());
     receivedData.setGroup(unzipDatum.getGroup());
@@ -85,57 +87,149 @@ public final class ReceivedDataConverter {
     receivedData.setScope(scope.name());
     receivedData.setLocalZone(regionLocal);
 
-    Map<String, Integer> dataCount;
-    if (acceptMulti) {
-      dataCount =
-          fillMultiRegionData(
-              unzipDatum, localDataCenter, receivedData, pushdataPredicate, segmentZonePredicate);
-    } else {
-      dataCount = fillRegionDatas(unzipDatum, receivedData, localDataCenter, pushdataPredicate);
-    }
-    return new PushData<>(receivedData, dataCount);
+    DataCenterPushInfo dataCenterPushInfo =
+        fillRegionDatas(unzipDatum, receivedData, localDataCenter, pushdataPredicate);
+
+    return new PushData<>(
+        receivedData,
+        Collections.singletonMap(receivedData.getSegment(), dataCenterPushInfo));
   }
 
-  private static Map<String, Integer> fillMultiRegionData(
+  public static PushData<MultiReceivedData> getMultiReceivedData(
+      MultiSubDatum unzipDatum,
+      ScopeEnum scope,
+      List<String> subscriberRegisterIdList,
+      String regionLocal,
+      String localDataCenter,
+      Predicate<String> pushdataPredicate,
+      Map<String, Set<String>> segmentZones) {
+    if (null == unzipDatum || CollectionUtils.isEmpty(unzipDatum.getDatumMap())) {
+      return new PushData<>(null, Collections.EMPTY_MAP);
+    }
+    unzipDatum.mustUnzipped();
+
+    MultiReceivedData receivedData = new MultiReceivedData();
+    receivedData.setDataId(unzipDatum.getDataId());
+    receivedData.setGroup(unzipDatum.getGroup());
+    receivedData.setInstanceId(unzipDatum.getInstanceId());
+    receivedData.setSubscriberRegistIds(subscriberRegisterIdList);
+    receivedData.setScope(scope.name());
+    receivedData.setLocalZone(regionLocal);
+
+    Map<String, DataCenterPushInfo> dataCenterPushInfo =
+        fillMultiRegionData(
+            unzipDatum, localDataCenter, receivedData, pushdataPredicate, segmentZones);
+    return new PushData<>(receivedData, dataCenterPushInfo);
+  }
+
+  private static Map<String, DataCenterPushInfo> fillMultiRegionData(
       MultiSubDatum unzipDatum,
       String localDataCenter,
-      ReceivedData receivedData,
+      MultiReceivedData multiReceivedData,
       Predicate<String> pushdataPredicate,
-      Predicate<String> segmentZonePredicate) {
-    int size = unzipDatum.getDatumMap().size();
+      Map<String, Set<String>> segmentZones) {
 
-    final Map<String, Integer> dataCount = Maps.newHashMapWithExpectedSize(size);
-    final Map<String /*dataCenter*/, Map<String /*zone*/, List<DataBox>>> multiDatas =
-        Maps.newHashMapWithExpectedSize(size);
+    final Map<String, MultiSegmentData> multiDatas = Maps.newHashMap();
+    final Map<String, DataCenterPushInfo> dataCenterPushInfo = Maps.newHashMap();
 
-    final Map<String, SegmentMetadata> segmentMetadataMap = Maps.newHashMapWithExpectedSize(size);
-    final Map<String /*dataCenter*/, Long> multiVersion = Maps.newHashMapWithExpectedSize(size);
+    for (Entry<String, SubDatum> datumEntry : unzipDatum.getDatumMap().entrySet()) {
+      String pushDataCenter = datumEntry.getKey();
+      SubDatum subDatum = datumEntry.getValue();
 
-    for (Entry<String, SubDatum> entry : unzipDatum.getDatumMap().entrySet()) {
-      Tuple<Integer, Map<String, List<DataBox>>> tuple = swizzData(entry.getValue(), pushdataPredicate);
-      multiDatas.put(entry.getKey(), tuple.o2);
-      multiVersion.put(entry.getKey(), entry.getValue().getVersion());
-      dataCount.put(entry.getKey(), tuple.o1);
+      Map<String, SegmentDataCounter> multiSegmentDatas =
+          buildMultiSegmentDataFromSubDatum(
+              localDataCenter,
+              pushDataCenter,
+              subDatum,
+              pushdataPredicate,
+              segmentZones.get(pushDataCenter));
+      if (CollectionUtils.isEmpty(multiDatas)) {
+        continue;
+      }
 
-      final Set<String> segmentZones =
-          tuple.o2.keySet().stream()
-              .filter(zone -> segmentZonePredicate.test(zone))
-              .collect(Collectors.toSet());
-      segmentMetadataMap.put(
-          entry.getKey(),
-          new SegmentMetadata(
-              StringUtils.endsWithIgnoreCase(localDataCenter, entry.getKey()),
-              entry.getKey(),
-              segmentZones));
+      final Map<String, SegmentPushInfo> segmentPushInfo = Maps.newHashMap();
+
+      for (Entry<String, SegmentDataCounter> entry : multiSegmentDatas.entrySet()) {
+        SegmentDataCounter value = entry.getValue();
+        multiDatas.put(entry.getKey(), value.getSegmentData());
+        segmentPushInfo.put(
+            entry.getKey(), new SegmentPushInfo(entry.getKey(), value.getDataCount()));
+      }
+      dataCenterPushInfo.put(pushDataCenter, new DataCenterPushInfo(subDatum.getVersion(), segmentPushInfo));
     }
-
-    receivedData.setUnzipMultiDatas(multiDatas);
-    receivedData.setMultiVersion(multiVersion);
-    receivedData.setSegmentMetadata(segmentMetadataMap);
-    return dataCount;
+    multiReceivedData.setMultiData(multiDatas);
+    return dataCenterPushInfo;
   }
 
-  private static Map<String, Integer> fillRegionDatas(
+  private static Map<String, SegmentDataCounter> buildMultiSegmentDataFromSubDatum(
+      String localDataCenter,
+      String pushDataCenter,
+      SubDatum subDatum,
+      Predicate<String> pushdataPredicate,
+      Set<String> segmentZones) {
+
+    Map<String, SegmentDataCounter> ret = Maps.newHashMap();
+    if (StringUtils.equals(localDataCenter, pushDataCenter)) {
+      LocalDataCenterPushData localDataCenterPushData =
+          localSegmentData(localDataCenter, subDatum, pushdataPredicate, segmentZones);
+      if (localDataCenterPushData == null) {
+        return null;
+      }
+
+      ret.put(localDataCenter, localDataCenterPushData.getLocalSegmentDatas());
+      ret.putAll(localDataCenterPushData.getRemoteSegmentDatas());
+      return ret;
+    }
+    return remoteSegmentData(subDatum, segmentZones);
+  }
+
+  private static Map<String, SegmentDataCounter> remoteSegmentData(
+      SubDatum subDatum, Set<String> segmentZones) {
+
+    Map<String, List<DataBox>> pushData;
+    try {
+      if (CollectionUtils.isEmpty(segmentZones)) {
+        throw new SofaRegistryRuntimeException(StringFormatter.format("segmentZones is empty."));
+      }
+      pushData = swizzData(subDatum, null);
+    } catch (Throwable th) {
+      LOGGER.error("build remoteSegmentData error, dataId: {}.", subDatum.getDataId(), th);
+      return null;
+    }
+
+    Map<String, SegmentDataCounter> ret = Maps.newHashMapWithExpectedSize(segmentZones.size());
+    for (String zone : segmentZones) {
+      SegmentDataCounter counter = new SegmentDataCounter(new MultiSegmentData(zone));
+      counter.put(zone, pushData.get(zone));
+      ret.put(zone, counter);
+    }
+    return ret;
+  }
+
+  private static LocalDataCenterPushData localSegmentData(
+      String localDataCenter,
+      SubDatum subDatum,
+      Predicate<String> pushdataPredicate,
+      Set<String> segmentZones) {
+
+    // split into local and remote
+    Map<String, List<DataBox>> pushData;
+    try {
+      if (CollectionUtils.isEmpty(segmentZones)) {
+        throw new SofaRegistryRuntimeException(StringFormatter.format("segmentZones is empty."));
+      }
+      pushData = swizzData(subDatum, null);
+    } catch (Throwable th) {
+      LOGGER.error("build localSegmentData error, dataId: {}.", subDatum.getDataId(), th);
+      return null;
+    }
+
+    LocalDataCenterPushData localDataCenterPushData = new LocalDataCenterPushData();
+    localDataCenterPushData.from(pushData, localDataCenter, pushdataPredicate, segmentZones);
+    return localDataCenterPushData;
+  }
+
+  private static DataCenterPushInfo fillRegionDatas(
       MultiSubDatum unzipDatum,
       ReceivedData receivedData,
       String localDataCenter,
@@ -149,25 +243,30 @@ public final class ReceivedDataConverter {
     receivedData.setSegment(localDataCenter);
     receivedData.setVersion(subDatum.getVersion());
 
-    Tuple<Integer, Map<String, List<DataBox>>> tuple = swizzData(subDatum, pushdataPredicate);
-    receivedData.setData(tuple.o2);
-    return Collections.singletonMap(localDataCenter, tuple.o1);
+    Map<String, List<DataBox>> tuple = swizzData(subDatum, pushdataPredicate);
+    receivedData.setData(tuple);
+
+    int dataCount = tuple.values().stream().mapToInt(List::size).sum();
+
+    DataCenterPushInfo dataCenterPushInfo = new DataCenterPushInfo(subDatum.getVersion(),
+            Collections.singletonMap(
+                    localDataCenter, new SegmentPushInfo(localDataCenter, dataCount)));
+    return dataCenterPushInfo;
   }
 
-  private static Tuple<Integer, Map<String /*zone*/, List<DataBox>>> swizzData(
+  private static Map<String /*zone*/, List<DataBox>> swizzData(
       SubDatum subDatum, Predicate<String> pushdataPredicate) {
     Map<String /*zone*/, List<DataBox>> swizzMap = new HashMap<>();
     List<SubPublisher> publishers = subDatum.mustGetPublishers();
     if (publishers.isEmpty()) {
-      return new Tuple<>(0, Collections.EMPTY_MAP);
+      return Collections.EMPTY_MAP;
     }
-    int dataCount = 0;
     for (SubPublisher publisher : publishers) {
       List<ServerDataBox> datas = publisher.getDataList();
 
       String region = publisher.getCell();
 
-      if (pushdataPredicate.test(region)) {
+      if (pushdataPredicate != null && pushdataPredicate.test(region)) {
         continue;
       }
       if (null == datas) {
@@ -175,9 +274,8 @@ public final class ReceivedDataConverter {
       }
       List<DataBox> regionDatas = swizzMap.computeIfAbsent(region, k -> new ArrayList<>());
       fillRegionDatas(regionDatas, datas);
-      dataCount += datas.size();
     }
-    return new Tuple<>(dataCount, swizzMap);
+    return swizzMap;
   }
 
   private static void fillRegionDatas(List<DataBox> regionDatas, List<ServerDataBox> datas) {

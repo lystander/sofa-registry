@@ -20,11 +20,13 @@ import static com.alipay.sofa.registry.server.data.change.ChangeMetrics.SKIP_SAM
 
 import com.alipay.sofa.registry.common.model.ConnectId;
 import com.alipay.sofa.registry.common.model.ProcessId;
-import com.alipay.sofa.registry.common.model.PublisherGroupType;
+import com.alipay.sofa.registry.common.model.ServiceGroupType;
 import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncAcceptorRequest;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.alipay.sofa.registry.common.model.store.ProcessIdCache;
 import com.alipay.sofa.registry.common.model.store.Publisher;
@@ -68,7 +70,7 @@ public final class PublisherGroup {
 
   final String group;
 
-  final PublisherGroupType groupType;
+  final ServiceGroupType serviceGroupType;
 
   // if the delete publisher from session, mark unpub
   final Map<String /*registerId*/, PublisherEnvelope> pubMap = Maps.newConcurrentMap();
@@ -86,7 +88,7 @@ public final class PublisherGroup {
     this.dataId = WordCache.getWordCache(dataInfo.getDataId());
     this.instanceId = WordCache.getWordCache(dataInfo.getInstanceId());
     this.group = WordCache.getWordCache(dataInfo.getGroup());
-    this.groupType = PublisherGroupType.of(dataInfoId);
+    this.serviceGroupType = ServiceGroupType.of(dataInfoId);
     if (DatumVersionUtil.useConfregVersionGen()) {
       this.version = DatumVersionUtil.confregNextId(0);
     } else {
@@ -379,14 +381,14 @@ public final class PublisherGroup {
     }
   }
 
-  DatumSummary getAllSummary() {
+  DatumSummary getAllSummary(SyncSlotAcceptorManager acceptorManager) {
     Map<String /*registerId*/, RegisterVersion> publisherVersions =
         Maps.newHashMapWithExpectedSize(pubMap.size());
     for (Map.Entry<String, PublisherEnvelope> e : pubMap.entrySet()) {
       PublisherEnvelope envelope = e.getValue();
       RegisterVersion v = envelope.getVersionIfPub();
       // v = null when envelope is unpub
-      if (v == null) {
+      if (v == null || !acceptorManager.accept(SyncAcceptorRequest.buildRequest(envelope.publisher.getPublishSource()))) {
         continue;
       }
       publisherVersions.put(e.getKey(), v);

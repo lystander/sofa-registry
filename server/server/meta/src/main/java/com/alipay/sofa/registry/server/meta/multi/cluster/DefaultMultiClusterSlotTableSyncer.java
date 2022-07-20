@@ -94,10 +94,12 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
   public void loseLeader() {}
 
   @Override
-  public Map<String, SlotTable> getMultiClusterSlotTable() {
-    Map<String, SlotTable> result = Maps.newHashMapWithExpectedSize(slotStateMap.size());
+  public Map<String, RemoteClusterSlotState> getMultiClusterSlotTable() {
+    Map<String, RemoteClusterSlotState> result = Maps.newHashMapWithExpectedSize(slotStateMap.size());
     for (Entry<String, RemoteClusterSlotState> entry : slotStateMap.entrySet()) {
-      result.put(entry.getKey(), entry.getValue().slotTable);
+      RemoteClusterSlotState state = entry.getValue();
+      result.put(state.getClusterId(),
+              new RemoteClusterSlotState(state.getClusterId(), state.getSlotTable(), state.getSegmentZones()));
     }
     return result;
   }
@@ -122,16 +124,17 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
         return;
       }
 
-      Set<String> remoteClusters = remoteClusterMetaExchanger.getAllRemoteClusters();
-      SetView<String> removes = Sets.difference(slotStateMap.keySet(), remoteClusters);
+      // remoteDataCenters is save in MultiClusterSyncInfo.remoteDataCenter, just use to print log, not clusterId
+      Set<String> remoteDataCenters = remoteClusterMetaExchanger.getAllRemoteClusters();
+      SetView<String> removes = Sets.difference(slotStateMap.keySet(), remoteDataCenters);
       for (String remove : removes) {
         RemoteClusterSlotState state = slotStateMap.remove(remove);
         LOGGER.info("remove dataCenter: {} sync info: {}.", remove, state);
       }
 
-      for (String dataCenter : remoteClusters) {
+      for (String dataCenter : remoteDataCenters) {
         RemoteClusterSlotState slotState =
-            slotStateMap.computeIfAbsent(dataCenter, k -> new RemoteClusterSlotState(dataCenter));
+            slotStateMap.computeIfAbsent(dataCenter, k -> new RemoteClusterSlotState());
 
         // check if exceed max fail count
         if (checkSyncFailCount(slotState.getFailCount())) {
@@ -148,10 +151,8 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
         if (needSync(slotState.task)) {
           SlotSyncTask syncTask =
               new SlotSyncTask(
-                  slotState.dataCenter,
-                  slotState.slotTable == null
-                      ? INIT_SLOT_TABLE_EPOCH
-                      : slotState.slotTable.getEpoch());
+                  dataCenter,
+                  slotState.slotTable.getEpoch());
           slotState.task = remoteSlotSyncerExecutor.execute(dataCenter, syncTask);
         }
       }
@@ -188,17 +189,42 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
         || task.isOverAfter(multiClusterMetaServerConfig.getRemoteSlotSyncerMillis());
   }
 
-  private static final class RemoteClusterSlotState {
-    final String dataCenter;
+  public static final class RemoteClusterSlotState {
+    volatile String clusterId;
 
     volatile SlotTable slotTable;
+
+    volatile Set<String> segmentZones;
 
     volatile KeyedTask<SlotSyncTask> task;
 
     final AtomicLong failCount = new AtomicLong(0);
 
-    public RemoteClusterSlotState(String dataCenter) {
-      this.dataCenter = dataCenter;
+    public RemoteClusterSlotState() {
+      this.slotTable = SlotTable.INIT;
+    }
+
+    public RemoteClusterSlotState(String clusterId, SlotTable slotTable, Set<String> segmentZones) {
+      this.clusterId = clusterId;
+      this.slotTable = slotTable;
+      this.segmentZones = segmentZones;
+    }
+
+    public synchronized void update(String clusterId, SlotTable update, Set<String> segmentZones) {
+
+      this.clusterId = clusterId;
+      SlotTable prev = slotTable;
+      if (slotTable.getEpoch() < update.getEpoch()) {
+        this.slotTable = update;
+        LOGGER.info(
+                "slotTable update from {} to {}, data: {}",
+                prev.getEpoch(),
+                update.getEpoch(),
+                update);
+      }
+      if (this.segmentZones == null) {
+        this.segmentZones = segmentZones;
+      }
     }
 
     public long incrementAndGetFailCount() {
@@ -213,11 +239,24 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
       return failCount.get();
     }
 
+
+    public synchronized String getClusterId() {
+      return this.clusterId;
+    }
+
+    public synchronized Set<String> getSegmentZones() {
+      return this.segmentZones;
+    }
+
+    public synchronized SlotTable getSlotTable() {
+      return this.slotTable;
+    }
+
     @Override
     public String toString() {
       return "RemoteClusterSlotState{"
-          + "dataCenter='"
-          + dataCenter
+          + "clusterId='"
+          + clusterId
           + '\''
           + ", slotTable="
           + slotTable
@@ -225,6 +264,7 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
           + task
           + '}';
     }
+
   }
 
   private final class SlotSyncTask implements Runnable {
@@ -281,10 +321,12 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
     RemoteClusterSlotSyncResponse data = syncRest.getData();
 
     if (syncRest.isSuccess()) {
-      remoteClusterMetaExchanger.learn(
-          request.getDataCenter(), new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader()));
-      handleSyncResult(state, data);
-      state.initFailCount();
+      boolean learn = remoteClusterMetaExchanger.learn(
+              request.getDataCenter(), new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader()));
+      if (learn) {
+        handleSyncResult(state, data);
+        state.initFailCount();
+      }
       return;
     }
     handleFailResponse(request, state, syncRest);
@@ -307,7 +349,7 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
     if (!data.isSyncOnLeader()) {
       remoteClusterMetaExchanger.learn(
           request.getDataCenter(), new LeaderInfo(data.getMetaLeaderEpoch(), data.getMetaLeader()));
-      // refresh the leader from follower, but the info maybe is incorrect
+      // refresh the leader from follower, but the info maybe incorrect
       // throw the exception to trigger the counter inc
       // if the info is correct, the counter would be reset
       throw new RuntimeException(
@@ -328,14 +370,9 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
   }
 
   private void handleSyncResult(RemoteClusterSlotState state, RemoteClusterSlotSyncResponse data) {
-    long epoch = state.slotTable.getEpoch();
-    if (data.isSlotTableUpgrade() && data.getMetaLeaderEpoch() > epoch) {
-      state.slotTable = data.getSlotTable();
-      LOGGER.info(
-          "slotTable update from {} to {}, data: {}",
-          epoch,
-          data.getMetaLeaderEpoch(),
-          data.getSlotTable());
+
+    if (data.isSlotTableUpgrade()) {
+      state.update(data.getClusterId(), data.getSlotTable(), data.getLocalSegZones());
     }
   }
 }

@@ -14,29 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alipay.sofa.registry.server.shared.constant;
+package com.alipay.sofa.registry.common.model.slot.filter;
+
+import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
+import com.google.common.collect.Sets;
+
+import java.util.Collections;
 
 /**
  * @author xiaojian.xj
- * @version : ExchangerModeEnum.java, v 0.1 2022年04月16日 17:49 xiaojian.xj Exp $
+ * @version : LocalDataSyncSessionAccessorManager.java, v 0.1 2022年05月24日 21:56 xiaojian.xj Exp $
  */
-public enum ExchangerModeEnum {
-  LOCAL_DATA_CENTER("LOCAL_DATA_CENTER"),
-  REMOTE_DATA_CENTER("REMOTE_DATA_CENTER"),
-  ;
+public class LocalDataSyncSessionAccessorManager extends BaseSyncSlotAcceptorManager {
 
-  private String code;
+  // todo xiaojian.xj  accept = all, filter = metadata
+  private static final SyncSlotAcceptor groupAcceptor =
+      new SyncServiceGroupAcceptor(
+              Collections.singleton());
 
-  ExchangerModeEnum(String code) {
-    this.code = code;
+  public LocalDataSyncSessionAccessorManager() {
+    // only group acceptor
+    super(Collections.singleton(groupAcceptor));
   }
 
-  /**
-   * Getter method for property <tt>code</tt>.
-   *
-   * @return property value of code
-   */
-  public String getCode() {
-    return code;
-  }
 }

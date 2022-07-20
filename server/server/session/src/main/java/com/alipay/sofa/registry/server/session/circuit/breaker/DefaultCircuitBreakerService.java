@@ -27,6 +27,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -139,8 +140,8 @@ public class DefaultCircuitBreakerService implements CircuitBreakerService {
   /**
    * statistic when push success
    *
-   * @param versions
-   * @param pushNums
+   * @param versions dataCenter -> version
+   * @param pushNums dataCenter -> pushNum
    * @param subscriber
    * @return
    */

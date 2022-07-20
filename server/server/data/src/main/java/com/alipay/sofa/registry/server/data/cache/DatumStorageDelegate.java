@@ -127,12 +127,6 @@ public class DatumStorageDelegate implements DatumStorage {
     return storageOf(dataCenter).getPublishers(dataCenter, slot);
   }
 
-  @Override
-  public Map<String, Map<String, Publisher>> getPublishers(
-      String dataCenter, int slot, SyncSlotAcceptorManager acceptorManager) {
-    return storageOf(dataCenter).getPublishers(dataCenter, slot, acceptorManager);
-  }
-
   /**
    * get all datum
    *
@@ -207,11 +201,6 @@ public class DatumStorageDelegate implements DatumStorage {
   public Map<String, Map<String, DatumSummary>> getDatumSummary(
       String dataCenter, int slotId, Set<String> sessions) {
     return storageOf(dataCenter).getDatumSummary(dataCenter, slotId, sessions);
-  }
-
-  @Override
-  public Map<String, DatumSummary> getDatumSummary(String dataCenter, int slotId) {
-    return storageOf(dataCenter).getDatumSummary(dataCenter, slotId);
   }
 
   @Override

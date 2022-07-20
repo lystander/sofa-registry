@@ -22,7 +22,7 @@ package com.alipay.sofa.registry.common.model.slot.filter;
  */
 public interface SyncSlotAcceptor {
 
-  boolean accept(String dataInfoId);
+  boolean accept(SyncAcceptorRequest request);
 
   String name();
 }

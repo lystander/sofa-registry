@@ -16,7 +16,7 @@
  */
 package com.alipay.sofa.registry.common.model.slot.filter;
 
-import com.alipay.sofa.registry.common.model.PublisherGroupType;
+import com.alipay.sofa.registry.common.model.ServiceGroupType;
 import com.google.common.collect.Sets;
 import java.util.Collections;
 
@@ -27,10 +27,10 @@ import java.util.Collections;
 public class AcceptorConstants {
 
   public static final SyncSlotAcceptor SERVICE_MAPPING_ACCEPTOR =
-      new SyncSlotGroupAcceptor(
-          Sets.newHashSet(PublisherGroupType.REGISTRY_MAPPING.getCode()), Collections.emptySet());
+      new SyncServiceGroupAcceptor(
+          Sets.newHashSet(ServiceGroupType.REGISTRY_MAPPING));
 
   public static final SyncSlotAcceptor APP_REVISION_ACCEPTOR =
-      new SyncSlotGroupAcceptor(
-          Sets.newHashSet(PublisherGroupType.REGISTRY_MAPPING.getCode()), Collections.emptySet());
+      new SyncServiceGroupAcceptor(
+          Sets.newHashSet(ServiceGroupType.REGISTRY_MAPPING));
 }

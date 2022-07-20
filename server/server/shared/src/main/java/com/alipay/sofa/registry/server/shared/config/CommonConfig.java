@@ -18,6 +18,8 @@ package com.alipay.sofa.registry.server.shared.config;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +41,10 @@ public class CommonConfig {
   @Value(
       "#{PropertySplitter.mapOfKeyList('${nodes.localDataCenter:DefaultDataCenter}', '${nodes.metaNode:DefaultDataCenter:localhost}')}")
   private Map<String /*dataCenterId*/, Collection<String>> metaNode;
+
+  @Value("#{PropertySplitter.list('${nodes.localSegmentRegions:}')}")
+  private Set<String> localSegmentRegions;
+
 
   /**
    * Getter method for property <tt>metaNode</tt>.
@@ -65,6 +71,15 @@ public class CommonConfig {
    */
   public String getLocalDataCenter() {
     return localDataCenter;
+  }
+
+  /**
+   * Getter method for property <tt>localSegmentRegions</tt>.
+   *
+   * @return property value of localSegmentRegions
+   */
+  public Set<String> getLocalSegmentRegions() {
+    return localSegmentRegions;
   }
 
   /**

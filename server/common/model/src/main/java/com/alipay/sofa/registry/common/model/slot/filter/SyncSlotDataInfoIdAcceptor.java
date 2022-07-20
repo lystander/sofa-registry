@@ -16,7 +16,10 @@
  */
 package com.alipay.sofa.registry.common.model.slot.filter;
 
+import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
 import com.google.common.base.Objects;
+
+import java.util.Collections;
 import java.util.Set;
 import org.springframework.util.CollectionUtils;
 
@@ -28,20 +31,30 @@ public class SyncSlotDataInfoIdAcceptor implements SyncSlotAcceptor {
 
   private final String NAME = "SyncSlotDataInfoIdAcceptor";
 
-  private static final String ACCEPT_ALL = "ACCEPT_ALL";
-  private final Set<String> acceptDataInfoIds;
+  private final Set<String> accepts;
 
-  public SyncSlotDataInfoIdAcceptor(Set<String> acceptDataInfoIds) {
-    this.acceptDataInfoIds = acceptDataInfoIds;
+  private final Set<String> filters;
+
+  public SyncSlotDataInfoIdAcceptor(Set<String> accepts) {
+    this(accepts, Collections.EMPTY_SET);
+  }
+
+  public SyncSlotDataInfoIdAcceptor(Set<String> accepts, Set<String> filters) {
+    this.accepts = accepts;
+    this.filters = filters;
   }
 
   @Override
-  public boolean accept(String dataInfoId) {
-    if (CollectionUtils.isEmpty(acceptDataInfoIds)) {
+  public boolean accept(SyncAcceptorRequest request) {
+    if (CollectionUtils.isEmpty(accepts)) {
       return false;
     }
 
-    return acceptDataInfoIds.contains(ACCEPT_ALL) || acceptDataInfoIds.contains(dataInfoId);
+    if (!CollectionUtils.isEmpty(filters) && filters.contains(request.getDataInfoId())) {
+      return false;
+    }
+
+    return accepts.contains(MultiValueConstants.SYNC_ACCEPT_ALL) || accepts.contains(request.getDataInfoId());
   }
 
   @Override

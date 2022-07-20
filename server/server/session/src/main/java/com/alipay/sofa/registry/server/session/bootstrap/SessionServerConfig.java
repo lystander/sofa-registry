@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.session.bootstrap;
 
 import com.alipay.sofa.registry.server.shared.config.ServerShareConfig;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * SessionServerConfig Interface
@@ -64,6 +65,8 @@ public interface SessionServerConfig extends ServerShareConfig {
   int getMetaNodeExchangeTimeoutMillis();
 
   String getSessionServerRegion();
+
+  Set<String> getLocalDataCenterZones();
 
   String getClientCell(String clientCell);
 

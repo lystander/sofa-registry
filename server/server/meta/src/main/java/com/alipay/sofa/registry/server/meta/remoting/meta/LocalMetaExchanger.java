@@ -24,7 +24,7 @@ import com.alipay.sofa.registry.remoting.ChannelHandler;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
-import com.alipay.sofa.registry.server.shared.constant.ExchangerModeEnum;
+import com.alipay.sofa.registry.server.shared.constant.MetaLeaderLearnModeEnum;
 import com.alipay.sofa.registry.server.shared.meta.AbstractMetaLeaderExchanger;
 import com.alipay.sofa.registry.store.api.elector.AbstractLeaderElector;
 import com.alipay.sofa.registry.util.StringFormatter;
@@ -42,12 +42,22 @@ public class LocalMetaExchanger extends AbstractMetaLeaderExchanger {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalMetaExchanger.class);
 
   public LocalMetaExchanger() {
-    super(Exchange.META_SERVER_TYPE, ExchangerModeEnum.LOCAL_DATA_CENTER, LOGGER);
+
+    super(Exchange.META_SERVER_TYPE, LOGGER);
   }
 
   @Autowired private MetaServerConfig metaServerConfig;
 
   @Autowired private MetaLeaderService metaLeaderService;
+
+  @Override
+  protected MetaLeaderLearnModeEnum getMode() {
+    if (defaultCommonConfig.isJdbc()) {
+      return MetaLeaderLearnModeEnum.JDBC;
+    } else {
+      return MetaLeaderLearnModeEnum.SLB;
+    }
+  }
 
   @Override
   public LeaderInfo queryLeaderFromDb() {

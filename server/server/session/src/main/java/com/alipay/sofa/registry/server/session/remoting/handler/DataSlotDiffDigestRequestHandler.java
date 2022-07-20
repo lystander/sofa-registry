@@ -22,6 +22,9 @@ import com.alipay.sofa.registry.common.model.dataserver.DatumDigest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffUtils;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncAcceptorRequest;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptor;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
@@ -37,6 +40,8 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Resource;
+
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-11-06 15:41 yuzhi.lyz Exp $
@@ -46,11 +51,13 @@ public class DataSlotDiffDigestRequestHandler
   private static final Logger LOGGER =
       LoggerFactory.getLogger(DataSlotDiffDigestRequestHandler.class);
 
-  @Autowired ExecutorManager executorManager;
+  @Autowired private ExecutorManager executorManager;
 
-  @Autowired DataStore sessionDataStore;
+  @Autowired private DataStore sessionDataStore;
 
-  @Autowired SlotTableCache slotTableCache;
+  @Autowired private SlotTableCache slotTableCache;
+
+  @Resource private SyncSlotAcceptorManager syncSlotAcceptAllManager;
 
   @Override
   public void checkParam(DataSlotDiffDigestRequest request) {
@@ -88,7 +95,7 @@ public class DataSlotDiffDigestRequestHandler
       Map<String, Map<String, Publisher>> existingPublishers) {
 
     DataSlotDiffDigestResult result =
-        DataSlotDiffUtils.diffDigestResult(digestMap, existingPublishers);
+        DataSlotDiffUtils.diffDigestResult(digestMap, existingPublishers, syncSlotAcceptAllManager);
     DataSlotDiffUtils.logDiffResult(result, targetSlot, LOGGER);
     return result;
   }

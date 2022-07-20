@@ -19,6 +19,7 @@ package com.alipay.sofa.registry.server.session.circuit.breaker;
 import com.alipay.sofa.registry.common.model.store.CircuitBreakerStatistic;
 import com.alipay.sofa.registry.common.model.store.Subscriber;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author xiaojian.xj
@@ -36,8 +37,8 @@ public interface CircuitBreakerService {
   /**
    * statistic when push success
    *
-   * @param versions
-   * @param pushNums
+   * @param versions dataCenter -> version
+   * @param pushNums dataCenter -> pushNum
    * @param subscriber
    * @return
    */

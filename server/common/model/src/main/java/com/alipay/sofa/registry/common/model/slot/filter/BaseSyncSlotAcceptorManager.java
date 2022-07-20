@@ -32,18 +32,23 @@ public class BaseSyncSlotAcceptorManager implements SyncSlotAcceptorManager {
     this.acceptors = acceptors;
   }
 
-  public boolean accept(String dataInfoId) {
+  /**
+   * add or update acceptor
+   * @param acceptor
+   */
+  @Override
+  public void updateAcceptor(SyncSlotAcceptor acceptor) {
+    acceptors.add(acceptor);
+  }
+
+  public boolean accept(SyncAcceptorRequest request) {
 
     for (SyncSlotAcceptor acceptor :
         Optional.ofNullable(acceptors).orElse(Collections.emptySet())) {
-      if (acceptor.accept(dataInfoId)) {
+      if (acceptor.accept(request)) {
         return true;
       }
     }
     return false;
-  }
-
-  public void register(SyncSlotAcceptor acceptor) {
-    acceptors.add(acceptor);
   }
 }

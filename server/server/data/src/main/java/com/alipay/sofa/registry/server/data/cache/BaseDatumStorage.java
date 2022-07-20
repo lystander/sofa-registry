@@ -114,12 +114,6 @@ public class BaseDatumStorage {
   }
 
   public Map<String, Map<String, Publisher>> getPublishers(int slotId) {
-    return getPublishers(slotId, null);
-  }
-
-  public Map<String, Map<String, Publisher>> getPublishers(
-      int slotId, SyncSlotAcceptorManager acceptorManager) {
-    ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
 
     PublisherGroups groups = getPublisherGroups(slotId);
     if (groups == null) {
@@ -129,9 +123,6 @@ public class BaseDatumStorage {
     Map<String, Map<String, Publisher>> ret = Maps.newHashMapWithExpectedSize(publisherMap.size());
     for (Map.Entry<String, List<Publisher>> publishers : publisherMap.entrySet()) {
       final String dataInfoId = publishers.getKey();
-      if (acceptorManager != null && !acceptorManager.accept(dataInfoId)) {
-        continue;
-      }
 
       final List<Publisher> list = publishers.getValue();
       // only copy the non empty publishers
@@ -203,10 +194,6 @@ public class BaseDatumStorage {
       summaries.put(sessionIp, Collections.emptyMap());
     }
     return summaries;
-  }
-
-  public Map<String, DatumSummary> getDatumSummary(int slotId) {
-    return getAcceptDatumSummary(slotId, null);
   }
 
   public Map<String, DatumSummary> getAcceptDatumSummary(

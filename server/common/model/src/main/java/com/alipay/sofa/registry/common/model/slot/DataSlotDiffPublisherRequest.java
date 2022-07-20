@@ -17,6 +17,7 @@
 package com.alipay.sofa.registry.common.model.slot;
 
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.google.common.collect.Lists;
 import java.io.Serializable;
 import java.util.Collection;
@@ -34,14 +35,18 @@ public class DataSlotDiffPublisherRequest implements Serializable {
   private final List<DatumSummary> datumSummaries;
   private final int slotId;
 
+  private final SyncSlotAcceptorManager acceptorManager;
+
   public DataSlotDiffPublisherRequest(
       String localDataCenter,
       long slotTableEpoch,
       int slotId,
+      SyncSlotAcceptorManager acceptorManager,
       Collection<DatumSummary> datumSummaries) {
     this.localDataCenter = localDataCenter;
     this.slotTableEpoch = slotTableEpoch;
     this.slotId = slotId;
+    this.acceptorManager = acceptorManager;
     this.datumSummaries =
         datumSummaries == null
             ? Lists.newArrayListWithCapacity(0)
@@ -77,6 +82,15 @@ public class DataSlotDiffPublisherRequest implements Serializable {
 
   public List<DatumSummary> getDatumSummaries() {
     return datumSummaries;
+  }
+
+  /**
+   * Getter method for property <tt>acceptorManager</tt>.
+   *
+   * @return property value of acceptorManager
+   */
+  public SyncSlotAcceptorManager getAcceptorManager() {
+    return acceptorManager;
   }
 
   @Override

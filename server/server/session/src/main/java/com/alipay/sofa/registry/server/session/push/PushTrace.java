@@ -16,6 +16,7 @@
  */
 package com.alipay.sofa.registry.server.session.push;
 
+import com.alipay.sofa.registry.common.model.DataCenterPushInfo;
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.constants.ValueConstants;
 import com.alipay.sofa.registry.common.model.store.MultiSubDatum;
@@ -115,27 +116,14 @@ public final class PushTrace {
   public void finishPush(
       PushStatus status,
       TraceID taskID,
-      Map<String, Long> subscriberPushedVersion,
-      Map<String, Integer> pushNum,
-      int retry,
-      Map<String, String> pushEncodes,
-      Map<String, Integer> encodeSizes) {
+      Map<String, DataCenterPushInfo> dataCenterPushInfoMap,
+      int retry) {
     try {
-      ParaCheckUtil.checkEquals(
-          subscriberPushedVersion.keySet(), pushNum.keySet(), "finishPush.datacenters");
 
-      for (Entry<String, Long> entry : subscriberPushedVersion.entrySet()) {
+      for (Entry<String, DataCenterPushInfo> entry : dataCenterPushInfoMap.entrySet()) {
         String dataCenter = entry.getKey();
-        Integer encodeSize = encodeSizes.get(dataCenter);
-        finish(
-            dataCenter,
-            status,
-            taskID,
-            entry.getValue(),
-            pushNum.get(dataCenter),
-            retry,
-            pushEncodes.get(dataCenter),
-            encodeSize == null ? 0 : encodeSize);
+        DataCenterPushInfo pushInfo = entry.getValue();
+        finish(dataCenter, status, taskID, pushInfo, retry);
       }
     } catch (Throwable t) {
       LOGGER.error(
@@ -152,11 +140,10 @@ public final class PushTrace {
       String dataCenter,
       PushStatus status,
       TraceID taskID,
-      long subscriberPushedVersion,
-      int pushNum,
-      int retry,
-      String pushEncode,
-      int encodeSize) {
+      DataCenterPushInfo pushInfo,
+      int retry) {
+    final long subscriberPushedVersion = pushInfo.getPushVersion();
+
     final long pushFinishTimestamp = System.currentTimeMillis();
     // push.finish- first.newly.datumTimestamp(after subscriberPushedVersion)
     long datumModifyPushSpanMillis;
@@ -250,10 +237,10 @@ public final class PushTrace {
               subRegTimestamp,
               pushCause.triggerPushCtx.formatTraceTimes(pushFinishTimestamp),
               pushDatumDelayStr,
-              pushNum,
+              pushInfo.getPushNum(),
               retry,
-              CompressUtils.normalizeEncode(pushEncode),
-              encodeSize);
+              pushInfo.getEncode(),
+              pushInfo.getEncodeSize());
       LOGGER.info(msg);
       if (datumModifyPushSpanMillis > 6000) {
         SLOW_LOGGER.info(msg);

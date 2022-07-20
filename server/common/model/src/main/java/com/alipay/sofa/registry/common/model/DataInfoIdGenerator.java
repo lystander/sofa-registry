@@ -31,11 +31,11 @@ public class DataInfoIdGenerator {
         new DataInfo(
             ValueConstants.DEFAULT_INSTANCE_ID,
             revision,
-            PublisherGroupType.REGISTRY_REVISION.getCode());
+            ServiceGroupType.REGISTRY_REVISION.getCode());
     return WordCache.getWordCache(dataInfo.getDataInfoId());
   }
 
   public static String serviceAppsId(String dataInfoId) {
-    return WordCache.getWordCache(PublisherGroupType.REGISTRY_MAPPING.getCode() + dataInfoId);
+    return WordCache.getWordCache(ServiceGroupType.REGISTRY_MAPPING.getCode() + dataInfoId);
   }
 }

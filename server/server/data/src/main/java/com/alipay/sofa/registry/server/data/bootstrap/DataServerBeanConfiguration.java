@@ -16,8 +16,8 @@
  */
 package com.alipay.sofa.registry.server.data.bootstrap;
 
-import com.alipay.sofa.registry.common.model.slot.filter.LocalSyncDataAccessorManager;
-import com.alipay.sofa.registry.common.model.slot.filter.LocalSyncSessionAccessorManager;
+import com.alipay.sofa.registry.common.model.slot.filter.LocalDataSyncDataAccessorManager;
+import com.alipay.sofa.registry.common.model.slot.filter.LocalDataSyncSessionAccessorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.jdbc.config.JdbcConfiguration;
 import com.alipay.sofa.registry.remoting.bolt.exchange.BoltExchange;
@@ -27,6 +27,7 @@ import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
 import com.alipay.sofa.registry.server.data.providedata.CompressDatumService;
+import com.alipay.sofa.registry.server.data.providedata.FetchMultiSyncService;
 import com.alipay.sofa.registry.server.data.providedata.FetchStopPushService;
 import com.alipay.sofa.registry.server.data.remoting.DataMetaServerManager;
 import com.alipay.sofa.registry.server.data.remoting.DataNodeExchanger;
@@ -157,13 +158,13 @@ public class DataServerBeanConfiguration {
     }
 
     @Bean
-    public SyncSlotAcceptorManager localSyncSessionAccessorManager() {
-      return new LocalSyncSessionAccessorManager();
+    public SyncSlotAcceptorManager localDataSyncSessionAccessorManager() {
+      return new LocalDataSyncSessionAccessorManager();
     }
 
     @Bean
     public SyncSlotAcceptorManager localSyncDataAccessorManager() {
-      return new LocalSyncDataAccessorManager();
+      return new LocalDataSyncDataAccessorManager();
     }
   }
 
@@ -436,6 +437,14 @@ public class DataServerBeanConfiguration {
       FetchStopPushService fetchStopPushService = new FetchStopPushService();
       systemPropertyProcessorManager.addSystemDataPersistenceProcessor(fetchStopPushService);
       return fetchStopPushService;
+    }
+
+    @Bean
+    public FetchSystemPropertyService fetchMultiSyncService(
+            SystemPropertyProcessorManager systemPropertyProcessorManager) {
+      FetchMultiSyncService fetchMultiSyncService = new FetchMultiSyncService();
+      systemPropertyProcessorManager.addSystemDataPersistenceProcessor(fetchMultiSyncService);
+      return fetchMultiSyncService;
     }
   }
 }

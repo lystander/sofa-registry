@@ -48,14 +48,7 @@ public class ReceivedData implements Serializable {
 
   private String localZone;
 
-  /** support multi dataCenter */
-  private Map<String /*dataCenter*/, Map<String /*zone*/, List<DataBox>>> unzipMultiDatas;
-
-  private Map<String /*dataCenter*/, Map<String /*zone*/, byte[]>> zipMultiDatas;
-
-  private Map<String /*dataCenter*/, Long> multiVersion;
-
-  private Map<String /*dataCenter*/, SegmentMetadata> segmentMetadata;
+  private Map<String, Long> dataCount;
 
   /** Instantiates a new Received data multi. */
   public ReceivedData() {}
@@ -251,75 +244,21 @@ public class ReceivedData implements Serializable {
   }
 
   /**
-   * Getter method for property <tt>unzipMultiDatas</tt>.
+   * Getter method for property <tt>dataCount</tt>.
    *
-   * @return property value of unzipMultiDatas
+   * @return property value of dataCount
    */
-  public Map<String, Map<String, List<DataBox>>> getUnzipMultiDatas() {
-    return unzipMultiDatas;
+  public Map<String, Long> getDataCount() {
+    return dataCount;
   }
 
   /**
-   * Setter method for property <tt>unzipMultiDatas</tt>.
+   * Setter method for property <tt>dataCount</tt>.
    *
-   * @param unzipMultiDatas value to be assigned to property unzipMultiDatas
+   * @param dataCount value to be assigned to property dataCount
    */
-  public void setUnzipMultiDatas(Map<String, Map<String, List<DataBox>>> unzipMultiDatas) {
-    this.unzipMultiDatas = unzipMultiDatas;
-  }
-
-  /**
-   * Getter method for property <tt>zipMultiDatas</tt>.
-   *
-   * @return property value of zipMultiDatas
-   */
-  public Map<String, Map<String, byte[]>> getZipMultiDatas() {
-    return zipMultiDatas;
-  }
-
-  /**
-   * Setter method for property <tt>zipMultiDatas</tt>.
-   *
-   * @param zipMultiDatas value to be assigned to property zipMultiDatas
-   */
-  public void setZipMultiDatas(Map<String, Map<String, byte[]>> zipMultiDatas) {
-    this.zipMultiDatas = zipMultiDatas;
-  }
-
-  /**
-   * Getter method for property <tt>segmentMetadata</tt>.
-   *
-   * @return property value of segmentMetadata
-   */
-  public Map<String, SegmentMetadata> getSegmentMetadata() {
-    return segmentMetadata;
-  }
-
-  /**
-   * Setter method for property <tt>segmentMetadata</tt>.
-   *
-   * @param segmentMetadata value to be assigned to property segmentMetadata
-   */
-  public void setSegmentMetadata(Map<String, SegmentMetadata> segmentMetadata) {
-    this.segmentMetadata = segmentMetadata;
-  }
-
-  /**
-   * Getter method for property <tt>multiVersion</tt>.
-   *
-   * @return property value of multiVersion
-   */
-  public Map<String, Long> getMultiVersion() {
-    return multiVersion;
-  }
-
-  /**
-   * Setter method for property <tt>multiVersion</tt>.
-   *
-   * @param multiVersion value to be assigned to property multiVersion
-   */
-  public void setMultiVersion(Map<String, Long> multiVersion) {
-    this.multiVersion = multiVersion;
+  public void setDataCount(Map<String, Long> dataCount) {
+    this.dataCount = dataCount;
   }
 
   /**
@@ -329,29 +268,17 @@ public class ReceivedData implements Serializable {
    */
   @Override
   public String toString() {
-    return "ReceivedData{"
-        + "dataId='"
-        + dataId
-        + '\''
-        + ", group='"
-        + group
-        + '\''
-        + ", instanceId='"
-        + instanceId
-        + '\''
-        + ", segment='"
-        + segment
-        + '\''
-        + ", scope='"
-        + scope
-        + '\''
-        + ", subscriberRegistIds="
-        + subscriberRegistIds
-        + ", version="
-        + version
-        + ", localZone='"
-        + localZone
-        + '\''
-        + '}';
+    return "ReceivedData{" +
+            "dataId='" + dataId + '\'' +
+            ", group='" + group + '\'' +
+            ", instanceId='" + instanceId + '\'' +
+            ", segment='" + segment + '\'' +
+            ", scope='" + scope + '\'' +
+            ", subscriberRegistIds=" + subscriberRegistIds +
+            ", data=" + data +
+            ", version=" + version +
+            ", localZone='" + localZone + '\'' +
+            ", dataCount=" + dataCount +
+            '}';
   }
 }

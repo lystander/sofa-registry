@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffUtils;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
@@ -39,6 +40,8 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Resource;
+
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-11-06 15:41 yuzhi.lyz Exp $
@@ -49,13 +52,16 @@ public class DataSlotDiffPublisherRequestHandler
   private static final Logger LOGGER =
       LoggerFactory.getLogger(DataSlotDiffPublisherRequestHandler.class);
 
-  @Autowired SessionServerConfig sessionServerConfig;
+  @Autowired private SessionServerConfig sessionServerConfig;
 
-  @Autowired ExecutorManager executorManager;
+  @Autowired private ExecutorManager executorManager;
 
-  @Autowired DataStore sessionDataStore;
+  @Autowired private DataStore sessionDataStore;
 
-  @Autowired SlotTableCache slotTableCache;
+  @Autowired private SlotTableCache slotTableCache;
+
+  @Resource
+  private SyncSlotAcceptorManager syncSlotAcceptAllManager;
 
   @Override
   public void checkParam(DataSlotDiffPublisherRequest request) {
@@ -90,7 +96,7 @@ public class DataSlotDiffPublisherRequestHandler
       Map<String, Map<String, Publisher>> existingPublishers) {
     DataSlotDiffPublisherResult result =
         DataSlotDiffUtils.diffPublishersResult(
-            datumSummaries, existingPublishers, sessionServerConfig.getSlotSyncPublisherMaxNum());
+            datumSummaries, existingPublishers, sessionServerConfig.getSlotSyncPublisherMaxNum(), syncSlotAcceptAllManager);
     DataSlotDiffUtils.logDiffResult(result, targetSlot, LOGGER);
     return result;
   }
