@@ -384,6 +384,11 @@ public class SessionServerConfigBean implements SessionServerConfig {
   }
 
   @Override
+  public boolean isLocalDataCenter(String dataCenter) {
+    return StringUtils.equals(getSessionServerDataCenter(), dataCenter);
+  }
+
+  @Override
   public String getSessionServerDataCenter() {
     if (commonConfig != null) {
       String dataCenter = commonConfig.getLocalDataCenter();

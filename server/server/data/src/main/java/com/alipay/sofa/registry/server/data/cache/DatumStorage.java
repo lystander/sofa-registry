@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 /**
  * @author yuzhi.lyz
@@ -89,11 +90,6 @@ public interface DatumStorage {
       ProcessId sessionProcessId,
       Map<String, RegisterVersion> removedPublishers);
 
-  Map<String, Map<String, DatumSummary>> getDatumSummary(
-      String dataCenter, int slotId, Set<String> sessions);
-
-  Map<String, DatumSummary> getDatumSummary(
-      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager);
 
   SlotChangeListener getSlotChangeListener(boolean localDataCenter);
 
@@ -106,4 +102,6 @@ public interface DatumStorage {
   Map<String, DatumVersion> updateVersion(String dataCenter, int slotId);
 
   DatumVersion updateVersion(String dataCenter, String dataInfoId);
+
+  void foreach(String dataCenter, int slotId, BiConsumer<String, PublisherGroup> f);
 }

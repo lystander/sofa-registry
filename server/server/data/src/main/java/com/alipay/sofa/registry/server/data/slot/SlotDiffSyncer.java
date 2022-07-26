@@ -29,6 +29,7 @@ import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffDigestResult;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherRequest;
 import com.alipay.sofa.registry.common.model.slot.DataSlotDiffPublisherResult;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncAcceptorRequest;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.store.Publisher;
 import com.alipay.sofa.registry.common.model.store.WordCache;
@@ -39,10 +40,13 @@ import com.alipay.sofa.registry.remoting.exchange.message.Response;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
 import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
+import com.alipay.sofa.registry.server.data.cache.PublisherEnvelope;
+import com.alipay.sofa.registry.server.data.cache.PublisherGroup;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
 import com.alipay.sofa.registry.server.data.multi.cluster.slot.MultiClusterSlotMetrics.RemoteSyncLeader;
+import com.alipay.sofa.registry.server.data.pubiterator.DatumBiConsumer;
 import com.alipay.sofa.registry.server.shared.remoting.ClientSideExchanger;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.alipay.sofa.registry.util.StringFormatter;
@@ -50,6 +54,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * @author yuzhi.lyz
@@ -391,9 +396,13 @@ public final class SlotDiffSyncer {
     // summary == null means can not assembly summary before(eg:migrating);
     // can not change to CollectionUtils.isEmpty
     if (summary == null) {
-      Map<String, Map<String, DatumSummary>> datumSummary =
-          datumStorageDelegate.getDatumSummary(
-              dataServerConfig.getLocalDataCenter(), slotId, Collections.singleton(sessionIp));
+      final Map<String, Map<String, DatumSummary>> datumSummary = Maps.newHashMapWithExpectedSize(1);
+
+      datumStorageDelegate.foreach(
+              dataServerConfig.getLocalDataCenter(),
+              slotId,
+              DatumBiConsumer.publisherGroupsBiConsumer(
+                      datumSummary, Collections.singleton(sessionIp), syncSlotAcceptorManager));
       summary = datumSummary.get(sessionIp);
     }
 
@@ -422,8 +431,8 @@ public final class SlotDiffSyncer {
       SyncContinues continues)
       throws RequestException {
     ParaCheckUtil.checkNotBlank(slotLeaderIp, "slotLeaderIp");
-    Map<String, DatumSummary> summary =
-        datumStorageDelegate.getDatumSummary(syncDataCenter, slotId, syncSlotAcceptorManager);
+    Map<String, DatumSummary> summaries = Maps.newHashMap();
+    datumStorageDelegate.foreach(syncDataCenter, slotId, DatumBiConsumer.publisherGroupsBiConsumer(summaries, syncSlotAcceptorManager));
     return sync(
         localDataCenter,
         syncDataCenter,
@@ -435,7 +444,7 @@ public final class SlotDiffSyncer {
         null,
         dataServerConfig.getSlotSyncPublisherDigestMaxNum(),
         continues,
-        summary);
+        summaries);
   }
 
   static Map<String, DatumSummary> pickSummaries(Map<String, DatumSummary> syncSummaries, int n) {

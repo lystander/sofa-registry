@@ -31,6 +31,7 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.cache.BaseDatumStorage;
 import com.alipay.sofa.registry.server.data.cache.CleanContinues;
 import com.alipay.sofa.registry.server.data.cache.DatumStorage;
+import com.alipay.sofa.registry.server.data.cache.PublisherGroup;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Maps;
@@ -39,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 /**
  * @author xiaojian.xj
@@ -247,30 +249,6 @@ public class MultiClusterDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, DatumSummary>> getDatumSummary(
-      String dataCenter, int slotId, Set<String> sessions) {
-    LOGGER.error(
-        "[MultiClusterDatumStorage]UnExcept getDatumSummary, dataCenter={}, dataInfoId={}, sessions={}",
-        dataCenter,
-        slotId,
-        sessions);
-    throw new UnSupportOperationException("MultiClusterDatumStorage.getDatumSummaryBySessions");
-  }
-
-  @Override
-  public Map<String, DatumSummary> getDatumSummary(
-      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
-    ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
-
-    BaseDatumStorage storage = storageMap.get(dataCenter);
-    if (storage == null) {
-      LOGGER.warn("[nullStorage]getDatumSummary dataCenter={}, slotId={}", dataCenter, slotId);
-      return Collections.emptyMap();
-    }
-    return storage.getAcceptDatumSummary(slotId, acceptorManager);
-  }
-
-  @Override
   public SlotChangeListener getSlotChangeListener(boolean localDataCenter) {
     return listener;
   }
@@ -314,6 +292,16 @@ public class MultiClusterDatumStorage implements DatumStorage {
       return null;
     }
     return storage.updateVersion(dataInfoId);
+  }
+
+  @Override
+  public void foreach(String dataCenter, int slotId, BiConsumer<String, PublisherGroup> f) {
+    BaseDatumStorage storage = storageMap.get(dataCenter);
+    if (storage == null) {
+      LOGGER.warn("[nullStorage]foreach dataCenter={}, slotId={}", dataCenter, slotId);
+      return;
+    }
+    storage.foreach(slotId, f);
   }
 
   private final class MultiClusterSlotListener implements SlotChangeListener {

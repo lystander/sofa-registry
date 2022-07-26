@@ -30,6 +30,7 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.alipay.sofa.registry.util.ParaCheckUtil;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * @author yuzhi.lyz
@@ -144,17 +145,8 @@ public final class LocalDatumStorage implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, DatumSummary>> getDatumSummary(
-      String dataCenter, int slotId, Set<String> sessions) {
-    return storage.getDatumSummary(slotId, sessions);
-  }
-
-  @Override
-  public Map<String, DatumSummary> getDatumSummary(
-      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
-    ParaCheckUtil.checkNotNull(acceptorManager, "acceptorManager");
-
-    return storage.getAcceptDatumSummary(slotId, acceptorManager);
+  public void foreach(String dataCenter, int slotId, BiConsumer f) {
+    storage.foreach(slotId, f);
   }
 
   @Override

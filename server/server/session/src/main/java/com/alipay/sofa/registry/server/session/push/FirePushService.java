@@ -131,7 +131,7 @@ public class FirePushService {
 
   public boolean fireOnWatcher(Watcher watcher, ReceivedConfigData configData) {
     try {
-      if (!pushSwitchService.canIpPush(watcher.getSourceAddress().getIpAddress())) {
+      if (!pushSwitchService.canIpPushLocal(watcher.getSourceAddress().getIpAddress())) {
         return false;
       }
       int level = sessionServerConfig.getClientNodePushConcurrencyLevel();
@@ -225,7 +225,7 @@ public class FirePushService {
 
   private boolean processPush(
       PushCause pushCause, MultiSubDatum datum, Collection<Subscriber> subscriberList) {
-    if (!pushSwitchService.canPush()) {
+    if (!pushSwitchService.canPushMulti(datum.getDataInfoId(), datum.dataCenters())) {
       return false;
     }
     if (subscriberList.isEmpty()) {

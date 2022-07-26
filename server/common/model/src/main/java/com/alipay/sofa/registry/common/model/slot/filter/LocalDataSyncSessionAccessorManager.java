@@ -17,7 +17,6 @@
 package com.alipay.sofa.registry.common.model.slot.filter;
 
 import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
-import com.google.common.collect.Sets;
 
 import java.util.Collections;
 
@@ -27,14 +26,8 @@ import java.util.Collections;
  */
 public class LocalDataSyncSessionAccessorManager extends BaseSyncSlotAcceptorManager {
 
-  // todo xiaojian.xj  accept = all, filter = metadata
-  private static final SyncSlotAcceptor groupAcceptor =
-      new SyncServiceGroupAcceptor(
-              Collections.singleton());
-
   public LocalDataSyncSessionAccessorManager() {
-    // only group acceptor
-    super(Collections.singleton(groupAcceptor));
+    super(Collections.singleton(MultiValueConstants.REGISTRY_SERVICE_GROUP_ACCEPTOR));
   }
 
 }

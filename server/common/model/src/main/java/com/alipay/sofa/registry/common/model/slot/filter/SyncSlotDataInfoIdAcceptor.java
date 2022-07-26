@@ -29,7 +29,7 @@ import org.springframework.util.CollectionUtils;
  */
 public class SyncSlotDataInfoIdAcceptor implements SyncSlotAcceptor {
 
-  private final String NAME = "SyncSlotDataInfoIdAcceptor";
+  private final String NAME = MultiValueConstants.SYNC_SLOT_DATAINFOID_ACCEPTOR;
 
   private final Set<String> accepts;
 
@@ -50,11 +50,17 @@ public class SyncSlotDataInfoIdAcceptor implements SyncSlotAcceptor {
       return false;
     }
 
-    if (!CollectionUtils.isEmpty(filters) && filters.contains(request.getDataInfoId())) {
+    return accepts.contains(MultiValueConstants.SYNC_ACCEPT_ALL) || accepts.contains(request.getDataInfoId());
+  }
+
+  @Override
+  public boolean filterOut(SyncAcceptorRequest request) {
+
+    if (CollectionUtils.isEmpty(filters)) {
       return false;
     }
 
-    return accepts.contains(MultiValueConstants.SYNC_ACCEPT_ALL) || accepts.contains(request.getDataInfoId());
+    return filters.contains(request.getDataInfoId());
   }
 
   @Override

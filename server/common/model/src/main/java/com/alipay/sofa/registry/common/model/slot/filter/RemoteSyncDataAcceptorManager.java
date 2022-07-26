@@ -16,7 +16,14 @@
  */
 package com.alipay.sofa.registry.common.model.slot.filter;
 
+import com.alipay.sofa.registry.common.model.console.MultiSegmentSyncSwitch;
+import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
+import com.alipay.sofa.registry.util.ParaCheckUtil;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author xiaojian.xj
@@ -25,6 +32,30 @@ import com.google.common.collect.Sets;
 public class RemoteSyncDataAcceptorManager extends BaseSyncSlotAcceptorManager {
 
   public RemoteSyncDataAcceptorManager() {
-    super(Sets.newConcurrentHashSet());
+    this(Sets.newConcurrentHashSet());
+
+    //init
+    updateAcceptor(MultiValueConstants.DATUM_SYNCER_SOURCE_FILTER);
+    updateAcceptor(new SyncPublisherGroupAcceptor(Collections.EMPTY_SET));
+    updateAcceptor(new SyncSlotDataInfoIdAcceptor(Collections.EMPTY_SET, Collections.EMPTY_SET));
   }
+
+  public RemoteSyncDataAcceptorManager(Set<SyncSlotAcceptor> acceptors) {
+    super(acceptors);
+  }
+
+  public synchronized void updateFrom(MultiSegmentSyncSwitch syncConfig) {
+    // add or update service group acceptor
+    this.updateAcceptor(new SyncPublisherGroupAcceptor(syncConfig.getSynPublisherGroups()));
+
+    // add or update dataInfoId group acceptor
+    this.updateAcceptor(
+        new SyncSlotDataInfoIdAcceptor(
+            syncConfig.getSyncDataInfoIds(), syncConfig.getIgnoreDataInfoIds()));
+  }
+
+  public Set<SyncSlotAcceptor> getAcceptors() {
+    return acceptors;
+  }
+
 }

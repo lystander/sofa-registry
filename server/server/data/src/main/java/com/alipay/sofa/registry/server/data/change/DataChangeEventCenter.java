@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.data.change;
 
 import static com.alipay.sofa.registry.server.data.change.ChangeMetrics.*;
 
+import com.alipay.sofa.registry.common.model.Node.NodeType;
 import com.alipay.sofa.registry.common.model.TraceTimes;
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.dataserver.Datum;
@@ -32,6 +33,7 @@ import com.alipay.sofa.registry.remoting.Channel;
 import com.alipay.sofa.registry.remoting.Server;
 import com.alipay.sofa.registry.remoting.exchange.Exchange;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
+import com.alipay.sofa.registry.server.data.bootstrap.MultiClusterDataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.shared.util.DatumUtils;
 import com.alipay.sofa.registry.task.FastRejectedExecutionException;
@@ -58,6 +60,8 @@ public class DataChangeEventCenter {
   private static final Logger LOGGER = LoggerFactory.getLogger(DataChangeEventCenter.class);
 
   @Autowired private DataServerConfig dataServerConfig;
+
+  @Autowired private MultiClusterDataServerConfig multiClusterDataServerConfig;
 
   @Autowired private DatumStorageDelegate datumStorageDelegate;
 
@@ -162,6 +166,7 @@ public class DataChangeEventCenter {
 
   final class ChangeNotifier implements Runnable {
     final Channel channel;
+    final int notifyPort;
     final String dataCenter;
     final Map<String, DatumVersion> dataInfoIds;
     final TraceTimes times;
@@ -170,11 +175,13 @@ public class DataChangeEventCenter {
 
     private ChangeNotifier(
         Channel channel,
+        int notifyPort,
         String dataCenter,
         Map<String, DatumVersion> dataInfoIds,
         TraceTimes parentTimes) {
       this.dataCenter = dataCenter;
       this.channel = channel;
+      this.notifyPort = notifyPort;
       this.dataInfoIds = dataInfoIds;
       this.times = parentTimes.copy();
       this.times.setDatumNotifyCreate(System.currentTimeMillis());
@@ -190,7 +197,7 @@ public class DataChangeEventCenter {
         }
         DataChangeRequest request = new DataChangeRequest(dataCenter, dataInfoIds, times);
         request.getTimes().setDatumNotifySend(System.currentTimeMillis());
-        doNotify(request, channel);
+        doNotify(request, channel, notifyPort);
         LOGGER.info("success to notify {}, {}", channel.getRemoteAddress(), this);
         CHANGE_SUCCESS_COUNTER.inc();
       } catch (Throwable e) {
@@ -279,12 +286,12 @@ public class DataChangeEventCenter {
     SubDatum subDatum = DatumUtils.of(datum);
     DataPushRequest request = new DataPushRequest(subDatum);
     LOGGER.info("temp pub to {}, {}", channel, subDatum);
-    doNotify(request, channel);
+    doNotify(request, channel, dataServerConfig.getNotifyPort());
   }
 
-  private void doNotify(Object request, Channel channel) {
-    Server sessionServer = boltExchange.getServer(dataServerConfig.getNotifyPort());
-    sessionServer.sendSync(channel, request, dataServerConfig.getRpcTimeoutMillis());
+  private void doNotify(Object request, Channel channel, int notifyPort) {
+    Server server = boltExchange.getServer(notifyPort);
+    server.sendSync(channel, request, dataServerConfig.getRpcTimeoutMillis());
   }
 
   boolean handleTempChanges(List<Channel> channels) {
@@ -346,21 +353,24 @@ public class DataChangeEventCenter {
     }
   }
 
-  boolean handleChanges(Map<String, List<Channel>> channelsMap) {
-    // first clean the event
-    final int maxItems = dataServerConfig.getNotifyMaxItems();
-    final List<DataChangeEvent> events = transferChangeEvent(maxItems);
-    if (events.isEmpty()) {
-      return false;
-    }
+  boolean handleChanges(List<DataChangeEvent> events, NodeType nodeType, int notifyPort) {
+
+    Server server = boltExchange.getServer(notifyPort);
+    Map<String, List<Channel>> channelsMap = server.selectAllAvailableChannelsForHostAddress();
+
     if (channelsMap.isEmpty()) {
-      LOGGER.error("session conn is empty when change");
+      LOGGER.error("{} conn is empty when change", nodeType);
       return false;
     }
     for (DataChangeEvent event : events) {
+      final String dataCenter = event.getDataCenter();
+      if (!dataServerConfig.isLocalDataCenter(dataCenter) && nodeType == NodeType.DATA) {
+        LOGGER.info("[skip]dataCenter={}, dataInfoIds={} change skip to notify remote data.", dataCenter, event.getDataInfoIds());
+        continue;
+      }
+
       final Map<String, DatumVersion> changes =
           Maps.newHashMapWithExpectedSize(event.getDataInfoIds().size());
-      final String dataCenter = event.getDataCenter();
       for (String dataInfoId : event.getDataInfoIds()) {
         DatumVersion datumVersion = datumStorageDelegate.getVersion(dataCenter, dataInfoId);
         if (datumVersion != null) {
@@ -378,7 +388,7 @@ public class DataChangeEventCenter {
         try {
           notifyExecutor.execute(
               channel.getRemoteAddress(),
-              new ChangeNotifier(channel, event.getDataCenter(), changes, event.getTraceTimes()));
+              new ChangeNotifier(channel, notifyPort, event.getDataCenter(), changes, event.getTraceTimes()));
           CHANGE_COMMIT_COUNTER.inc();
         } catch (FastRejectedExecutionException e) {
           CHANGE_SKIP_COUNTER.inc();
@@ -440,9 +450,18 @@ public class DataChangeEventCenter {
     @Override
     public void runUnthrowable() {
       try {
-        Server server = boltExchange.getServer(dataServerConfig.getNotifyPort());
-        Map<String, List<Channel>> channelMap = server.selectAllAvailableChannelsForHostAddress();
-        handleChanges(channelMap);
+        // first clean the event
+        final int maxItems = dataServerConfig.getNotifyMaxItems();
+        final List<DataChangeEvent> events = transferChangeEvent(maxItems);
+        if (events.isEmpty()) {
+          return;
+        }
+
+        // notify local session
+        handleChanges(events, NodeType.SESSION, dataServerConfig.getNotifyPort());
+
+        // notify remote data
+        handleChanges(events, NodeType.DATA, multiClusterDataServerConfig.getSyncRemoteSlotLeaderPort());
         handleExpire();
       } catch (Throwable e) {
         LOGGER.error("failed to merge change", e);
@@ -485,8 +504,8 @@ public class DataChangeEventCenter {
 
   @VisibleForTesting
   ChangeNotifier newChangeNotifier(
-      Channel channel, String dataCenter, Map<String, DatumVersion> dataInfoIds) {
-    return new ChangeNotifier(channel, dataCenter, dataInfoIds, new TraceTimes());
+      Channel channel, int notifyPort, String dataCenter, Map<String, DatumVersion> dataInfoIds) {
+    return new ChangeNotifier(channel, notifyPort, dataCenter, dataInfoIds, new TraceTimes());
   }
 
   @VisibleForTesting

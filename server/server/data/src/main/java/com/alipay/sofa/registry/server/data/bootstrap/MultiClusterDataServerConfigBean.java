@@ -28,7 +28,9 @@ public class MultiClusterDataServerConfigBean implements MultiClusterDataServerC
 
   public static final String PREFIX = "data.remote.server";
 
-  private volatile int syncRemoteSlotLeaderIntervalSecs = 6;
+  private volatile int syncRemoteSlotLeaderIntervalSecs = 10;
+
+  private volatile int syncRemoteDataIdIntervalMs = 2000;
 
   private volatile int syncRemoteSlotLeaderTimeoutMillis = 3000;
 
@@ -39,6 +41,10 @@ public class MultiClusterDataServerConfigBean implements MultiClusterDataServerC
   private volatile int remoteSyncSlotLeaderExecutorThreadSize = OsUtils.getCpuCount() * 3;
 
   private volatile int remoteSyncSlotLeaderExecutorQueueSize = 100;
+
+  private volatile int remoteSyncDataIdExecutorThreadSize = OsUtils.getCpuCount() * 3;
+
+  private volatile int remoteSyncDataIdExecutorQueueSize = 1000;
 
   private volatile int syncAppRevisionExecutorThreadSize = OsUtils.getCpuCount() * 3;
 
@@ -208,6 +214,48 @@ public class MultiClusterDataServerConfigBean implements MultiClusterDataServerC
   @Override
   public int getSyncServiceMappingExecutorQueueSize() {
     return syncServiceMappingExecutorQueueSize;
+  }
+
+  @Override
+  public int getSyncRemoteDataIdIntervalMs() {
+    return syncRemoteDataIdIntervalMs;
+  }
+
+  @Override
+  public int getRemoteSyncDataIdExecutorThreadSize() {
+    return remoteSyncDataIdExecutorThreadSize;
+  }
+
+  @Override
+  public int getRemoteSyncDataIdExecutorQueueSize() {
+    return remoteSyncDataIdExecutorQueueSize;
+  }
+
+  /**
+   * Setter method for property <tt>syncRemoteDataIdIntervalMs</tt>.
+   *
+   * @param syncRemoteDataIdIntervalMs value to be assigned to property syncRemoteDataIdIntervalMs
+   */
+  public void setSyncRemoteDataIdIntervalMs(int syncRemoteDataIdIntervalMs) {
+    this.syncRemoteDataIdIntervalMs = syncRemoteDataIdIntervalMs;
+  }
+
+  /**
+   * Setter method for property <tt>remoteSyncDataIdExecutorThreadSize</tt>.
+   *
+   * @param remoteSyncDataIdExecutorThreadSize value to be assigned to property remoteSyncDataIdExecutorThreadSize
+   */
+  public void setRemoteSyncDataIdExecutorThreadSize(int remoteSyncDataIdExecutorThreadSize) {
+    this.remoteSyncDataIdExecutorThreadSize = remoteSyncDataIdExecutorThreadSize;
+  }
+
+  /**
+   * Setter method for property <tt>remoteSyncDataIdExecutorQueueSize</tt>.
+   *
+   * @param remoteSyncDataIdExecutorQueueSize value to be assigned to property remoteSyncDataIdExecutorQueueSize
+   */
+  public void setRemoteSyncDataIdExecutorQueueSize(int remoteSyncDataIdExecutorQueueSize) {
+    this.remoteSyncDataIdExecutorQueueSize = remoteSyncDataIdExecutorQueueSize;
   }
 
   /**

@@ -18,6 +18,9 @@ package com.alipay.sofa.registry.server.meta.multi.cluster.remote;
 
 import com.alipay.sofa.registry.common.model.GenericResponse;
 import com.alipay.sofa.registry.common.model.Node.NodeType;
+import com.alipay.sofa.registry.common.model.console.PersistenceData;
+import com.alipay.sofa.registry.common.model.constants.ValueConstants;
+import com.alipay.sofa.registry.common.model.multi.cluster.DataCenterMetadata;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
@@ -26,8 +29,12 @@ import com.alipay.sofa.registry.server.meta.MetaLeaderService;
 import com.alipay.sofa.registry.server.meta.bootstrap.ExecutorManager;
 import com.alipay.sofa.registry.server.meta.bootstrap.config.MetaServerConfig;
 import com.alipay.sofa.registry.server.meta.metaserver.CurrentDcMetaServer;
+import com.alipay.sofa.registry.server.meta.provide.data.FetchStopPushService;
+import com.alipay.sofa.registry.server.meta.provide.data.ProvideDataService;
 import com.alipay.sofa.registry.server.shared.remoting.AbstractServerHandler;
 import com.alipay.sofa.registry.server.shared.slot.SlotTableUtils;
+import com.alipay.sofa.registry.server.shared.util.PersistenceDataParser;
+import com.alipay.sofa.registry.store.api.DBResponse;
 import com.alipay.sofa.registry.store.api.config.DefaultCommonConfig;
 import com.alipay.sofa.registry.store.api.elector.AbstractLeaderElector.LeaderInfo;
 import java.util.concurrent.Executor;
@@ -51,6 +58,8 @@ public class RemoteClusterSlotSyncHandler
   @Autowired private MetaServerConfig metaServerConfig;
 
   @Autowired private DefaultCommonConfig defaultCommonConfig;
+
+  @Autowired private FetchStopPushService fetchStopPushService;
 
   @Override
   public Class interest() {
@@ -80,7 +89,7 @@ public class RemoteClusterSlotSyncHandler
       LOGGER.error("request: {} sync on follower, leader is:{}", request, leaderInfo.getLeader());
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillFailData(
-              RemoteClusterSlotSyncResponse.wrongLeader(clusterId, metaServerConfig.getLocalDataCenterZones(),
+              RemoteClusterSlotSyncResponse.wrongLeader(
                   leaderInfo.getLeader(), leaderInfo.getEpoch()));
     }
 
@@ -89,7 +98,7 @@ public class RemoteClusterSlotSyncHandler
       LOGGER.error("request: {} sync on leader not warmuped.", request);
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillFailData(
-              RemoteClusterSlotSyncResponse.leaderNotWarmuped(clusterId, metaServerConfig.getLocalDataCenterZones(),
+              RemoteClusterSlotSyncResponse.leaderNotWarmuped(
                   leaderInfo.getLeader(), leaderInfo.getEpoch()));
     }
 
@@ -108,8 +117,9 @@ public class RemoteClusterSlotSyncHandler
     } else if (request.getSlotTableEpoch() == slotTable.getEpoch()) {
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillSucceed(
-              RemoteClusterSlotSyncResponse.notUpgrade(clusterId, metaServerConfig.getLocalDataCenterZones(),
-                  leaderInfo.getLeader(), leaderInfo.getEpoch()));
+              RemoteClusterSlotSyncResponse.notUpgrade(
+                  leaderInfo.getLeader(), leaderInfo.getEpoch(),
+                      new DataCenterMetadata(clusterId, fetchStopPushService.isStopPush(), metaServerConfig.getLocalDataCenterZones())));
     } else {
       LOGGER.info(
           "sync request epoch:{} < newSlotTableEpoch:{}, leader:{}, leaderEpoch:{}, slotTable upgrade: {}",
@@ -120,11 +130,11 @@ public class RemoteClusterSlotSyncHandler
           slotTable);
       return new GenericResponse<RemoteClusterSlotSyncResponse>()
           .fillSucceed(
-              RemoteClusterSlotSyncResponse.upgrade(clusterId, metaServerConfig.getLocalDataCenterZones(),
-                  leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable));
+              RemoteClusterSlotSyncResponse.upgrade(
+                  leaderInfo.getLeader(), leaderInfo.getEpoch(), slotTable,
+                      new DataCenterMetadata(clusterId, fetchStopPushService.isStopPush(), metaServerConfig.getLocalDataCenterZones())));
     }
   }
-
   @Override
   public Executor getExecutor() {
     return executorManager.getRemoteClusterHandlerExecutor();

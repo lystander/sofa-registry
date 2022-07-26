@@ -33,6 +33,7 @@ import com.alipay.sofa.registry.server.meta.lease.filter.DefaultForbiddenServerM
 import com.alipay.sofa.registry.server.meta.lease.filter.RegistryForbiddenServerManager;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultClientManagerService;
 import com.alipay.sofa.registry.server.meta.provide.data.DefaultProvideDataService;
+import com.alipay.sofa.registry.server.meta.provide.data.FetchStopPushService;
 import com.alipay.sofa.registry.server.meta.provide.data.NodeOperatingService;
 import com.alipay.sofa.registry.server.meta.provide.data.ProvideDataService;
 import com.alipay.sofa.registry.server.meta.remoting.DataNodeExchanger;
@@ -311,6 +312,11 @@ public class MetaServerConfiguration {
     @ConditionalOnMissingBean
     public InterfaceAppsIndexCleaner interfaceAppsIndexCleaner() {
       return new InterfaceAppsIndexCleaner();
+    }
+
+    @Bean
+    public FetchStopPushService fetchStopPushService() {
+      return new FetchStopPushService();
     }
   }
 

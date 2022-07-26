@@ -338,7 +338,7 @@ public class SessionRegistry implements Registry {
     public void runUnthrowable() {
       try {
         final int intervalMillis = sessionServerConfig.getScanSubscriberIntervalMillis();
-        final boolean stop = !pushSwitchService.canPush();
+        final boolean stop = !pushSwitchService.canLocalDataCenterPush();
         // could not start scan ver at begin
         // 1. stopPush.val = true default in session.default
         if (stop) {

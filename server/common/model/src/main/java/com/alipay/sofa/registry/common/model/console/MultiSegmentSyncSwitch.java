@@ -23,7 +23,7 @@ public class MultiSegmentSyncSwitch {
      * allow sync multi group
      *
      **/
-    private Set<ServiceGroupType> syncServiceGroups = Collections.EMPTY_SET;
+    private Set<String> synPublisherGroups = Collections.EMPTY_SET;
 
     /**
      * allow sync multi dataInfoId
@@ -50,21 +50,21 @@ public class MultiSegmentSyncSwitch {
     }
 
     /**
-     * Getter method for property <tt>syncServiceGroups</tt>.
+     * Getter method for property <tt>synPublisherGroups</tt>.
      *
-     * @return property value of syncServiceGroups
+     * @return property value of synPublisherGroups
      */
-    public Set<ServiceGroupType> getSyncServiceGroups() {
-        return syncServiceGroups;
+    public Set<String> getSynPublisherGroups() {
+        return synPublisherGroups;
     }
 
     /**
-     * Setter method for property <tt>syncServiceGroups</tt>.
+     * Setter method for property <tt>synPublisherGroups</tt>.
      *
-     * @param syncServiceGroups value to be assigned to property syncServiceGroups
+     * @param synPublisherGroups value to be assigned to property synPublisherGroups
      */
-    public void setSyncServiceGroups(Set<ServiceGroupType> syncServiceGroups) {
-        this.syncServiceGroups = syncServiceGroups;
+    public void setSynPublisherGroups(Set<String> synPublisherGroups) {
+        this.synPublisherGroups = synPublisherGroups;
     }
 
     /**

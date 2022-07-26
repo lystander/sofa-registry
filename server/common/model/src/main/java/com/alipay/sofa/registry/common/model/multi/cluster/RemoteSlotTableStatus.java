@@ -40,33 +40,33 @@ public class RemoteSlotTableStatus implements Serializable {
   /** slot table will be null if syncOnLeader=false or slotTableUpgrade=false */
   private final SlotTable slotTable;
 
-  /** segmentZones */
-  private Set<String> segmentZones;
+  /** remote meta data */
+  private final DataCenterMetadata dataCenterMetadata;
 
   public RemoteSlotTableStatus(
       long slotTableEpoch,
       boolean slotTableUpgrade,
       boolean slotTableEpochConflict,
       SlotTable slotTable,
-      Set<String> segmentZones) {
+      DataCenterMetadata dataCenterMetadata) {
     this.slotTableEpoch = slotTableEpoch;
     this.slotTableUpgrade = slotTableUpgrade;
     this.slotTableEpochConflict = slotTableEpochConflict;
     this.slotTable = slotTable;
-    this.segmentZones = segmentZones;
+    this.dataCenterMetadata = dataCenterMetadata;
   }
 
-  public static RemoteSlotTableStatus conflict(SlotTable slotTable, Set<String> segmentZones) {
-    return new RemoteSlotTableStatus(slotTable.getEpoch(), false, true, slotTable, segmentZones);
+  public static RemoteSlotTableStatus conflict(SlotTable slotTable) {
+    return new RemoteSlotTableStatus(slotTable.getEpoch(), false, true, slotTable, null);
   }
 
-  public static RemoteSlotTableStatus notUpgrade(long slotTableEpoch, Set<String> segmentZones) {
-    return new RemoteSlotTableStatus(slotTableEpoch, false, false, null, segmentZones);
+  public static RemoteSlotTableStatus notUpgrade(long slotTableEpoch, DataCenterMetadata dataCenterMetadata) {
+    return new RemoteSlotTableStatus(slotTableEpoch, false, false, null, dataCenterMetadata);
   }
 
-  public static RemoteSlotTableStatus upgrade(SlotTable slotTable, Set<String> segmentZones) {
+  public static RemoteSlotTableStatus upgrade(SlotTable slotTable, DataCenterMetadata dataCenterMetadata) {
     ParaCheckUtil.checkNotNull(slotTable, "slotTable");
-    return new RemoteSlotTableStatus(slotTable.getEpoch(), true, false, slotTable, segmentZones);
+    return new RemoteSlotTableStatus(slotTable.getEpoch(), true, false, slotTable, dataCenterMetadata);
   }
 
   /**
@@ -75,15 +75,15 @@ public class RemoteSlotTableStatus implements Serializable {
    * @return property value of slotTableEpoch
    */
   public long getSlotTableEpoch() {
-    return slotTableEpoch;
+    return this.slotTableEpoch;
   }
 
   public boolean isSlotTableUpgrade() {
-    return slotTableUpgrade;
+    return this.slotTableUpgrade;
   }
 
   public boolean isSlotTableEpochConflict() {
-    return slotTableEpochConflict;
+    return this.slotTableEpochConflict;
   }
 
   /**
@@ -92,16 +92,16 @@ public class RemoteSlotTableStatus implements Serializable {
    * @return property value of slotTable
    */
   public SlotTable getSlotTable() {
-    return slotTable;
+    return this.slotTable;
   }
 
   /**
-   * Getter method for property <tt>segmentZones</tt>.
+   * Getter method for property <tt>dataCenterMetadata</tt>.
    *
-   * @return property value of segmentZones
+   * @return property value of dataCenterMetadata
    */
-  public Set<String> getSegmentZones() {
-    return segmentZones;
+  public DataCenterMetadata getDataCenterMetadata() {
+    return dataCenterMetadata;
   }
 
   @Override

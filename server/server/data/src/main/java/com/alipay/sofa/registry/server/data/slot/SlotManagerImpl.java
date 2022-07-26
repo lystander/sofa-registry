@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.data.slot;
 
 import static com.alipay.sofa.registry.server.data.slot.SlotMetrics.Manager.*;
 
+import com.alipay.sofa.registry.common.model.PublishSource;
 import com.alipay.sofa.registry.common.model.Tuple;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.dataserver.DatumVersion;
@@ -32,6 +33,9 @@ import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.change.DataChangeEventCenter;
 import com.alipay.sofa.registry.server.data.change.DataChangeType;
 import com.alipay.sofa.registry.server.data.lease.SessionLeaseManager;
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.AppRevisionPublish;
+import com.alipay.sofa.registry.server.data.multi.cluster.app.discovery.ServiceAppsPublish;
+import com.alipay.sofa.registry.server.data.pubiterator.DatumBiConsumer;
 import com.alipay.sofa.registry.server.data.remoting.DataNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.SessionNodeExchanger;
 import com.alipay.sofa.registry.server.data.remoting.metaserver.MetaServerServiceImpl;
@@ -96,6 +100,10 @@ public final class SlotManagerImpl implements SlotManager {
   @Resource private SyncSlotAcceptorManager localSyncDataAccessorManager;
 
   @Autowired private SlotChangeListenerManager slotChangeListenerManager;
+
+  @Autowired private AppRevisionPublish appRevisionPublish;
+
+  @Autowired private ServiceAppsPublish serviceAppsPublish;
 
   private KeyedThreadPoolExecutor migrateSessionExecutor;
   private KeyedThreadPoolExecutor syncSessionExecutor;
@@ -165,20 +173,25 @@ public final class SlotManagerImpl implements SlotManager {
     if (currentEpoch < srcSlotEpoch) {
       triggerUpdateSlotTable(srcSlotEpoch);
     }
-    return checkSlotAccess(slotId, currentEpoch, state, srcLeaderEpoch);
+    SlotAccess slotAccess = checkSlotAccess(slotId, currentEpoch, state, srcLeaderEpoch);
+    SlotAccess revisionAccess =
+        appRevisionPublish.checkSlotAccess(slotId, currentEpoch, srcLeaderEpoch);
+    SlotAccess mappingAccess =
+        serviceAppsPublish.checkSlotAccess(slotId, currentEpoch, srcLeaderEpoch);
+    return SlotAccess.mergeAccess(Lists.newArrayList(slotAccess, revisionAccess, mappingAccess));
   }
 
-  static SlotAccess checkSlotAccess(
-      int slotId, long currentSlotTableEpoch, SlotState state, long srcLeaderEpoch) {
+  public static SlotAccess checkSlotAccess(
+      int slotId, long currentSlotTableEpoch, ISlotState state, long srcLeaderEpoch) {
     if (state == null) {
       return new SlotAccess(slotId, currentSlotTableEpoch, SlotAccess.Status.Moved, -1);
     }
-    final Slot slot = state.slot;
+    final Slot slot = state.getSlot();
     if (!localIsLeader(slot)) {
       return new SlotAccess(
           slotId, currentSlotTableEpoch, SlotAccess.Status.Moved, slot.getLeaderEpoch());
     }
-    if (!state.migrated) {
+    if (!state.isMigrated()) {
       return new SlotAccess(
           slotId, currentSlotTableEpoch, SlotAccess.Status.Migrating, slot.getLeaderEpoch());
     }
@@ -599,14 +612,27 @@ public final class SlotManagerImpl implements SlotManager {
       }
     }
 
-    if (!CollectionUtils.isEmpty(doSyncSet)) {
-      final Map<String, Map<String, DatumSummary>> datumSummary =
-          datumStorageDelegate.getDatumSummary(
-              dataServerConfig.getLocalDataCenter(), slotState.slotId, doSyncSet);
-      for (String sessionIp : doSyncSet) {
-        Map<String, DatumSummary> summary = datumSummary.get(sessionIp);
-        syncSession(slotState, sessionIp, summary, syncSessionIntervalMs, slotTableEpoch);
+    if (CollectionUtils.isEmpty(doSyncSet)) {
+      return;
+    }
+
+    final Map<String, Map<String, DatumSummary>> datumSummary =
+        Maps.newHashMapWithExpectedSize(doSyncSet.size());
+
+    if (CollectionUtils.isEmpty(datumSummary)) {
+      for (String sessionIp : sessions) {
+        datumSummary.put(sessionIp, Collections.emptyMap());
       }
+      return;
+    }
+    datumStorageDelegate.foreach(
+        dataServerConfig.getLocalDataCenter(),
+        slotState.slotId,
+        DatumBiConsumer.publisherGroupsBiConsumer(
+            datumSummary, doSyncSet, localSyncSessionAccessorManager));
+    for (String sessionIp : doSyncSet) {
+      Map<String, DatumSummary> summary = datumSummary.get(sessionIp);
+      syncSession(slotState, sessionIp, summary, syncSessionIntervalMs, slotTableEpoch);
     }
   }
 
@@ -728,7 +754,13 @@ public final class SlotManagerImpl implements SlotManager {
     }
   }
 
-  static final class SlotState {
+  public interface ISlotState {
+    boolean isMigrated();
+
+    Slot getSlot();
+  }
+
+  static final class SlotState implements ISlotState {
     final int slotId;
     volatile Slot slot;
     volatile boolean migrated;
@@ -799,6 +831,16 @@ public final class SlotManagerImpl implements SlotManager {
         }
       }
       return true;
+    }
+
+    @Override
+    public boolean isMigrated() {
+      return this.migrated;
+    }
+
+    @Override
+    public Slot getSlot() {
+      return this.slot;
     }
   }
 

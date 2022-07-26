@@ -22,6 +22,7 @@ import com.alipay.sofa.registry.common.model.dataserver.BatchRequest;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.slot.Slot;
 import com.alipay.sofa.registry.common.model.slot.Slot.Role;
+import com.alipay.sofa.registry.common.model.slot.SlotAccess;
 import com.alipay.sofa.registry.common.model.slot.SlotAccessGenericResponse;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.func.MD5HashFunction;
@@ -35,6 +36,7 @@ import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
 import com.alipay.sofa.registry.server.data.cache.DatumStorageDelegate;
 import com.alipay.sofa.registry.server.data.multi.cluster.executor.MultiClusterExecutorManager;
+import com.alipay.sofa.registry.server.data.pubiterator.DatumBiConsumer;
 import com.alipay.sofa.registry.server.data.remoting.sessionserver.handler.BatchPutDataHandler;
 import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.alipay.sofa.registry.task.KeyedTask;
@@ -91,10 +93,12 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
   public void onSlotAdd(
       String dataCenter, long slotTableEpoch, int slotId, long slotLeaderEpoch, Slot.Role role) {
 
-    // reset state
+    // add or create state
     MetadataLoadState status =
-        slotLeaderStatus.put(
-            slotId, MetadataLoadState.initState(slotTableEpoch, slotId, slotLeaderEpoch));
+        slotLeaderStatus.computeIfAbsent(
+            slotId, k -> MetadataLoadState.initState(slotTableEpoch, slotId, slotLeaderEpoch));
+
+    status.update(slotTableEpoch, slotLeaderEpoch);
     if (status == null) {
       watchDog.wakeup();
     }
@@ -109,6 +113,27 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
   protected abstract int waitingMillis();
 
   protected abstract SyncSlotAcceptorManager getSlotAcceptorManager();
+
+  public SlotAccess checkSlotAccess(int slotId, long currentSlotTableEpoch, long srcLeaderEpoch) {
+    MetadataLoadState state = slotLeaderStatus.get(slotId);
+    if (state == null) {
+      return new SlotAccess(slotId, currentSlotTableEpoch, SlotAccess.Status.Moved, -1);
+    }
+
+    if (!state.isSynced()) {
+      return new SlotAccess(
+              slotId, currentSlotTableEpoch, SlotAccess.Status.Migrating, state.getSlotLeaderEpoch());
+    }
+
+    if (state.getSlotLeaderEpoch() != srcLeaderEpoch) {
+      return new SlotAccess(
+              slotId, currentSlotTableEpoch, SlotAccess.Status.MisMatch, state.getSlotLeaderEpoch());
+    }
+    return new SlotAccess(
+            slotId, currentSlotTableEpoch, SlotAccess.Status.Accept, state.getSlotLeaderEpoch());
+
+  }
+
 
   private final class WatchDog extends WakeUpLoopRunnable {
 
@@ -204,9 +229,9 @@ public abstract class MetadataSlotChangeListener<T extends MetadataVersion>
 
   private void reload(long slotTableEpoch, int slotId, long slotLeaderEpoch) {
     // query from datum storage
-    Map<String, DatumSummary> datumSummary =
-        datumStorageDelegate.getDatumSummary(
-            dataServerConfig.getLocalDataCenter(), slotId, getSlotAcceptorManager());
+    Map<String, DatumSummary> datumSummary = Maps.newHashMap();
+    datumStorageDelegate.foreach(dataServerConfig.getLocalDataCenter(), slotId,
+            DatumBiConsumer.publisherGroupsBiConsumer(datumSummary, getSlotAcceptorManager()));
 
     // query from repository
     Map<String, T> metadataSummary = queryMetadata(slotId);

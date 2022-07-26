@@ -118,6 +118,7 @@ public class GetDataVersionsHandler extends AbstractDataHandler<GetDataVersionRe
         }
         // if equals, do not return the version to reduce network overhead
       } else {
+        // todo xiaojian.xj 跨机房数据get不存在时是否创建empty datum
         if (localDataCenter) {
           // no datum in data node, this maybe happens an empty datum occurs migrating
           // there is subscriber subs the dataId. we create a empty datum to trace the version

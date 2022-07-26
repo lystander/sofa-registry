@@ -17,6 +17,7 @@
 package com.alipay.sofa.registry.common.model.slot.filter;
 
 import com.alipay.sofa.registry.common.model.ServiceGroupType;
+import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
 import com.alipay.sofa.registry.common.model.store.DataInfo;
 import com.google.common.base.Objects;
 import java.util.Set;
@@ -28,7 +29,7 @@ import org.springframework.util.CollectionUtils;
  */
 public class SyncServiceGroupAcceptor implements SyncSlotAcceptor {
 
-  private final String NAME = "SyncServiceGroupAcceptor";
+  private final String NAME = MultiValueConstants.SYNC_SERVICE_GROUP_ACCEPTOR;
   private final Set<ServiceGroupType> acceptGroups;
 
   public SyncServiceGroupAcceptor(Set<ServiceGroupType> acceptGroups) {
@@ -42,6 +43,11 @@ public class SyncServiceGroupAcceptor implements SyncSlotAcceptor {
       return false;
     }
     return acceptGroups.contains(request.getServiceGroup());
+  }
+
+  @Override
+  public boolean filterOut(SyncAcceptorRequest request) {
+    return false;
   }
 
   @Override

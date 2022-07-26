@@ -38,13 +38,12 @@ import com.alipay.sofa.registry.task.MetricsableThreadPoolExecutor;
 import com.alipay.sofa.registry.task.RejectedDiscardHandler;
 import com.alipay.sofa.registry.trace.TraceID;
 import com.alipay.sofa.registry.util.*;
-import com.google.common.collect.Maps;
+
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -111,7 +110,8 @@ public class PushProcessor {
       InetSocketAddress addr,
       Map<String, Subscriber> subscriberMap,
       MultiSubDatum datum) {
-    if (!pushSwitchService.canIpPush(addr.getAddress().getHostAddress())) {
+    if (!pushSwitchService.canIpPushMulti(
+        addr.getAddress().getHostAddress(), datum.getDataInfoId(), datum.dataCenters())) {
       return;
     }
     // most of the time, element size is 1, SingleMap to save the memory
@@ -296,7 +296,8 @@ public class PushProcessor {
   }
 
   boolean doPush(PushTask task) {
-    if (!pushSwitchService.canIpPush(task.pushingTaskKey.addr.getAddress().getHostAddress())) {
+    if (!pushSwitchService.canIpPushMulti(task.pushingTaskKey.addr.getAddress().getHostAddress(),
+            task.datum.getDataInfoId(), task.datum.dataCenters())) {
       return false;
     }
 
@@ -414,7 +415,8 @@ public class PushProcessor {
     @Override
     protected boolean commit() {
       try {
-        if (!pushSwitchService.canIpPush(pushingTaskKey.addr.getAddress().getHostAddress())) {
+        if (!pushSwitchService.canIpPushMulti(pushingTaskKey.addr.getAddress().getHostAddress(),
+                datum.getDataInfoId(), datum.dataCenters())) {
           return false;
         }
         // keyed by client.addr && (pushingKey%concurrencyLevel)

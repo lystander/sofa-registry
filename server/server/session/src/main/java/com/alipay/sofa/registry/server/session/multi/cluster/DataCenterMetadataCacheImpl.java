@@ -1,10 +1,12 @@
 /** Alipay.com Inc. Copyright (c) 2004-2022 All Rights Reserved. */
 package com.alipay.sofa.registry.server.session.multi.cluster;
 
+import com.alipay.sofa.registry.common.model.multi.cluster.DataCenterMetadata;
 import com.alipay.sofa.registry.common.model.multi.cluster.RemoteSlotTableStatus;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.session.bootstrap.SessionServerConfig;
+import com.alipay.sofa.registry.server.session.providedata.FetchStopPushService;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -27,6 +29,8 @@ public class DataCenterMetadataCacheImpl implements DataCenterMetadataCache {
 
   @Autowired private SessionServerConfig sessionServerConfig;
 
+  @Autowired private FetchStopPushService fetchStopPushService;
+
   private Map<String, DataCenterMetadata> metadataCache = Maps.newConcurrentMap();
 
   @PostConstruct
@@ -36,6 +40,7 @@ public class DataCenterMetadataCacheImpl implements DataCenterMetadataCache {
         sessionServerConfig.getSessionServerDataCenter(),
         new DataCenterMetadata(
             sessionServerConfig.getSessionServerDataCenter(),
+            fetchStopPushService.isStopPushSwitch(),
             sessionServerConfig.getLocalDataCenterZones()));
   }
 
@@ -56,6 +61,16 @@ public class DataCenterMetadataCacheImpl implements DataCenterMetadataCache {
   }
 
   @Override
+  public Boolean isStopPush(String dataCenter) {
+    DataCenterMetadata metadata = metadataCache.get(dataCenter);
+
+    if (metadata == null) {
+      return null;
+    }
+    return metadata.isStopPush();
+  }
+
+  @Override
   public Map<String, Set<String>> dataCenterZonesOf(Set<String> dataCenters) {
     if (CollectionUtils.isEmpty(dataCenters)) {
       return Collections.EMPTY_MAP;
@@ -65,8 +80,7 @@ public class DataCenterMetadataCacheImpl implements DataCenterMetadataCache {
     for (String dataCenter : dataCenters) {
       DataCenterMetadata metadata = metadataCache.get(dataCenter);
       if (metadata == null || CollectionUtils.isEmpty(metadata.getZones())) {
-        LOGGER.error(
-                "[DataCenterMetadataCache]find dataCenter: {} zones error.", dataCenter);
+        LOGGER.error("[DataCenterMetadataCache]find dataCenter: {} zones error.", dataCenter);
         continue;
       }
       ret.put(dataCenter, metadata.getZones());
@@ -82,43 +96,24 @@ public class DataCenterMetadataCacheImpl implements DataCenterMetadataCache {
         Optional.ofNullable(remoteSlotTableStatus).orElse(Maps.newHashMap()).entrySet()) {
 
       RemoteSlotTableStatus value = entry.getValue();
-      if (StringUtils.isEmpty(entry.getKey()) || CollectionUtils.isEmpty(value.getSegmentZones())) {
+      if (StringUtils.isEmpty(entry.getKey()) || value.getDataCenterMetadata() == null
+              || CollectionUtils.isEmpty(value.getDataCenterMetadata().getZones())) {
         LOGGER.error(
-            "[DataCenterMetadataCache]invalidate dataCenter: {} or zones: {}", entry.getKey(), value.getSegmentZones());
+            "[DataCenterMetadataCache]invalidate dataCenter: {} or metadata: {}",
+            entry.getKey(),
+            value);
         success = false;
         continue;
       }
-      metadataCache.computeIfAbsent(entry.getKey(), k -> new DataCenterMetadata(entry.getKey(), value.getSegmentZones()));
+      metadataCache.put(entry.getKey(), value.getDataCenterMetadata());
     }
     return success;
   }
 
-  private final class DataCenterMetadata {
-    private final String dataCenter;
-
-    private final Set<String> zones;
-
-    public DataCenterMetadata(String dataCenter, Set<String> zones) {
-      this.dataCenter = dataCenter;
-      this.zones = zones;
-    }
-
-    /**
-     * Getter method for property <tt>dataCenter</tt>.
-     *
-     * @return property value of dataCenter
-     */
-    public String getDataCenter() {
-      return dataCenter;
-    }
-
-    /**
-     * Getter method for property <tt>zones</tt>.
-     *
-     * @return property value of zones
-     */
-    public Set<String> getZones() {
-      return zones;
-    }
+  @Override
+  public void updateLocalData(boolean stopPush) {
+    metadataCache.put(sessionServerConfig.getSessionServerDataCenter(),
+            new DataCenterMetadata(sessionServerConfig.getSessionServerDataCenter(), stopPush,
+                    sessionServerConfig.getLocalDataCenterZones()));
   }
 }

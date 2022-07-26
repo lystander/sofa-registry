@@ -30,6 +30,8 @@ import com.alipay.sofa.registry.server.data.slot.SlotChangeListener;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.util.*;
+import java.util.function.BiConsumer;
+
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -198,15 +200,8 @@ public class DatumStorageDelegate implements DatumStorage {
   }
 
   @Override
-  public Map<String, Map<String, DatumSummary>> getDatumSummary(
-      String dataCenter, int slotId, Set<String> sessions) {
-    return storageOf(dataCenter).getDatumSummary(dataCenter, slotId, sessions);
-  }
-
-  @Override
-  public Map<String, DatumSummary> getDatumSummary(
-      String dataCenter, int slotId, SyncSlotAcceptorManager acceptorManager) {
-    return storageOf(dataCenter).getDatumSummary(dataCenter, slotId, acceptorManager);
+  public void foreach(String dataCenter, int slotId, BiConsumer<String, PublisherGroup> f) {
+    storageOf(dataCenter).foreach(dataCenter, slotId, f);
   }
 
   @Override

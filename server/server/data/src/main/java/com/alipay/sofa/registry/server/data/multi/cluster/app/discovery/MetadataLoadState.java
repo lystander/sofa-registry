@@ -25,13 +25,13 @@ import com.alipay.sofa.registry.task.KeyedTask;
  */
 public final class MetadataLoadState {
 
-  private final long slotTableEpoch;
+  private long slotTableEpoch;
 
   private final int slotId;
 
-  private final long slotLeaderEpoch;
+  private long slotLeaderEpoch;
 
-  private MetadataLoadStatus status = MetadataLoadStatus.INIT;
+  private volatile boolean synced;
 
   private long lastSuccessSyncTime = -1L;
 
@@ -46,6 +46,8 @@ public final class MetadataLoadState {
   public static MetadataLoadState initState(long slotTableEpoch, int slotId, long slotLeaderEpoch) {
     return new MetadataLoadState(slotTableEpoch, slotId, slotLeaderEpoch);
   }
+
+
   /**
    * Getter method for property <tt>slotId</tt>.
    *
@@ -55,23 +57,8 @@ public final class MetadataLoadState {
     return slotId;
   }
 
-  /**
-   * Getter method for property <tt>status</tt>.
-   *
-   * @return property value of status
-   */
-  public MetadataLoadStatus getStatus() {
-    return status;
-  }
-
-  /**
-   * Setter method for property <tt>status</tt>.
-   *
-   * @param status value to be assigned to property status
-   */
-  // todo xiaojian.xj
-  public void setStatus(MetadataLoadStatus status) {
-    this.status = status;
+  public boolean isSynced() {
+    return synced;
   }
 
   /**
@@ -97,7 +84,7 @@ public final class MetadataLoadState {
    *
    * @return property value of slotTableEpoch
    */
-  public long getSlotTableEpoch() {
+  public synchronized long getSlotTableEpoch() {
     return slotTableEpoch;
   }
 
@@ -106,7 +93,7 @@ public final class MetadataLoadState {
    *
    * @return property value of slotLeaderEpoch
    */
-  public long getSlotLeaderEpoch() {
+  public synchronized long getSlotLeaderEpoch() {
     return slotLeaderEpoch;
   }
 
@@ -128,9 +115,15 @@ public final class MetadataLoadState {
     this.syncMetadataTask = syncMetadataTask;
   }
 
-  public void completeSyncMetadataTask() {
+  public synchronized void completeSyncMetadataTask() {
     if (syncMetadataTask != null && syncMetadataTask.isSuccess()) {
       this.lastSuccessSyncTime = syncMetadataTask.getEndTime();
+      this.synced = true;
     }
+  }
+
+  public synchronized void update(long slotTableEpoch, long slotLeaderEpoch) {
+    this.slotTableEpoch = slotTableEpoch;
+    this.slotLeaderEpoch = slotLeaderEpoch;
   }
 }

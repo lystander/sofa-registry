@@ -71,9 +71,15 @@ public class FetchMultiPushService
     return true;
   }
 
-  // todo xiaojian.xj
   public boolean multiPush(String dataInfoId) {
-    return this.storage.get().multiSegmentPushSwitch.isMultiPush();
+    MultiSegmentPushSwitch multiSegmentPushSwitch = this.storage.get().multiSegmentPushSwitch;
+
+    if (!multiSegmentPushSwitch.isMultiPush()) {
+      return false;
+    }
+
+    Set<String> pushDataInfoIds = multiSegmentPushSwitch.getPushDataInfoIds();
+    return  pushDataInfoIds.contains(MultiValueConstants.PUSH_ACCEPT_ALL) || pushDataInfoIds.contains(dataInfoId);
   }
 
   public static class MultiPushStorage extends SystemDataStorage {

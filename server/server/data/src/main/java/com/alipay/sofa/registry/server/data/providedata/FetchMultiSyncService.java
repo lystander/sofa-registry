@@ -4,6 +4,8 @@ package com.alipay.sofa.registry.server.data.providedata;
 import com.alipay.sofa.registry.common.model.console.MultiSegmentSyncSwitch;
 import com.alipay.sofa.registry.common.model.console.PersistenceData;
 import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
+import com.alipay.sofa.registry.common.model.slot.filter.RemoteSyncDataAcceptorManager;
+import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
 import com.alipay.sofa.registry.server.data.bootstrap.DataServerConfig;
@@ -13,6 +15,8 @@ import com.alipay.sofa.registry.server.shared.providedata.SystemDataStorage;
 import com.alipay.sofa.registry.store.api.meta.ProvideDataRepository;
 import com.alipay.sofa.registry.util.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
 
 /**
  * @author xiaojian.xj
@@ -26,6 +30,8 @@ public class FetchMultiSyncService
   @Autowired private DataServerConfig dataServerConfig;
 
   @Autowired private ProvideDataRepository provideDataRepository;
+
+  @Resource private RemoteSyncDataAcceptorManager remoteSyncDataAcceptorManager;
 
   private static final MultiSyncStorage INIT =
       new MultiSyncStorage(INIT_VERSION, new MultiSegmentSyncSwitch());
@@ -62,12 +68,7 @@ public class FetchMultiSyncService
       }
       LOGGER.info("Fetch multi sync switch, prev={}, current={}", expect, update);
 
-      // todo xiaojian.xj rebuild remote data acceptor manager
-
-      if (expect.isMultiSync() && !update.isMultiSync()) {
-        // todo xiaojian.xj clean multi publisher, not clean datum
-      }
-
+      remoteSyncDataAcceptorManager.updateFrom(getMultiSyncSwitch());
     } catch (Throwable t) {
       LOGGER.error("update multi sync switch:{} error.", update, t);
     }
@@ -76,6 +77,10 @@ public class FetchMultiSyncService
 
   public boolean multiSync() {
     return this.storage.get().multiSegmentSyncSwitch.isMultiSync();
+  }
+
+  public MultiSegmentSyncSwitch getMultiSyncSwitch() {
+    return this.storage.get().multiSegmentSyncSwitch;
   }
 
   public static class MultiSyncStorage extends SystemDataStorage {
@@ -92,5 +97,7 @@ public class FetchMultiSyncService
     boolean isMultiSync() {
       return multiSegmentSyncSwitch.isMultiSync();
     }
+
+
   }
 }

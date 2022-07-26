@@ -16,7 +16,9 @@
  */
 package com.alipay.sofa.registry.common.model.slot.filter;
 
-import com.google.common.collect.Sets;
+import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
+
+import java.util.Collections;
 
 /**
  * @author xiaojian.xj
@@ -24,9 +26,7 @@ import com.google.common.collect.Sets;
  */
 public class LocalDataSyncDataAccessorManager extends BaseSyncSlotAcceptorManager {
 
-  // todo xiaojian.xj  accept = all, filter = metadata
   public LocalDataSyncDataAccessorManager() {
-    // only group acceptor
-    super(Sets.newConcurrentHashSet());
+    super(Collections.singleton(MultiValueConstants.REGISTRY_SERVICE_GROUP_ACCEPTOR));
   }
 }

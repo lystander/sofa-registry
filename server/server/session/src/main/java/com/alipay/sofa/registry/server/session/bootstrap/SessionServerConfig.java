@@ -70,6 +70,8 @@ public interface SessionServerConfig extends ServerShareConfig {
 
   String getClientCell(String clientCell);
 
+  boolean isLocalDataCenter(String dataCenter);
+
   String getSessionServerDataCenter();
 
   int getAccessDataExecutorPoolSize();

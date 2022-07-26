@@ -24,5 +24,7 @@ public interface SyncSlotAcceptor {
 
   boolean accept(SyncAcceptorRequest request);
 
+  boolean filterOut(SyncAcceptorRequest request);
+
   String name();
 }

@@ -16,13 +16,18 @@
  */
 package com.alipay.sofa.registry.common.model.slot;
 
+import com.alipay.sofa.registry.util.ParaCheckUtil;
+
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yuzhi.lyz
  * @version v 0.1 2020-10-30 10:34 yuzhi.lyz Exp $
  */
 public final class SlotAccess implements Serializable {
+
   public enum Status {
     Accept,
     Migrating,
@@ -73,6 +78,22 @@ public final class SlotAccess implements Serializable {
 
   public long getSlotLeaderEpoch() {
     return slotLeaderEpoch;
+  }
+
+  public static SlotAccess mergeAccess(List<SlotAccess> slotAccessList) {
+    ParaCheckUtil.checkNotEmpty(slotAccessList, "slotAccessList");
+
+    int count = 0;
+    for (SlotAccess slotAccess : slotAccessList) {
+      if (!slotAccess.isAccept()) {
+        return slotAccess;
+      }
+      count++;
+      if (count == slotAccessList.size()) {
+        return slotAccess;
+      }
+    }
+    return null;
   }
 
   @Override

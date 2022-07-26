@@ -48,6 +48,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.MapUtils;
 
@@ -98,6 +99,15 @@ public final class PublisherGroup {
 
   DatumVersion getVersion() {
     return new DatumVersion(version);
+  }
+
+  /**
+   * Getter method for property <tt>serviceGroupType</tt>.
+   *
+   * @return property value of serviceGroupType
+   */
+  public ServiceGroupType getServiceGroupType() {
+    return serviceGroupType;
   }
 
   Datum toDatum() {
@@ -381,47 +391,12 @@ public final class PublisherGroup {
     }
   }
 
-  DatumSummary getAllSummary(SyncSlotAcceptorManager acceptorManager) {
-    Map<String /*registerId*/, RegisterVersion> publisherVersions =
-        Maps.newHashMapWithExpectedSize(pubMap.size());
-    for (Map.Entry<String, PublisherEnvelope> e : pubMap.entrySet()) {
-      PublisherEnvelope envelope = e.getValue();
-      RegisterVersion v = envelope.getVersionIfPub();
-      // v = null when envelope is unpub
-      if (v == null || !acceptorManager.accept(SyncAcceptorRequest.buildRequest(envelope.publisher.getPublishSource()))) {
-        continue;
-      }
-      publisherVersions.put(e.getKey(), v);
-    }
-
-    return new DatumSummary(dataInfoId, publisherVersions);
+  public int pubSize() {
+    return pubMap.size();
   }
 
-  Map<String, DatumSummary> getSummary(Set<String> sessionIps) {
-    Map<String, Map<String /*registerId*/, RegisterVersion>> summaryMap =
-        Maps.newHashMapWithExpectedSize(sessionIps.size());
-
-    for (String sessionIp : sessionIps) {
-      summaryMap.computeIfAbsent(sessionIp, k -> Maps.newHashMapWithExpectedSize(64));
-    }
-
-    for (Map.Entry<String, PublisherEnvelope> e : pubMap.entrySet()) {
-      PublisherEnvelope envelope = e.getValue();
-      RegisterVersion v = envelope.getVersionIfPub();
-      if (v == null) {
-        continue;
-      }
-
-      if (sessionIps.contains(envelope.sessionProcessId.getHostAddress())) {
-        summaryMap.get(envelope.sessionProcessId.getHostAddress()).put(e.getKey(), v);
-      }
-    }
-
-    Map<String, DatumSummary> result = Maps.newHashMapWithExpectedSize(summaryMap.size());
-    for (Entry<String, Map<String, RegisterVersion>> entry : summaryMap.entrySet()) {
-      result.put(entry.getKey(), new DatumSummary(dataInfoId, entry.getValue()));
-    }
-    return result;
+  public void foreach(BiConsumer<String /*registerId*/, PublisherEnvelope> f) {
+    pubMap.forEach(f);
   }
 
   Collection<ProcessId> getSessionProcessIds() {

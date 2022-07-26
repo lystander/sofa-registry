@@ -17,6 +17,7 @@
 package com.alipay.sofa.registry.common.model.slot.filter;
 
 import com.alipay.sofa.registry.common.model.PublishSource;
+import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
 import com.google.common.base.Objects;
 import org.springframework.util.CollectionUtils;
 
@@ -28,20 +29,26 @@ import java.util.Set;
  */
 public class SyncPublishSourceAcceptor implements SyncSlotAcceptor {
 
-  private final String             NAME = "SyncPublishSourceAcceptor";
-  private final Set<PublishSource> accepts;
+  private static final String             NAME = MultiValueConstants.SYNC_PUBLISH_SOURCE_ACCEPTOR;
+  private final Set<PublishSource> filters;
 
-  public SyncPublishSourceAcceptor(Set<PublishSource> acceptGroups) {
-    this.accepts = acceptGroups;
+  public SyncPublishSourceAcceptor(Set<PublishSource> filters) {
+    this.filters = filters;
   }
 
   @Override
   public boolean accept(SyncAcceptorRequest request) {
 
-    if (CollectionUtils.isEmpty(accepts)) {
+    return true;
+  }
+
+  @Override
+  public boolean filterOut(SyncAcceptorRequest request) {
+    if (CollectionUtils.isEmpty(filters)) {
       return false;
     }
-    return accepts.contains(request.getServiceGroup());
+
+    return filters.contains(request.getDataInfoId());
   }
 
   @Override

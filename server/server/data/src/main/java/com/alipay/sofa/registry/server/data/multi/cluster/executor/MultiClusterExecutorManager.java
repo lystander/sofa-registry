@@ -36,6 +36,8 @@ public class MultiClusterExecutorManager {
 
   private final KeyedThreadPoolExecutor remoteSyncLeaderExecutor;
 
+  private final KeyedThreadPoolExecutor remoteSyncDataIdExecutor;
+
   private final KeyedThreadPoolExecutor syncAppRevisionExecutor;
 
   private final KeyedThreadPoolExecutor syncServiceMappingExecutor;
@@ -43,6 +45,8 @@ public class MultiClusterExecutorManager {
   private final MetricsableThreadPoolExecutor remoteSlotSyncProcessorExecutor;
 
   private static final String REMOTE_SYNC_LEADER_EXECUTOR = "REMOTE_SYNC_LEADER_EXECUTOR";
+
+  private static final String REMOTE_SYNC_DATA_ID_EXECUTOR = "REMOTE_SYNC_DATA_ID_EXECUTOR";
 
   private static final String SYNC_APP_REVISION_EXECUTOR = "SYNC_APP_REVISION_EXECUTOR";
 
@@ -64,6 +68,15 @@ public class MultiClusterExecutorManager {
                     REMOTE_SYNC_LEADER_EXECUTOR,
                     multiClusterDataServerConfig.getRemoteSyncSlotLeaderExecutorThreadSize(),
                     multiClusterDataServerConfig.getRemoteSyncSlotLeaderExecutorQueueSize()));
+
+    remoteSyncDataIdExecutor =
+            reportExecutors.computeIfAbsent(
+                    REMOTE_SYNC_DATA_ID_EXECUTOR,
+                    k ->
+                            new KeyedThreadPoolExecutor(
+                                    REMOTE_SYNC_DATA_ID_EXECUTOR,
+                                    multiClusterDataServerConfig.getRemoteSyncDataIdExecutorThreadSize(),
+                                    multiClusterDataServerConfig.getRemoteSyncDataIdExecutorQueueSize()));
 
     syncAppRevisionExecutor =
         reportExecutors.computeIfAbsent(
@@ -105,6 +118,15 @@ public class MultiClusterExecutorManager {
    */
   public KeyedThreadPoolExecutor getRemoteSyncLeaderExecutor() {
     return remoteSyncLeaderExecutor;
+  }
+
+  /**
+   * Getter method for property <tt>remoteSyncDataIdExecutor</tt>.
+   *
+   * @return property value of remoteSyncDataIdExecutor
+   */
+  public KeyedThreadPoolExecutor getRemoteSyncDataIdExecutor() {
+    return remoteSyncDataIdExecutor;
   }
 
   /**

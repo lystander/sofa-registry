@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiConsumer;
+
 import org.glassfish.jersey.internal.guava.Sets;
 import org.springframework.util.CollectionUtils;
 
@@ -141,42 +143,8 @@ public final class PublisherGroups {
     return group == null ? null : group.remove(sessionProcessId, removedPublishers);
   }
 
-  Map<String, Map<String, DatumSummary>> getSummary(Set<String> sessions) {
-    Map<String /*sessionIp*/, Map<String /*dataInfoId*/, DatumSummary>> summaries =
-        Maps.newHashMap();
-
-    for (String sessionIp : sessions) {
-      summaries.computeIfAbsent(sessionIp, v -> Maps.newHashMapWithExpectedSize(64));
-    }
-
-    for (Entry<String, PublisherGroup> pubEntry : publisherGroupMap.entrySet()) {
-      Map<String /*sessionIp*/, DatumSummary> summary = pubEntry.getValue().getSummary(sessions);
-
-      for (Entry<String, DatumSummary> entry : summary.entrySet()) {
-        if (entry.getValue().isEmpty()) {
-          continue;
-        }
-        Map<String, DatumSummary> summaryMap = summaries.get(entry.getKey());
-        summaryMap.put(pubEntry.getKey(), entry.getValue());
-      }
-    }
-
-    return summaries;
-  }
-
-  Map<String, DatumSummary> getAcceptSummary(SyncSlotAcceptorManager acceptorManager) {
-    Map<String, DatumSummary> summaries = Maps.newHashMap();
-    publisherGroupMap.entrySet().stream()
-        .filter(entry -> acceptorManager.accept(SyncAcceptorRequest.buildRequest(entry.getKey(),
-                entry.getValue().serviceGroupType)))
-        .forEach(
-            entry -> {
-              DatumSummary summary = entry.getValue().getAllSummary(acceptorManager);
-              if (!summary.isEmpty()) {
-                summaries.put(entry.getKey(), summary);
-              }
-            });
-    return summaries;
+  void foreach(BiConsumer<String, PublisherGroup> f) {
+    publisherGroupMap.forEach(f);
   }
 
   Set<ProcessId> getSessionProcessIds() {

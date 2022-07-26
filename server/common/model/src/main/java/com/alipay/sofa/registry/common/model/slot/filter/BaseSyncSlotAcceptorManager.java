@@ -26,7 +26,7 @@ import java.util.Set;
  */
 public class BaseSyncSlotAcceptorManager implements SyncSlotAcceptorManager {
 
-  private final Set<SyncSlotAcceptor> acceptors;
+  protected final Set<SyncSlotAcceptor> acceptors;
 
   public BaseSyncSlotAcceptorManager(Set<SyncSlotAcceptor> acceptors) {
     this.acceptors = acceptors;
@@ -34,6 +34,7 @@ public class BaseSyncSlotAcceptorManager implements SyncSlotAcceptorManager {
 
   /**
    * add or update acceptor
+   *
    * @param acceptor
    */
   @Override
@@ -45,6 +46,10 @@ public class BaseSyncSlotAcceptorManager implements SyncSlotAcceptorManager {
 
     for (SyncSlotAcceptor acceptor :
         Optional.ofNullable(acceptors).orElse(Collections.emptySet())) {
+      if (acceptor.filterOut(request)) {
+        return false;
+      }
+
       if (acceptor.accept(request)) {
         return true;
       }

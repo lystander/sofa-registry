@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -178,28 +180,11 @@ public class BaseDatumStorage {
     return groups == null ? null : groups.remove(dataInfoId, sessionProcessId, removedPublishers);
   }
 
-  public Map<String, Map<String, DatumSummary>> getDatumSummary(int slotId, Set<String> sessions) {
+  public void foreach(int slotId, BiConsumer<String, PublisherGroup> f) {
     final PublisherGroups groups = publisherGroupsMap.get(slotId);
     if (groups != null) {
-      return groups.getSummary(sessions);
+      groups.foreach(f);
     }
-
-    if (CollectionUtils.isEmpty(sessions)) {
-      return Collections.emptyMap();
-    }
-
-    Map<String /*sessionIp*/, Map<String /*dataInfoId*/, DatumSummary>> summaries =
-        Maps.newHashMapWithExpectedSize(sessions.size());
-    for (String sessionIp : sessions) {
-      summaries.put(sessionIp, Collections.emptyMap());
-    }
-    return summaries;
-  }
-
-  public Map<String, DatumSummary> getAcceptDatumSummary(
-      int slotId, SyncSlotAcceptorManager acceptorManager) {
-    final PublisherGroups groups = publisherGroupsMap.get(slotId);
-    return groups != null ? groups.getAcceptSummary(acceptorManager) : Collections.emptyMap();
   }
 
   public Map<String, DatumVersion> updateVersion(int slotId) {

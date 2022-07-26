@@ -16,11 +16,11 @@
  */
 package com.alipay.sofa.registry.server.data.multi.cluster.app.discovery;
 
-import static com.alipay.sofa.registry.common.model.slot.filter.AcceptorConstants.APP_REVISION_ACCEPTOR;
 
 import com.alipay.sofa.registry.common.model.DataInfoIdGenerator;
 import com.alipay.sofa.registry.common.model.RegisterVersion;
 import com.alipay.sofa.registry.common.model.ServerDataBox;
+import com.alipay.sofa.registry.common.model.constants.MultiValueConstants;
 import com.alipay.sofa.registry.common.model.dataserver.DatumSummary;
 import com.alipay.sofa.registry.common.model.slot.filter.BaseSyncSlotAcceptorManager;
 import com.alipay.sofa.registry.common.model.slot.filter.SyncSlotAcceptorManager;
@@ -64,7 +64,7 @@ public class AppRevisionPublish extends MetadataSlotChangeListener<MetadataVersi
 
   @Override
   protected SyncSlotAcceptorManager getSlotAcceptorManager() {
-    return new BaseSyncSlotAcceptorManager(Sets.newHashSet(APP_REVISION_ACCEPTOR));
+    return new BaseSyncSlotAcceptorManager(Sets.newHashSet(MultiValueConstants.APP_REVISION_GROUP_ACCEPTOR));
   }
 
   @Override

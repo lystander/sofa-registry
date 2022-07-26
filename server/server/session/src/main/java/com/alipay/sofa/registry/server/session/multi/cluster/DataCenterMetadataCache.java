@@ -23,7 +23,11 @@ public interface DataCenterMetadataCache {
      */
     Set<String> dataCenterZonesOf(String dataCenter);
 
+    Boolean isStopPush(String dataCenter);
+
     Map<String, Set<String>> dataCenterZonesOf(Set<String> dataCenters);
 
     boolean saveDataCenterZones(Map<String, RemoteSlotTableStatus> remoteSlotTableStatus);
+
+    void updateLocalData(boolean stopPush);
 }

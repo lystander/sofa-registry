@@ -18,6 +18,7 @@ package com.alipay.sofa.registry.server.meta.multi.cluster;
 
 import com.alipay.sofa.registry.common.model.GenericResponse;
 import com.alipay.sofa.registry.common.model.elector.LeaderInfo;
+import com.alipay.sofa.registry.common.model.multi.cluster.DataCenterMetadata;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
 import com.alipay.sofa.registry.log.Logger;
 import com.alipay.sofa.registry.log.LoggerFactory;
@@ -68,8 +69,6 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
 
   private static volatile long LAST_REFRESH_CONFIG_TS = 0;
 
-  private static final long INIT_SLOT_TABLE_EPOCH = -1l;
-
   static final int MAX_SYNC_FAIL_COUNT = 3;
 
   @PostConstruct
@@ -98,8 +97,13 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
     Map<String, RemoteClusterSlotState> result = Maps.newHashMapWithExpectedSize(slotStateMap.size());
     for (Entry<String, RemoteClusterSlotState> entry : slotStateMap.entrySet()) {
       RemoteClusterSlotState state = entry.getValue();
-      result.put(state.getClusterId(),
-              new RemoteClusterSlotState(state.getClusterId(), state.getSlotTable(), state.getSegmentZones()));
+      DataCenterMetadata metadata = state.getDataCenterMetadata();
+      if (metadata == null) {
+        LOGGER.error("[getMultiClusterSlotTable]dataCenter: {} metadata is null.", entry.getKey());
+        continue;
+      }
+      result.put(metadata.getDataCenter(),
+              new RemoteClusterSlotState(state.getSlotTable(), metadata));
     }
     return result;
   }
@@ -190,11 +194,9 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
   }
 
   public static final class RemoteClusterSlotState {
-    volatile String clusterId;
-
     volatile SlotTable slotTable;
 
-    volatile Set<String> segmentZones;
+    volatile DataCenterMetadata dataCenterMetadata;
 
     volatile KeyedTask<SlotSyncTask> task;
 
@@ -204,15 +206,13 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
       this.slotTable = SlotTable.INIT;
     }
 
-    public RemoteClusterSlotState(String clusterId, SlotTable slotTable, Set<String> segmentZones) {
-      this.clusterId = clusterId;
+    public RemoteClusterSlotState(SlotTable slotTable, DataCenterMetadata dataCenterMetadata) {
       this.slotTable = slotTable;
-      this.segmentZones = segmentZones;
+      this.dataCenterMetadata = dataCenterMetadata;
     }
 
-    public synchronized void update(String clusterId, SlotTable update, Set<String> segmentZones) {
+    public synchronized void update(SlotTable update, DataCenterMetadata dataCenterMetadata) {
 
-      this.clusterId = clusterId;
       SlotTable prev = slotTable;
       if (slotTable.getEpoch() < update.getEpoch()) {
         this.slotTable = update;
@@ -222,9 +222,7 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
                 update.getEpoch(),
                 update);
       }
-      if (this.segmentZones == null) {
-        this.segmentZones = segmentZones;
-      }
+      this.dataCenterMetadata = dataCenterMetadata;
     }
 
     public long incrementAndGetFailCount() {
@@ -240,12 +238,13 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
     }
 
 
-    public synchronized String getClusterId() {
-      return this.clusterId;
-    }
-
-    public synchronized Set<String> getSegmentZones() {
-      return this.segmentZones;
+    /**
+     * Getter method for property <tt>dataCenterMetadata</tt>.
+     *
+     * @return property value of dataCenterMetadata
+     */
+    public synchronized DataCenterMetadata getDataCenterMetadata() {
+      return dataCenterMetadata;
     }
 
     public synchronized SlotTable getSlotTable() {
@@ -254,17 +253,13 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
 
     @Override
     public String toString() {
-      return "RemoteClusterSlotState{"
-          + "clusterId='"
-          + clusterId
-          + '\''
-          + ", slotTable="
-          + slotTable
-          + ", task="
-          + task
-          + '}';
+      return "RemoteClusterSlotState{" +
+              "slotTable=" + slotTable +
+              ", dataCenterMetadata=" + dataCenterMetadata +
+              ", task=" + task +
+              ", failCount=" + failCount +
+              '}';
     }
-
   }
 
   private final class SlotSyncTask implements Runnable {
@@ -329,12 +324,11 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
       }
       return;
     }
-    handleFailResponse(request, state, syncRest);
+    handleFailResponse(request, syncRest);
   }
 
   private void handleFailResponse(
       RemoteClusterSlotSyncRequest request,
-      RemoteClusterSlotState state,
       GenericResponse<RemoteClusterSlotSyncResponse> syncRest) {
 
     RemoteClusterSlotSyncResponse data = syncRest.getData();
@@ -372,7 +366,7 @@ public class DefaultMultiClusterSlotTableSyncer implements MultiClusterSlotTable
   private void handleSyncResult(RemoteClusterSlotState state, RemoteClusterSlotSyncResponse data) {
 
     if (data.isSlotTableUpgrade()) {
-      state.update(data.getClusterId(), data.getSlotTable(), data.getLocalSegZones());
+      state.update(data.getSlotTable(), data.getDataCenterMetadata());
     }
   }
 }

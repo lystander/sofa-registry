@@ -51,4 +51,10 @@ public interface MultiClusterDataServerConfig {
   int getSyncServiceMappingExecutorThreadSize();
 
   int getSyncServiceMappingExecutorQueueSize();
+
+  int getSyncRemoteDataIdIntervalMs();
+
+  int getRemoteSyncDataIdExecutorThreadSize();
+
+  int getRemoteSyncDataIdExecutorQueueSize();
 }

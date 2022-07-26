@@ -24,6 +24,7 @@ import com.alipay.sofa.registry.common.model.metaserver.inter.heartbeat.Heartbea
 import com.alipay.sofa.registry.common.model.metaserver.nodes.DataNode;
 import com.alipay.sofa.registry.common.model.metaserver.nodes.MetaNode;
 import com.alipay.sofa.registry.common.model.metaserver.nodes.SessionNode;
+import com.alipay.sofa.registry.common.model.multi.cluster.DataCenterMetadata;
 import com.alipay.sofa.registry.common.model.multi.cluster.RemoteSlotTableStatus;
 import com.alipay.sofa.registry.common.model.slot.SlotConfig;
 import com.alipay.sofa.registry.common.model.slot.SlotTable;
@@ -329,7 +330,7 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
       RemoteClusterSlotState state = metaEntry.getValue();
       Long slotTableEpoch = dataRemoteSlotTable.get(dataCenter);
       SlotTable exist = state.getSlotTable();
-      Set<String> segmentZones = metaEntry.getValue().getSegmentZones();
+      DataCenterMetadata dataCenterMetadata = metaEntry.getValue().getDataCenterMetadata();
       if (slotTableEpoch == null || slotTableEpoch < exist.getEpoch()) {
         MULTI_CLUSTER_LOGGER.info(
             "[calculateStatus]node:{}, heartbeat request:{}/{}, newSlotTableEpoch:{}/{}, slotTable upgrade: {}",
@@ -341,7 +342,7 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
                 exist);
         result.put(
             dataCenter,
-            RemoteSlotTableStatus.upgrade(exist, segmentZones));
+            RemoteSlotTableStatus.upgrade(exist, dataCenterMetadata));
       } else if (slotTableEpoch > exist.getEpoch()) {
         // it should not happen, print error log and return false
         MULTI_CLUSTER_LOGGER.error(
@@ -351,9 +352,9 @@ public class HeartbeatRequestHandler extends BaseMetaServerHandler<HeartbeatRequ
             slotTableEpoch,
             dataCenter,
                 exist.getEpoch());
-        result.put(dataCenter, RemoteSlotTableStatus.conflict(exist, segmentZones));
+        result.put(dataCenter, RemoteSlotTableStatus.conflict(exist));
       } else {
-        result.put(dataCenter, RemoteSlotTableStatus.notUpgrade(slotTableEpoch, segmentZones));
+        result.put(dataCenter, RemoteSlotTableStatus.notUpgrade(slotTableEpoch, dataCenterMetadata));
       }
     }
     return result;
